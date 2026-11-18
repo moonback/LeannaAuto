@@ -539,3 +539,17 @@ Branche : `feat/agents-management-ui`, créée depuis `main` après fusion de la
 - [ ] Contrôle visuel et fonctionnel dans le navigateur : ouverture/fermeture de la modale, validation formulaire, recherche, filtres et cartes agent.
 
 État de validation : build, suite automatisée et démarrage du serveur confirmés par l'utilisateur sous Windows. Le contrôle visuel des interactions reste à effectuer. La fusion de la PR #10 a été réalisée avant ce lot ; ce lot reste isolé de `main` dans la PR #11.
+
+
+### Lot — modifier, renommer et supprimer les agents
+
+Branche : `feat/agent-lifecycle-actions`.
+
+- [x] Ajouter l’édition du nom et de la mission depuis une modale réutilisée ; l’identifiant et l’identité cryptographique restent inchangés.
+- [x] Ajouter la suppression explicite avec confirmation, réservée à l’administrateur.
+- [x] Refuser la suppression d’un agent actif, d’un agent parent ou d’un agent qui possède encore des tâches.
+- [x] Supprimer la sandbox Docker et son volume workspace avant de retirer l’agent de SQLite.
+- [x] Étendre les tests HTTP aux permissions, à la modification et aux refus de suppression.
+- [ ] Validation utilisateur Windows : build, tests complets, puis vérification visuelle des actions Modifier et Supprimer.
+
+Les journaux et événements historiques sont conservés après suppression. Les tâches et les agents enfants doivent être traités explicitement avant de pouvoir supprimer leur agent parent.
