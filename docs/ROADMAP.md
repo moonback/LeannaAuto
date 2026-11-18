@@ -202,6 +202,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Instrumenter les décisions de la constitution et les phases d'exécution des outils, avec durée et résultat.
 - [x] Supprimer les arguments bruts des messages de décision d'outil afin de ne pas recopier inutilement commandes et contenus dans les journaux.
 - [x] Ajouter un test d'intégration vérifiant que les événements tâche/LLM/outil d'un même cycle partagent la même corrélation.
+- [x] Étendre le filtre du Journal système aux transitions de tâches, appels/usage LLM, décisions et exécutions d'outils.
 - [ ] Validation utilisateur Windows : build, suite complète et tests Docker opt-in.
 
 Limites : la corrélation est créée par cycle de décision de l'agent ; les actions hors boucle d'agent et les événements historiques ne reçoivent pas rétroactivement de corrélation. Les logs legacy conservent leur format texte pour compatibilité.
