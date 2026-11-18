@@ -23,7 +23,7 @@ jobs:
         run: |
           git init .
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.event.pull_request.head.sha || github.sha }}"
+          git fetch --depth=1 origin "refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}"
           git checkout --detach FETCH_HEAD
           node --version
           npm --version
@@ -38,7 +38,7 @@ jobs:
         run: |
           git init .
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.event.pull_request.head.sha || github.sha }}"
+          git fetch --depth=1 origin "refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}"
           git checkout --detach FETCH_HEAD
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
@@ -57,7 +57,7 @@ jobs:
         run: |
           git init .
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.event.pull_request.head.sha || github.sha }}"
+          git fetch --depth=1 origin "refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}"
           git checkout --detach FETCH_HEAD
       - uses: actions/setup-node@v4
         with:
@@ -75,7 +75,7 @@ jobs:
         run: |
           git init .
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.event.pull_request.head.sha || github.sha }}"
+          git fetch --depth=1 origin "refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}"
           git checkout --detach FETCH_HEAD
       - uses: actions/setup-node@v4
         with:
