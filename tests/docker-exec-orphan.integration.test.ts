@@ -39,7 +39,7 @@ describe.skipIf(!enabled)("Docker exec orphan characterization (opt-in)",()=>{
   if(volume)await docker(["volume","rm",volume]).catch(()=>undefined);
  });
 
- it("detects whether a docker exec command survives its Node owner and overlaps a retry",async()=>{
+ it("waits for an orphaned docker exec to finish before starting a retry",async()=>{
   const agentId="orphan-"+randomUUID();
   container="leanna-"+agentId.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40);
   volume=container+"-workspace";
