@@ -15,7 +15,7 @@ async function docker(args:string[],timeout=120000):Promise<string>{
 describe.skipIf(!enabled)("real Docker sandbox reconciliation (opt-in)",()=>{
  it("restarts and recreates a sandbox while preserving its workspace and security limits",async()=>{
   const agentId="integration-"+randomUUID();
-  const container="leanna-"+agentId;
+  const container="leanna-"+agentId.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40);
   const volume=container+"-workspace";
   resources.push(container,volume);
   try{
