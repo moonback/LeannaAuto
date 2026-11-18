@@ -1,4 +1,4 @@
-import {db,log} from "./storage.js";
+import {db,log,emergencyStopActive} from "./storage.js";
 import {chat} from "./llm.js";
 import {ensureSandbox} from "./executor.js";
 import {runTool,toolHelp} from "./tools.js";
@@ -12,7 +12,7 @@ export async function startAgent(id:string){
  await ensureSandbox(id); log(id,"system","Agent started");
  let history:string[]=[];
  while(true){
-  const current=get(id); if(!current||current.status!=="running")break;
+  const current=get(id); if(!current||current.status!=="running"||emergencyStopActive())break;
   db.prepare("UPDATE agents SET heartbeat_at=? WHERE id=?").run(new Date().toISOString(),id);
   const mode=resourceMode();
   const task=db.prepare("SELECT id,title,description,status FROM tasks WHERE agent_id=? AND status IN ('pending','active') ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END,created_at LIMIT 1").get(id) as {id:string;title:string;description:string;status:string}|undefined;
