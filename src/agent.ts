@@ -38,8 +38,8 @@ export async function startAgent(id:string,options:{staleAfterMs?:number}={}){
    const afterResponse=get(id);
    if(!afterResponse||afterResponse.status!=="running"||afterResponse.runtime_owner!==owner||emergencyStopActive())break;
    log(id,"agent",answer);
-   if(/^DONE\\b/i.test(answer)){if(task)db.prepare("UPDATE tasks SET status='completed',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);history.push(answer);await delay(60000);continue;}
-   const match=answer.match(/^TOOL\\s+(shell|read_file|write_file)\\s+(\\{.*\\})/s);
+   if(/^DONE\b/i.test(answer)){if(task)db.prepare("UPDATE tasks SET status='completed',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);history.push(answer);await delay(60000);continue;}
+   const match=answer.match(/^TOOL\s+(shell|read_file|write_file)\s+(\{.*\})/s);
    if(match){try{const result=await runTool(id,match[1],JSON.parse(match[2]));log(id,"tool",result.slice(0,4000));history.push(answer+"\\nRESULT: "+result.slice(0,4000));}catch(e){log(id,"error","Tool parse/execution: "+String(e));}}
    else history.push(answer);
    await delay(mode==="CRITICAL"?30000:5000);
