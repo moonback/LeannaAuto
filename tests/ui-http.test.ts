@@ -56,10 +56,19 @@ afterAll(async()=>{
 });
 
 describe("dashboard HTTP security integration",()=>{
- it("authenticates an operator and serves the dashboard",async()=>{
+ it("serves the control room shell with operational sections",async()=>{
+  const response=await fetch(baseUrl+"/");
+  expect(response.status).toBe(200);
+  const html=await response.text();
+  expect(html).toContain("Interventions requises");
+  expect(html).toContain("Flux d'activité récent");
+  expect(html).toContain("Agents en activité");
+  expect(html).toContain("Dernière actualisation");
+ });
+ it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
   expect(response.status).toBe(200);
-  await expect(response.json()).resolves.toMatchObject({role:"operator"});
+  await expect(response.json()).resolves.toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
  });
  it("rejects privileged writes from an operator",async()=>{
   const response=await request("/api/agents",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"blocked",goal:"must be denied"})});
