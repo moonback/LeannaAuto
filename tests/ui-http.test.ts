@@ -61,6 +61,11 @@ describe("dashboard HTTP security integration",()=>{
   expect(response.status).toBe(200);
   const html=await response.text();
   expect(html).toContain("Interventions requises");
+  expect(html).toContain("Bureau IA");
+  expect(html).toContain('id="officeTree"');
+  expect(html).toContain("function renderOfficeTree(agents,tasks)");
+  expect(html).toContain("office-desk");
+  expect(html).toContain("office-task");
   expect(html).toContain("Flux d'activité récent");
   expect(html).toContain("Agents en activité");
   expect(html).toContain("Dernière actualisation");
