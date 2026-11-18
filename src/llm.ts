@@ -1,8 +1,9 @@
 import "dotenv/config";
 import type {LLMMessage} from "./types.js";
 import {db,log} from "./storage.js";
+import type {EventMetadata} from "./storage.js";
 
-export async function chat(messages:LLMMessage[],agentId="unknown"){
+export async function chat(messages:LLMMessage[],agentId="unknown",context:Pick<EventMetadata,"taskId"|"correlationId">={}){
  const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));
  const used=(db.prepare("SELECT COALESCE(SUM(tokens),0) as total FROM usage").get() as {total:number}).total;
  if(used>=quota)throw new Error("Global inference token quota exhausted ("+used+"/"+quota+").");
@@ -20,6 +21,6 @@ export async function chat(messages:LLMMessage[],agentId="unknown"){
  const data=await response.json() as any;
  const tokens=Math.max(0,Number(data.usage?.total_tokens??0));
  db.prepare("INSERT INTO usage(agent_id,at,cpu_seconds,mem_mb,tokens) VALUES(?,?,?,?,?)").run(agentId,new Date().toISOString(),0,0,tokens);
- log(agentId,"usage","Inference tokens: "+tokens+"; global total: "+(used+tokens)+"/"+quota);
+ log(agentId,"usage","Inference tokens: "+tokens+"; global total: "+(used+tokens)+"/"+quota,{eventType:"llm_usage",source:"llm",taskId:context.taskId,correlationId:context.correlationId,details:{tokens,model}});
  return String(data.choices?.[0]?.message?.content??"");
 }
