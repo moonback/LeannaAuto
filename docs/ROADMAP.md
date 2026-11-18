@@ -411,3 +411,12 @@ Résultats après régénération du lockfile — validation utilisateur Windows
 
 Conclusion du lot dépendances : installation verrouillée, build et tests validés par l'utilisateur ; réduction de 7 avis (dont 2 moderate/critical groupes initiaux) à 5 avis high liés à Picomatch. Le risque transitif restant n'est pas résolu et l'audit global ne doit pas être qualifié de propre. Le périmètre runtime doit être confirmé séparément par `npm audit --omit=dev`.
 
+
+
+Clôture de la vérification runtime — validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm audit --omit=dev` : 0 vulnérabilité. Les dépendances runtime de production ne présentent donc aucun avis dans cet audit.
+- [x] `npm ls picomatch --all` confirme que Picomatch 4.0.7 est uniquement dans l'arbre de développement : `vitest@4.1.12` → `vite@8.3.8` / `tinyglobby@0.2.17` → `fdir@6.5.0` → `picomatch@4.0.7`.
+- [ ] Le rapport complet `npm audit` conserve 5 avis high liés à Picomatch 4.0.7 dans cette chaîne de développement. Ils ne sont pas corrigés ; continuer à surveiller un correctif amont.
+- [x] Décision : ne pas appliquer `npm audit fix --force` ni ajouter un override arbitraire. Conserver Vitest 4.1.12 et le lockfile validé.
+
+Bilan du lot : installation reproductible (`npm ci`), build TypeScript réussi, 5 tests réussis sur 5, audit des dépendances de production sans vulnérabilité. Risque restant circonscrit à l'outillage de développement via Picomatch ; l'audit global n'est pas entièrement propre. Validations exécutées par l'utilisateur sous Windows.
