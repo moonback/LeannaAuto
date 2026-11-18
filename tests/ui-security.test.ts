@@ -15,6 +15,7 @@ describe("dashboard authentication",()=>{
 describe("dashboard API authorization",()=>{
  it("allows operators to read dashboard data and agent details",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/dashboard")).toBe(true);
+  expect(isAllowedUiRequest("operator","GET","/api/resources")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1/workspace")).toBe(true);
  });

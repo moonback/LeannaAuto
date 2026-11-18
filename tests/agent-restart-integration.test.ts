@@ -14,14 +14,16 @@ describe("supervisor recovery with the real agent loop",()=>{
    CREATE TABLE logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,level TEXT,message TEXT);
    INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
    INSERT INTO agents(id,name,goal,status,runtime_owner,heartbeat_at,restart_count) VALUES('agent-restart','Test agent','Complete its task','running','dead-owner','2026-11-18T00:00:00.000Z',0);
-   INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Do not reset this task','active','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
+   INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Activate and preserve this task','pending','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
   `);
  });
  afterEach(()=>{if(db?.open)db.close();});
 
  it("reclaims a crashed lease and runs the real agent loop without Docker or a live LLM",async()=>{
-  const log=vi.fn((id:string,level:string,message:string)=>{
+  const eventRecords:Array<{eventType?:string;taskId?:string|null;correlationId?:string|null;details?:unknown}>=[];
+  const log=vi.fn((id:string,level:string,message:string,metadata?:{eventType?:string;taskId?:string|null;correlationId?:string|null;details?:unknown})=>{
    db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(id,new Date().toISOString(),level,message);
+   if(metadata)eventRecords.push(metadata);
   });
   const ensureSandbox=vi.fn(async()=> "sandbox-ready");
   const stopSandbox=vi.fn(async()=>undefined);
@@ -44,12 +46,19 @@ describe("supervisor recovery with the real agent loop",()=>{
   expect(ensureSandbox).toHaveBeenCalledOnce();
   expect(chat).toHaveBeenCalledOnce();
   expect(runTool).toHaveBeenCalledOnce();
+  expect(chat).toHaveBeenCalledWith(expect.any(Array),"agent-restart",expect.objectContaining({taskId:"task-restart",correlationId:expect.any(String)}));
+  expect(runTool).toHaveBeenCalledWith("agent-restart","shell",{command:"true"},expect.objectContaining({taskId:"task-restart",correlationId:expect.any(String)}));
   expect(stopSandbox).not.toHaveBeenCalled();
   expect(db.prepare("SELECT status,runtime_owner,heartbeat_at,restart_count FROM agents WHERE id='agent-restart'").get()).toMatchObject({
    status:"stopped",runtime_owner:null,heartbeat_at:null,restart_count:1
   });
   expect(db.prepare("SELECT status FROM tasks WHERE id='task-restart'").get()).toEqual({status:"active"});
   expect((db.prepare("SELECT COUNT(*) AS count FROM logs WHERE level='tool'").get() as {count:number}).count).toBe(1);
+  expect(eventRecords.map(event=>event.eventType)).toEqual(expect.arrayContaining(["task_transition","llm_call","tool_execution"]));
+  const correlated=eventRecords.filter(event=>event.taskId==="task-restart");
+  expect(correlated.length).toBeGreaterThanOrEqual(5);
+  expect(new Set(correlated.map(event=>event.correlationId)).size).toBe(1);
+  expect(correlated.every(event=>Boolean(event.correlationId))).toBe(true);
  });
 
  it("rejects a second start while the real agent loop still owns its lease",async()=>{

@@ -56,19 +56,92 @@ afterAll(async()=>{
 });
 
 describe("dashboard HTTP security integration",()=>{
- it("authenticates an operator and serves the dashboard",async()=>{
+ it("serves the control room shell with operational sections",async()=>{
+  const response=await fetch(baseUrl+"/");
+  expect(response.status).toBe(200);
+  const html=await response.text();
+  expect(html).toContain("Interventions requises");
+  expect(html).toContain("Flux d'activité récent");
+  expect(html).toContain("Agents en activité");
+  expect(html).toContain("Dernière actualisation");
+  expect(html).toContain("Journal d’événements");
+  expect(html).toContain("eventTypeFilter");
+  expect(html).toContain("Transitions de tâches");
+  expect(html).toContain("Décisions des outils");
+  expect(html).toContain("Ressources système");
+  expect(html).toContain("resourceDocker");
+  expect(html).toContain('autocomplete="username"');
+  expect(html).toContain("setInterval(()=>{if(sessionStorage.getItem");
+  expect(html).toContain("data:image/svg+xml");
+  expect(html).toContain("document.getElementById('agentTable').innerHTML=agents.map");
+  expect(html).not.toContain("document.getElementById('nTasks')");
+  expect(html).not.toContain("document.getElementById('nTokens')");
+  expect(html).not.toContain("document.getElementById('recent')");
+ });
+ it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
   expect(response.status).toBe(200);
-  await expect(response.json()).resolves.toMatchObject({role:"operator"});
+  await expect(response.json()).resolves.toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
  });
  it("rejects privileged writes from an operator",async()=>{
   const response=await request("/api/agents",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"blocked",goal:"must be denied"})});
   expect(response.status).toBe(403);
  });
- it("allows an administrator to create an agent",async()=>{
+ it("creates an agent and reports exact pending task counts",async()=>{
   const response=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"integration-agent",goal:"HTTP integration test"})});
   expect(response.status).toBe(201);
-  await expect(response.json()).resolves.toHaveProperty("id");
+  const created=await response.json() as {id:string};
+  expect(created.id).toBeTruthy();
+  const taskResponse=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:created.id,title:"Control room counter test",description:"Verify task aggregation"})});
+  expect(taskResponse.status).toBe(201);
+  const dashboard=await request("/api/dashboard");
+  expect(dashboard.status).toBe(200);
+  await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
+ });
+ it("exposes host, runtime, disk and Docker resource snapshots",async()=>{
+  const response=await request("/api/resources");
+  expect(response.status).toBe(200);
+  const data=await response.json() as any;
+  expect(data.host.memory.totalBytes).toBeGreaterThan(0);
+  expect(data.host.memory.freeBytes).toBeGreaterThan(0);
+  expect(data.host.cpuCores).toBeGreaterThan(0);
+  expect(data.host.uptimeSeconds).toBeGreaterThan(0);
+  expect(data.host.disk).toHaveProperty("available");
+  expect(data.runtime.pid).toBeGreaterThan(0);
+  expect(data.runtime.memory.rssBytes).toBeGreaterThan(0);
+  expect(data.configuredLimits).toMatchObject({cpuCores:1,memory:"1g",pids:64});
+  expect(data.docker).toHaveProperty("available");
+  expect(Array.isArray(data.docker.containers)).toBe(true);
+ });
+ it("exposes filtered, cursor-paginated structured events to operators",async()=>{
+  const first=await request("/api/events?limit=2");
+  expect(first.status).toBe(200);
+  const page=await first.json() as {events:Array<{id:number;type:string;summary:string}>;page:{nextBefore:number|null}};
+  expect(page.events.length).toBe(2);
+  expect(page.events.some(event=>event.type==="audit"||event.type==="log")).toBe(true);
+  expect(page.page.nextBefore).toBeTypeOf("number");
+  const next=await request("/api/events?limit=2&before="+page.page.nextBefore);
+  expect(next.status).toBe(200);
+  const nextPage=await next.json() as {events:Array<{id:number}>};
+  expect(nextPage.events.every(event=>event.id<page.page.nextBefore!)).toBe(true);
+  const filtered=await request("/api/events?type=audit&limit=20");
+  const filteredPage=await filtered.json() as {events:Array<{type:string}>};
+  expect(filteredPage.events.length).toBeGreaterThan(0);
+  expect(filteredPage.events.every(event=>event.type==="audit")).toBe(true);
+ });
+ it("redacts common secret patterns from persisted event summaries",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"redaction-check",goal:"token=integration-secret-value"})});
+  expect(created.status).toBe(201);
+  const agent=await created.json() as {id:string};
+  const response=await request("/api/events?agentId="+encodeURIComponent(agent.id)+"&type=log&limit=10");
+  expect(response.status).toBe(200);
+  const page=await response.json() as {events:Array<{summary:string}>};
+  expect(page.events.some(event=>event.summary.includes("[REDACTED]"))).toBe(true);
+  expect(JSON.stringify(page.events)).not.toContain("integration-secret-value");
+ });
+ it("rejects invalid event pagination parameters",async()=>{
+  expect((await request("/api/events?limit=0")).status).toBe(400);
+  expect((await request("/api/events?before=invalid")).status).toBe(400);
  });
  it("rejects non-JSON write requests",async()=>{
   const response=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"text/plain"},body:"not-json"});

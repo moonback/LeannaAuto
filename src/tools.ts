@@ -2,8 +2,9 @@ import {shell} from "./executor.js";
 import {checkAction} from "./constitution.js";
 import path from "node:path";
 import {log} from "./storage.js";
-export async function runTool(agentId:string,name:string,args:Record<string,unknown>){
- const verdict=checkAction(name,args); log(agentId,"decision",JSON.stringify({tool:name,allowed:verdict.allowed,reason:verdict.reason,args})); if(!verdict.allowed)return "Rejected: "+verdict.reason;
+import type {EventMetadata} from "./storage.js";
+export async function runTool(agentId:string,name:string,args:Record<string,unknown>,context:Pick<EventMetadata,"taskId"|"correlationId">={}){
+ const verdict=checkAction(name,args); log(agentId,"decision","Tool "+name+" "+(verdict.allowed?"allowed":"rejected")+": "+verdict.reason,{eventType:"tool_decision",source:"tool-router",taskId:context.taskId,correlationId:context.correlationId,details:{tool:name,allowed:verdict.allowed,reason:verdict.reason}}); if(!verdict.allowed)return "Rejected: "+verdict.reason;
  if(name==="shell")return await shell(agentId,String(args.command??""));
  if(name==="read_file"){
   const p=workspacePath(String(args.path??""));

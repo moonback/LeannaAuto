@@ -1,6 +1,7 @@
 import {randomUUID} from "node:crypto";
 import type DatabaseConstructor from "better-sqlite3";
 import {db,log,emergencyStopActive} from "./storage.js";
+import type {EventMetadata} from "./storage.js";
 import {claimAgentRuntime,refreshAgentHeartbeat,releaseAgentRuntime} from "./agent-runtime.js";
 import {chat} from "./llm.js";
 import {ensureSandbox,stopSandbox} from "./executor.js";
@@ -15,12 +16,12 @@ type AgentStarterOptions={staleAfterMs?:number};
 type AgentDependencies={
  db:SqliteDatabase;
  getAgent:(id:string)=>StoredAgent|undefined;
- log:(id:string,level:string,message:string)=>void;
+ log:(id:string,level:string,message:string,metadata?:EventMetadata)=>void;
  emergencyStopActive:()=>boolean;
- chat:(messages:{role:"system"|"user"|"assistant"|"tool";content:string}[],agentId:string)=>Promise<string>;
+ chat:(messages:{role:"system"|"user"|"assistant"|"tool";content:string}[],agentId:string,context?:{taskId?:string|null;correlationId?:string})=>Promise<string>;
  ensureSandbox:(id:string)=>Promise<unknown>;
  stopSandbox:(id:string)=>Promise<unknown>;
- runTool:(id:string,name:string,args:Record<string,unknown>)=>Promise<string>;
+ runTool:(id:string,name:string,args:Record<string,unknown>,context?:{taskId?:string|null;correlationId?:string})=>Promise<string>;
  toolHelp:string;
  constitutionText:string;
  resourceMode:()=>string;
@@ -66,19 +67,23 @@ async function runAgentLoop(id:string,owner:string,deps:AgentDependencies):Promi
    if(!current||current.status!=="running"||current.runtime_owner!==owner||deps.emergencyStopActive())break;
    refreshAgentHeartbeat(deps.db,id,owner,new Date());
    const mode=deps.resourceMode();
+   const correlationId=randomUUID();
    const task=deps.db.prepare("SELECT id,title,description,status FROM tasks WHERE agent_id=? AND status IN ('pending','active') ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END,created_at LIMIT 1").get(id) as {id:string;title:string;description:string;status:string}|undefined;
-   if(task&&task.status==="pending")deps.db.prepare("UPDATE tasks SET status='active',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);
+   if(task&&task.status==="pending"){
+    deps.db.prepare("UPDATE tasks SET status='active',updated_at=? WHERE id=? AND status='pending'").run(new Date().toISOString(),task.id);
+    deps.log(id,"info","Task activated",{eventType:"task_transition",source:"agent-runtime",taskId:task.id,correlationId,details:{from:"pending",to:"active"}});
+   }
    const taskPrompt=task?"\nCurrent task: "+task.title+"\nTask detail: "+task.description+"\nTask ID: "+task.id+"\nPrioritize this task; task status is updated using the CLI.\n":"";
    const prompt="Identity: "+current.name+" ("+id+")\nMission: "+current.goal+"\nResource mode: "+mode+taskPrompt+"\n"+deps.toolHelp+"\nUse exactly one tool per response, format TOOL name JSON on one line, or say DONE and explain progress.\n";
    let answer="";
-   try{answer=await deps.chat([{role:"system",content:deps.constitutionText+"\n"+prompt},{role:"user",content:history.slice(-8).join("\n")||"Begin your mission."}],id);}
-   catch(e){if(deps.emergencyStopActive())break;deps.log(id,"error",String(e));await delay(15000);continue;}
+   try{const llmStarted=Date.now();deps.log(id,"info","LLM request started",{eventType:"llm_call",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{phase:"started"}});answer=await deps.chat([{role:"system",content:deps.constitutionText+"\n"+prompt},{role:"user",content:history.slice(-8).join("\n")||"Begin your mission."}],id,{taskId:task?.id??null,correlationId});deps.log(id,"info","LLM response received",{eventType:"llm_call",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{phase:"completed",durationMs:Date.now()-llmStarted}});}
+   catch(e){if(deps.emergencyStopActive())break;deps.log(id,"error",String(e),{eventType:"llm_call",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{phase:"failed"}});await delay(15000);continue;}
    const afterResponse=deps.getAgent(id);
    if(!afterResponse||afterResponse.status!=="running"||afterResponse.runtime_owner!==owner||deps.emergencyStopActive())break;
    deps.log(id,"agent",answer);
-   if(/^DONE\b/i.test(answer)){if(task)deps.db.prepare("UPDATE tasks SET status='completed',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);history.push(answer);await delay(60000);continue;}
+   if(/^DONE\b/i.test(answer)){if(task){deps.db.prepare("UPDATE tasks SET status='completed',updated_at=? WHERE id=? AND status='active'").run(new Date().toISOString(),task.id);deps.log(id,"info","Task completed",{eventType:"task_transition",source:"agent-runtime",taskId:task.id,correlationId,details:{from:"active",to:"completed"}});}history.push(answer);await delay(60000);continue;}
    const match=answer.match(/^TOOL\s+(shell|read_file|write_file)\s+(\{.*\})/s);
-   if(match){try{const result=await deps.runTool(id,match[1],JSON.parse(match[2]));deps.log(id,"tool",result.slice(0,4000));history.push(answer+"\nRESULT: "+result.slice(0,4000));}catch(e){deps.log(id,"error","Tool parse/execution: "+String(e));}}
+   if(match){try{const toolStarted=Date.now();deps.log(id,"info","Tool execution started",{eventType:"tool_execution",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{tool:match[1],phase:"started"}});const result=await deps.runTool(id,match[1],JSON.parse(match[2]),{taskId:task?.id??null,correlationId});deps.log(id,"tool",result.slice(0,4000),{eventType:"tool_execution",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{tool:match[1],phase:"completed",durationMs:Date.now()-toolStarted}});history.push(answer+"\nRESULT: "+result.slice(0,4000));}catch(e){deps.log(id,"error","Tool parse/execution: "+String(e),{eventType:"tool_execution",source:"agent-runtime",taskId:task?.id??null,correlationId,details:{tool:match[1],phase:"failed"}});}}
    else history.push(answer);
    await delay(mode==="CRITICAL"?30000:5000);
   }
