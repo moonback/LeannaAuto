@@ -476,3 +476,21 @@ Branche : feat/mission-control-ui.
 - [ ] Validation Windows après correctif : build, tests et vérification de la liste des agents existants.
 
 Cause : une exception JavaScript sur le premier élément DOM inexistant interrompait le reste de refresh(), avant le remplissage de agentTable. La requête SQL de l'API lisait bien les agents.
+
+
+### Livraison en cours — explorateur Workspace sécurisé (lecture seule)
+
+Branche : `feat/workspace-explorer`, créée depuis `main` après intégration du centre de contrôle.
+
+- [x] Remplacer la liste plate limitée à deux niveaux par une navigation dossier par dossier avec fil d'Ariane.
+- [x] Afficher les fichiers, dossiers, liens symboliques, tailles et dates de modification ; inclure les fichiers cachés sauf le verrou interne du shell.
+- [x] Ajouter une recherche locale dans le dossier affiché et un aperçu du contenu des fichiers.
+- [x] Borner les aperçus à 256 Kio et les sorties Docker ; ne proposer aucune écriture, suppression, exécution ou commande terminal.
+- [x] Distinguer dossier vide, sandbox absente/arrêtée, Docker indisponible, chemin absent et fichier trop volumineux au lieu de retourner silencieusement une liste vide.
+- [x] Valider les chemins relatifs côté serveur ; rejeter les chemins absolus, traversées `..`, antislashs et chemins excessifs.
+- [x] Résoudre les chemins dans le conteneur et vérifier leur confinement dans `/workspace` avant de lister ou lire ; ne pas suivre un lien symbolique sortant.
+- [x] Ajouter les routes de lecture `GET /api/agents/:id/workspace` et `GET /api/agents/:id/workspace/file`, protégées par les rôles existants.
+- [x] Ajouter tests unitaires de validation des chemins et tests HTTP de refus de traversal avant accès Docker.
+- [ ] Validation utilisateur Windows : build, suite complète, vérification visuelle du Workspace et navigation sur un agent avec fichiers réels.
+
+Limites : la recherche est locale au dossier courant (pas une recherche plein texte récursive). Les aperçus sont limités à 256 Kio et destinés aux fichiers texte ; le contenu binaire n'est pas encore détecté explicitement. Le service requiert une sandbox Docker démarrée et ne la démarre pas automatiquement. Les liens symboliques sont affichés mais non ouvrables. Le composant ne permet volontairement aucune modification des fichiers.
