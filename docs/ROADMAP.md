@@ -527,6 +527,15 @@ Commits :
 - `e8ad2ee` — ajout des tests de réconciliation Docker.
 - `4716989`, `3dd6315`, `6390b73` — typage des doubles de test et correction du séparateur de sortie shell.
 
+### Continuité des tâches après reprise de bail — tests ajoutés
+
+- [x] Étendre les tests du bail runtime pour vérifier qu'une reprise après heartbeat périmé ne réinitialise pas une tâche déjà `active`.
+- [x] Vérifier que l'ancien propriétaire ne peut ni rafraîchir ni libérer le bail après la reprise par un nouveau propriétaire.
+- [ ] Exécuter la suite étendue sous Windows.
+- [ ] Valider avec une interruption réelle du processus que le superviseur reprend l'agent et que sa tâche active continue sans être dupliquée.
+
+Commit : `fa7cdc5`.
+
 ### Prochaine validation utilisateur
 
 Build et tests automatisés validés sous Windows le 18 novembre 2026. La prochaine étape porte sur les scénarios manuels API et la reprise réelle du runtime après crash.
