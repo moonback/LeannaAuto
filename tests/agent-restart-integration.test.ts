@@ -14,7 +14,7 @@ describe("supervisor recovery with the real agent loop",()=>{
    CREATE TABLE logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,level TEXT,message TEXT);
    INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
    INSERT INTO agents(id,name,goal,status,runtime_owner,heartbeat_at,restart_count) VALUES('agent-restart','Test agent','Complete its task','running','dead-owner','2026-11-18T00:00:00.000Z',0);
-   INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Do not reset this task','active','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
+   INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Activate and preserve this task','pending','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
   `);
  });
  afterEach(()=>{if(db?.open)db.close();});
