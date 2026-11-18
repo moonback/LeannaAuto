@@ -27,19 +27,20 @@ describe.skipIf(!enabled)("real agent loop with a real Docker sandbox (opt-in)",
   const agentId="e2e-"+randomUUID();
   container="leanna-"+agentId.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40);
   volume=container+"-workspace";
-  db=new Database(":memory:");
-  db.exec(`
+  const testDb=new Database(":memory:");
+  db=testDb;
+  testDb.exec(`
    CREATE TABLE agents(id TEXT PRIMARY KEY,name TEXT,goal TEXT,parent_id TEXT,status TEXT,created_at TEXT,identity TEXT,constitution_hash TEXT,version TEXT,runtime_owner TEXT,heartbeat_at TEXT,last_error TEXT,restart_count INTEGER NOT NULL DEFAULT 0);
    CREATE TABLE system_state(key TEXT PRIMARY KEY,value TEXT,updated_at TEXT);
    CREATE TABLE tasks(id TEXT PRIMARY KEY,agent_id TEXT,title TEXT,description TEXT,status TEXT,created_at TEXT,updated_at TEXT);
    CREATE TABLE logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,level TEXT,message TEXT);
    INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
   `);
-  db.prepare("INSERT INTO agents(id,name,goal,status) VALUES(?,?,?,'running')").run(agentId,"Docker integration agent","Write a marker in its workspace");
+  testDb.prepare("INSERT INTO agents(id,name,goal,status) VALUES(?,?,?,'running')").run(agentId,"Docker integration agent","Write a marker in its workspace");
   const marker="agent-docker-"+randomUUID();
   const startAgent=createAgentStarter({
-   db,
-   getAgent:(id:string)=>db!.prepare("SELECT * FROM agents WHERE id=?").get(id) as any,
+   db:testDb,
+   getAgent:(id:string)=>testDb.prepare("SELECT * FROM agents WHERE id=?").get(id) as any,
    log:(id,level,message)=>db!.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(id,new Date().toISOString(),level,message),
    emergencyStopActive:()=>false,
    chat:async()=>'TOOL shell '+JSON.stringify({command:"printf '%s' '"+marker+"' > /workspace/agent-e2e.txt"}),
@@ -61,10 +62,10 @@ describe.skipIf(!enabled)("real agent loop with a real Docker sandbox (opt-in)",
 
   await startAgent(agentId);
   await expect(docker(["exec",container,"cat","/workspace/agent-e2e.txt"])).resolves.toBe(marker);
-  expect(db.prepare("SELECT status,runtime_owner,heartbeat_at FROM agents WHERE id=?").get(agentId)).toMatchObject({
+  expect(testDb.prepare("SELECT status,runtime_owner,heartbeat_at FROM agents WHERE id=?").get(agentId)).toMatchObject({
    status:"stopped",runtime_owner:null,heartbeat_at:null
   });
-  expect(db.prepare("SELECT level,message FROM logs WHERE agent_id=? AND level='tool'").all(agentId)).toHaveLength(1);
+  expect(testDb.prepare("SELECT level,message FROM logs WHERE agent_id=? AND level='tool'").all(agentId)).toHaveLength(1);
   const config=(await docker(["inspect","-f","{{.HostConfig.NetworkMode}}|{{.HostConfig.ReadonlyRootfs}}|{{.HostConfig.Memory}}|{{.HostConfig.NanoCpus}}|{{.HostConfig.PidsLimit}}",container])).split("|");
   expect(config).toEqual(["none","true","1073741824","1000000000","64"]);
  },180000);
