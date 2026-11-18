@@ -497,6 +497,16 @@ Résultat du premier passage des tests HTTP sous Windows :
 - [x] Validation utilisateur après le correctif `9dfe895` : `npm run build` réussi ; `npm test` réussi, 5 fichiers et 31 tests sur 31.
 - [x] Le test Host personnalisé via `node:http` et le test Origin malveillante passent tous les deux.
 
+### Réconciliation des sandboxes Docker — tests automatisés validés
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `git pull` : branche à jour.
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 6 fichiers réussis, 36 tests sur 36.
+- [x] Les 5 tests de réconciliation Docker passent, couvrant conteneur actif, arrêté, absent, daemon indisponible et échec de démarrage.
+
+La validation porte sur les tests automatisés avec exécuteur Docker simulé. Les scénarios manuels avec un vrai daemon Docker et une interruption brutale de processus restent à effectuer.
+
 ### Réconciliation des sandboxes Docker — en cours
 
 Objectif : rendre la reprise d'un agent déterministe et éviter qu'une panne du daemon Docker soit confondue avec la disparition d'un conteneur.
@@ -508,7 +518,7 @@ Objectif : rendre la reprise d'un agent déterministe et éviter qu'une panne du
 - [x] Réutiliser le volume persistant `leanna-<agent>-workspace` lors de la recréation.
 - [x] Propager les erreurs de daemon indisponible et les échecs de démarrage au lieu de les masquer.
 - [x] Ajouter 5 tests unitaires ciblant ces états Docker.
-- [ ] Faire valider build et suite complète sur Windows.
+- [x] Build et suite complète validés sous Windows : 6 fichiers, 36 tests réussis (retour utilisateur).
 - [ ] Effectuer un test manuel avec Docker : arrêter un conteneur, relancer l'agent et vérifier qu'il est redémarré ; supprimer ensuite le conteneur (sans supprimer son volume) et vérifier sa recréation.
 - [ ] Tester une vraie interruption brutale du processus superviseur et confirmer qu'un seul runtime reprend le bail.
 
