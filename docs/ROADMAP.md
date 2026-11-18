@@ -169,7 +169,8 @@ Branche : `feat/mission-control-ui`.
 - [x] Ajouter l'heure de dernière actualisation et des liens vers Missions, Logs et fiches agents.
 - [x] Ajouter `taskCounts` dans `GET /api/dashboard` : compteurs exacts calculés en SQL, indépendants de la limite de 200 tâches renvoyées pour l'affichage.
 - [x] Ordonner les tâches renvoyées en donnant priorité aux tâches actives et en attente, puis aux tâches historiques récentes.
-- [x] Ajouter des tests HTTP couvrant la structure de la salle de contrôle et les compteurs de tâches.
+- [x] Ajouter des tests HTTP couvrant la structure de la salle de contrôle, les compteurs vides et le comptage exact après création d'une tâche.
+- [x] Signaler les tâches en échec comme intervention requise et distinguer visuellement les niveaux d'alerte.
 - [ ] Validation utilisateur Windows de ce nouveau lot : `npm run build`, `npm test` et vérification visuelle dans le navigateur.
 
 Limites connues : l'état Docker, SQLite, du fournisseur LLM et du superviseur n'est pas encore sondé indépendamment ; il n'est donc pas présenté comme sain. Le flux utilise les logs existants, pas encore un journal d'événements typé. Les alertes sont calculées à partir des champs actuellement persistés ; les approbations et métriques de ressources ne sont pas encore disponibles.
