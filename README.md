@@ -63,7 +63,7 @@ The watchdog starts loops for database agents marked `running`, records heartbea
 
 
 ## Dashboard authentication
-The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login sends this token as a bearer credential; protected API routes reject requests without it. The browser keeps the token in session storage for the current tab session. Do not expose the dashboard port publicly or reuse this token elsewhere.
+The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login accepts `LEANNAAUTO_UI_TOKEN` (admin) or the optional `LEANNAAUTO_UI_OPERATOR_TOKEN` (restricted operator). Admins can use every dashboard action. Operators can view agents, tasks, logs, quota and audit history, start/stop agents, and create tasks; agent creation and other privileged actions are admin-only. The browser keeps the token in session storage for the current tab session. Use two different long random secrets. Do not expose the dashboard port publicly or reuse these tokens elsewhere.
 
 Generate a token with Node.js:
 ```bash
