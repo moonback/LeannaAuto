@@ -464,3 +464,15 @@ Branche : `feat/mission-control-ui`.
 - [ ] Validation Windows après ce correctif : build, tests et vérification console après chargement avant connexion puis après connexion.
 
 Les avertissements `contentscript.js` / `ObjectMultiplex` sont externes au code servi par LeannaAuto et doivent être comparés avec les extensions du navigateur désactivées si nécessaire. Le nombre de tests attendu passe de 50 à 50 (assertions supplémentaires dans un test existant).
+
+
+### Correctif — liste des agents vide dans la console
+Branche : feat/mission-control-ui.
+
+- [x] Identifier l'arrêt prématuré de refresh() causé par des références DOM obsolètes (nTasks, nTokens, recent) retirées lors de la refonte du dashboard.
+- [x] Supprimer les mises à jour de ces éléments inexistants et l'ancien rendu qui écrasait la synthèse des agents actifs.
+- [x] Conserver le rendu de la liste « Agents existants » à partir de la réponse GET /api/dashboard.
+- [x] Ajouter des assertions au test de la coquille UI pour empêcher le retour de ces références obsolètes.
+- [ ] Validation Windows après correctif : build, tests et vérification de la liste des agents existants.
+
+Cause : une exception JavaScript sur le premier élément DOM inexistant interrompait le reste de refresh(), avant le remplissage de agentTable. La requête SQL de l'API lisait bien les agents.
