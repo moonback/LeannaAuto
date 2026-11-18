@@ -155,7 +155,7 @@ const server=http.createServer(async(req,res)=>{
   const filters:[string,string][]=[["agentId","agent_id"],["taskId","task_id"],["type","type"],["level","level"],["from","at"],["to","at"]];
   for(const [parameter,column] of filters){const value=params.get(parameter);if(value){if(value.length>128)return send(400,{error:"Filtre trop long"});clauses.push(column+(parameter==="from"?">=":parameter==="to"?"<=":"=")+"?");values.push(value);}}
   const before=params.get("before");
-  if(!/^\d+$/.test(before)||!Number.isSafeInteger(cursor)||cursor<1)return send(400,{error:"Curseur invalide"});
+  if(before!==null){const cursor=Number(before);if(!/^\d+$/.test(before)||!Number.isSafeInteger(cursor)||cursor<1)return send(400,{error:"Curseur invalide"});clauses.push("id<?");values.push(cursor);}
   const where=clauses.length?" WHERE "+clauses.join(" AND "):"";
   const rows=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events"+where+" ORDER BY id DESC LIMIT ?").all(...values,limitValue) as any[];
   const events=rows.map(row=>({...row,details:JSON.parse(row.detailsJson)}));
