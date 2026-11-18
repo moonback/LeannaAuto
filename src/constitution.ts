@@ -2,7 +2,10 @@ const denyPatterns=[
  /\b(rm\s+-rf\s+[/~]|mkfs|shutdown|reboot)\b/i,
  /\b(curl|wget)\b.*\b(sh|bash)\b/i,
  /\b(sudo|su)\b/i,
- /\b(docker\s+(run|exec).*--privileged)\b/i
+ /\b(docker\s+(run|exec).*--privileged)\b/i,
+ /\b(chmod\s+[0-7]*777|chown\s+-R)\b/i,
+ /\b(iptables|ufw)\s+(disable|reset)/i,
+ /\b(passwd|useradd|usermod)\b/i
 ];
 export function checkAction(name:string,args:Record<string,unknown>){
  if(name==="shell"){
