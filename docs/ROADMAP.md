@@ -184,6 +184,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Alimenter automatiquement le journal structuré depuis les logs runtime et les entrées d'audit existantes.
 - [x] Appliquer une rédaction de motifs courants de secrets dans le résumé et les détails des événements ; cette protection complémentaire ne remplace pas la rédaction à la source.
 - [x] Exposer `GET /api/events` avec authentification, filtres agent/tâche/type/niveau/période et pagination par curseur.
+- [x] Connecter la page Journal système à l'API d'événements structurés, avec filtres agent et type.
 - [x] Ajouter un test HTTP de lecture opérateur, filtrage par type et navigation entre pages.
 - [ ] Validation utilisateur Windows de ce lot : build, suite complète et vérification de l'API.
 
