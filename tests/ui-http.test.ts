@@ -66,6 +66,8 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("Dernière actualisation");
   expect(html).toContain("Journal d’événements");
   expect(html).toContain("eventTypeFilter");
+  expect(html).toContain("Transitions de tâches");
+  expect(html).toContain("Décisions des outils");
  });
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
