@@ -626,7 +626,11 @@ Branche dédiée : `test/agent-start-concurrency`, créée depuis `test/agent-re
 - [x] Tenter un second démarrage du même agent pendant que le premier détient encore le bail.
 - [x] Vérifier que le second démarrage est refusé et qu'aucune deuxième boucle/modèle n'est lancée.
 - [x] Vérifier que le premier runtime libère le bail après son arrêt contrôlé.
-- [ ] Exécuter `npm run build` et `npm test` sous Windows.
+- [ ] Exécuter `npm run build` et `npm test` sous Windows après correction.
 - [ ] Tester la réconciliation et le redémarrage avec un daemon Docker réel.
 
-Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel.
+Premier retour Windows : build réussi ; 40 tests réussis sur 41. Le nouveau second test a échoué car la connexion SQLite partagée au niveau du fichier était fermée par le `afterEach` du premier test, puis réutilisée par le second (`TypeError: The database connection is not open`). Ce défaut concernait l'isolation du test, pas une preuve d'échec du verrouillage concurrent.
+
+Correction commit `5bc8f95` : créer une base SQLite mémoire et son schéma avant chaque test, puis fermer uniquement cette instance après le test. Le scénario concurrent libère également son appel modèle bloquant dans un bloc `finally`, afin d'éviter de laisser la boucle d'agent suspendue si une assertion échoue.
+
+Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel. Build et tests après cette correction : en attente du retour Windows.
