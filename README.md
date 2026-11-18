@@ -26,7 +26,7 @@ The Docker executor creates isolated containers with CPU, memory and PID limits 
 - `start ID`
 - `stop ID`
 - `status ID`
-- `resources ID`
+- `resources ID`\n- `usage [ID]` (token totals and global quota)
 - `logs ID --follow`
 - `identity ID`
 - `spawn ID --goal GOAL` (creates a child manifest; child must be separately started)
@@ -55,7 +55,7 @@ Task state is stored in SQLite (pending, active, completed, failed). This CLI tr
 ## OpenRouter
 Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default endpoint is `https://openrouter.ai/api/v1`. Optional attribution headers are configured with `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME`.
 
-## Supervisor
+## Inference budget\n\n`INFERENCE_QUOTA` is a global token ceiling. OpenRouter-reported `usage.total_tokens` is persisted to SQLite per agent. Calls are blocked when the recorded total reaches the ceiling. Use `npm run dev -- usage` for global totals or append an agent ID for per-agent usage. Models/providers that omit usage fields may be undercounted.\n\n## Supervisor
 ```bash
 npm run dev -- supervise --interval 10 --stale 90
 ```
