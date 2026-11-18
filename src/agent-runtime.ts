@@ -2,7 +2,7 @@ import type Database from "better-sqlite3";
 
 export function claimAgentRuntime(db:Database,agentId:string,owner:string,now:Date,staleAfterMs:number):boolean {
  const staleBefore=new Date(now.getTime()-staleAfterMs).toISOString();
- const result=db.prepare("UPDATE agents SET status='running',runtime_owner=?,heartbeat_at=?,last_error=NULL WHERE id=? AND (status!='running' OR heartbeat_at IS NULL OR datetime(heartbeat_at) IS NULL OR datetime(heartbeat_at)<datetime(?))")
+ const result=db.prepare("UPDATE agents SET status='running',runtime_owner=?,heartbeat_at=?,last_error=NULL WHERE id=? AND (status!='running' OR heartbeat_at IS NULL OR datetime(heartbeat_at) IS NULL OR datetime(heartbeat_at)<datetime(?)) AND EXISTS(SELECT 1 FROM system_state WHERE key='emergency_stop' AND value='0')")
   .run(owner,now.toISOString(),agentId,staleBefore);
  return result.changes===1;
 }
