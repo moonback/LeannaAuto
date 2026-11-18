@@ -708,12 +708,3 @@ Correction en cours sur `fix/docker-exec-orphan-lock` :
 - [ ] Tester fin normale, expiration du timeout client, commande bloquée et arrêt/redémarrage du conteneur.
 
 Le verrou est volontairement par agent : il sérialise les appels shell sur un même workspace, sans bloquer les commandes d'autres agents. `flock` libère automatiquement le verrou à la fin du processus qui l'a acquis ; le fichier de verrou peut rester dans le volume sans conserver un verrou actif. La correction ne prétend pas annuler une commande orpheline : elle empêche la relance de commencer avant que celle-ci ait terminé.
-
-18 novembre 2026 :
-- `npm install --package-lock-only` n'a produit aucun changement : le dépôt était propre et aucun commit de lockfile n'était nécessaire.
-- `npm ci` a ensuite réussi et installé 90 packages ; l'installation propre est désormais confirmée avec Vitest 4.1.12.
-- `npm run build` a réussi.
-- `npm test` : 12 fichiers réussis, 1 échec ; 44 tests réussis et le test de caractérisation Docker échoue avant le crash. Les tests Docker déjà établis (agent end-to-end, reprise après crash et réconciliation/persistance) ont tous passé.
-- Le défaut vient d'une course dans le test : attendre seulement l'existence du fichier ne garantit pas que la commande ait déjà écrit `started`. La redirection crée le fichier avant l'écriture du marqueur. Le test a aussi été corrigé pour découper les lignes sur les vrais retours à la ligne.
-- [x] Corriger le test pour attendre explicitement le contenu `started` avant de tuer le processus Node et inclure le dernier contenu lu dans le diagnostic de timeout (commit `26d05bb`).
-- [ ] Rejouer build, suite complète et test opt-in après cette correction ; le comportement de la commande orpheline reste indéterminé tant que cette exécution n'a pas fourni le relevé `started/completed`.
