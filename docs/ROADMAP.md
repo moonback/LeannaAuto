@@ -518,3 +518,24 @@ Le rapport utilisateur du 18 novembre 2026 montre que les tests Docker opt-in pa
 - [ ] Vérification fonctionnelle visuelle du Workspace dans le navigateur avec un agent contenant des fichiers.
 
 La validation confirme le build, la suite automatisée et le démarrage du serveur. La navigation réelle dans l'interface et l'aperçu d'un fichier restent à vérifier manuellement avant fusion.
+
+
+### Livraison en cours — gestion des agents et création en modale
+
+Branche : `feat/agents-management-ui`, créée depuis `main` après fusion de la PR #10 (`6389b1d332944beb96153dcb04f08e442d87c843`).
+
+- [x] Remplacer le formulaire permanent « Créer un agent » par une fenêtre modale accessible (dialogue, fermeture explicite, clic sur le fond et touche Échap).
+- [x] Garder l'ouverture de la création réservée au rôle administrateur ; la création reste protégée côté API.
+- [x] Clarifier les champs du formulaire, ajouter des aides contextuelles et des limites de saisie côté interface.
+- [x] Refaire « Agents existants » sous forme de cartes responsive avec nom, identifiant, mission, statut traduit, date de création, heartbeat, redémarrages, parent et dernière erreur.
+- [x] Ajouter des indicateurs total / en mission / arrêtés / en erreur.
+- [x] Ajouter recherche locale et filtre par statut sans modifier les données serveur.
+- [x] Conserver les actions Démarrer, Arrêter et Voir la fiche, avec échappement HTML des données dynamiques.
+- [x] Étendre le test HTTP de la coquille UI pour vérifier la présence de la modale, des filtres et des informations agents.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm ci` réussi (90 packages) ; audit npm sans vulnérabilité ; `npm run build` réussi.
+- [x] Validation utilisateur Windows : `npm test` réussi, 14 fichiers et 54 tests sur 54.
+- [x] Les tests Docker opt-in réels sont actifs et réussis : intégration agent, récupération après crash, sérialisation des commandes orphelines (ordre `started → completed → started → completed`) et réconciliation du conteneur.
+- [x] `npm run ui` démarre sur `http://127.0.0.1:3000`.
+- [ ] Contrôle visuel et fonctionnel dans le navigateur : ouverture/fermeture de la modale, validation formulaire, recherche, filtres et cartes agent.
+
+État de validation : build, suite automatisée et démarrage du serveur confirmés par l'utilisateur sous Windows. Le contrôle visuel des interactions reste à effectuer. La fusion de la PR #10 a été réalisée avant ce lot ; ce lot reste isolé de `main` dans la PR #11.
