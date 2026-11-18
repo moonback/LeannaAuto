@@ -344,18 +344,18 @@ Modifications apportées :
 - [x] Échapper les valeurs dynamiques rendues dans les tableaux HTML afin de limiter l'injection de balisage via les données.
 - [x] Afficher le rôle authentifié dans l'en-tête du dashboard.
 - [ ] Vérifier l'ensemble des pages et actions dans un navigateur Windows.
-- [ ] Exécuter build, tests et CI sur cette branche.
+- [x] Exécuter build et tests sur Windows : `npm run build` réussi ; `npm test` : 5 tests réussis sur 5 (validation utilisateur).\n- [ ] Vérifier le statut CI de cette branche.
 - [ ] Tester les permissions admin/opérateur, l'arrêt d'urgence et le réarmement.
 
 Commits du lot :
 - `7ea7371` — rendu de la liste des tâches et échappement des tableaux.
 - `2a70270` — simplification/correction du helper d'échappement et affichage du rôle.
 
-Validation : aucune exécution de build ou de tests n'a été effectuée dans cet environnement. Le lot reste donc **en cours**, non validé. La revue des autres rendus HTML dynamiques et des routes API reste à faire.
+Validation rapportée par l'utilisateur sous Windows : `npm install` terminé ; `npm run build` réussi ; `npm test` réussi (1 fichier, 5 tests). `npm run ui` démarre le serveur sur `http://127.0.0.1:3000`. Les pages, les permissions et les scénarios d'arrêt d'urgence restent à vérifier manuellement ; le lot n'est donc pas entièrement validé.\n\nSécurité dépendances : `npm install` a signalé 7 vulnérabilités (1 modérée, 4 élevées, 2 critiques). Aucun `npm audit fix` n'a été exécuté. Il faut examiner le rapport détaillé `npm audit` et les dépendances transitives avant de choisir des mises à jour, sans lancer `--force` à l'aveugle. 
 
 ## 7. Prochain lot concret
 
-**Lot recommandé : finaliser et valider la refonte du dashboard.**
+**Lot recommandé : terminer la validation fonctionnelle du dashboard et traiter les vulnérabilités npm, puis ouvrir le lot de tests API et de durcissement du superviseur.**
 
 1. Récupérer `feat/pro-dashboard-ui`.
 2. Exécuter `npm run build` et `npm test`.
