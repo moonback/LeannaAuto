@@ -101,6 +101,20 @@ describe("dashboard HTTP security integration",()=>{
   expect(filteredPage.events.length).toBeGreaterThan(0);
   expect(filteredPage.events.every(event=>event.type==="audit")).toBe(true);
  });
+ it("redacts common secret patterns from persisted event summaries",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"redaction-check",goal:"token=integration-secret-value"})});
+  expect(created.status).toBe(201);
+  const agent=await created.json() as {id:string};
+  const response=await request("/api/events?agentId="+encodeURIComponent(agent.id)+"&type=log&limit=10");
+  expect(response.status).toBe(200);
+  const page=await response.json() as {events:Array<{summary:string}>};
+  expect(page.events.some(event=>event.summary.includes("[REDACTED]"))).toBe(true);
+  expect(JSON.stringify(page.events)).not.toContain("integration-secret-value");
+ });
+ it("rejects invalid event pagination parameters",async()=>{
+  expect((await request("/api/events?limit=0")).status).toBe(400);
+  expect((await request("/api/events?before=invalid")).status).toBe(400);
+ });
  it("rejects non-JSON write requests",async()=>{
   const response=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"text/plain"},body:"not-json"});
   expect(response.status).toBe(415);
