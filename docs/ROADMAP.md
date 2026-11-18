@@ -506,3 +506,15 @@ Branche : `feat/workspace-explorer`.
 - [ ] Vérifier la navigation Workspace et l'aperçu d'un fichier réel.
 
 Le rapport utilisateur du 18 novembre 2026 montre que les tests Docker opt-in passaient, mais que le build échouait sur `src/ui.ts:202`. Les tests HTTP ne pouvaient pas démarrer leur serveur Dashboard. Aucune validation après ce correctif n'est encore disponible.
+
+
+### Validation utilisateur — correctif Workspace, 18 novembre 2026
+
+- [x] `npm run build` réussi sous Windows après correction des expressions régulières.
+- [x] `npm test` réussi : 14 fichiers, 54 tests réussis sur 54.
+- [x] Tests HTTP : 11/11, dont les routes et contrôles de sécurité Workspace.
+- [x] Tests Docker opt-in réels actifs et réussis : intégration agent, récupération après crash, sérialisation des commandes orphelines et réconciliation du conteneur.
+- [x] `npm run ui` démarre sur `http://127.0.0.1:3000`.
+- [ ] Vérification fonctionnelle visuelle du Workspace dans le navigateur avec un agent contenant des fichiers.
+
+La validation confirme le build, la suite automatisée et le démarrage du serveur. La navigation réelle dans l'interface et l'aperçu d'un fichier restent à vérifier manuellement avant fusion.
