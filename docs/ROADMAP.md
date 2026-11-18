@@ -367,3 +367,24 @@ Validation rapportée par l'utilisateur sous Windows : `npm install` terminé ; 
 ---
 
 **Règle de pilotage :** LeannaAuto doit devenir plus capable seulement au rythme où il devient plus vérifiable, plus isolé et plus facile à arrêter.
+
+## 6.2. Diagnostic de l'audit npm — 18 novembre 2026
+
+Branche de travail : `fix/npm-security-audit`, créée depuis `feat/dashboard-finish`.
+
+Rapport utilisateur :
+- [ ] Audit à relancer après correction ; résultat actuel : 7 vulnérabilités (1 modérée, 4 élevées, 2 critiques).
+- [x] Les paquets concernés sont dans la chaîne de développement/test, pas dans les dépendances runtime directes.
+- [x] Versions identifiées dans le lockfile : `vitest@3.2.7`, `@vitest/mocker@3.2.7`, `vite@7.3.8`, `picomatch@4.0.7`, `tinypool@1.1.1`.
+
+Diagnostic :
+- `@vitest/mocker` est vulnérable jusqu'à `4.1.11` selon le rapport ; une version corrigée candidate est `4.1.12`. Le passage de Vitest 3 à 4 est une mise à jour majeure.
+- `tinypool` doit être porté au minimum à `2.1.2` pour couvrir les deux avis critiques signalés dans la chaîne de dépendances.
+- L'avis ReDoS actuel sur `picomatch` affecte `4.0.7` et ne fournit pas de version corrigée. Ne pas inventer d'override ni prétendre que l'audit peut être entièrement nettoyé tant qu'un correctif éditeur n'est pas publié.
+- La documentation Vitest 4 indique Node.js >=20 et Vite >=6 ; la version de Vite verrouillée est 7.3.8. Confirmer la version Node locale avec `node --version` avant la mise à jour.
+
+Décision :
+- Aucun `npm audit fix --force` exécuté.
+- Aucun changement de dépendance effectué dans ce commit : le lockfile doit être régénéré par npm puis contrôlé avec `npm ci`, `npm run build`, `npm test` et `npm audit`.
+- Prochaine action sur cette branche : tester une mise à jour contrôlée de Vitest 4.1.12 et l'override Tinypool 2.1.2 ; documenter explicitement le risque Picomatch restant si aucun correctif n'est disponible.
+
