@@ -388,3 +388,11 @@ Décision :
 - Aucun changement de dépendance effectué dans ce commit : le lockfile doit être régénéré par npm puis contrôlé avec `npm ci`, `npm run build`, `npm test` et `npm audit`.
 - Prochaine action sur cette branche : tester une mise à jour contrôlée de Vitest 4.1.12 et l'override Tinypool 2.1.2 ; documenter explicitement le risque Picomatch restant si aucun correctif n'est disponible.
 
+Mise à jour après confirmation de l'environnement utilisateur :
+- [x] Node.js utilisateur : `v24.16.0`, compatible avec Vitest 4.1.12.
+- [x] Métadonnées npm vérifiées : Vitest 4.1.12 accepte Vite 6/7/8 et Node >=20, >=22 ou >=24 selon les branches de version.
+- [x] `package.json` mis à jour vers `vitest@^4.1.12` (commit `80acc70`). Cette version embarque `@vitest/mocker@4.1.12`, au-delà de la plage vulnérable, et n'utilise plus Tinypool dans sa chaîne de dépendances.
+- [ ] Régénérer `package-lock.json` avec `npm install`, puis valider `npm ci`, build, tests et audit sur Windows.
+- [ ] Picomatch reste signalé : l'avis GHSA-fc5q-39xc-vjpf couvre jusqu'à 4.0.7 sans version corrigée publiée. Vite 7 utilise encore Picomatch ; ne pas ajouter un override arbitraire. Le risque est limité à l'outillage de développement dans la configuration actuelle, mais doit rester suivi.
+- [ ] Ne pas annoncer l'audit nettoyé tant que `npm audit` n'a pas été relancé après régénération du lockfile.
+
