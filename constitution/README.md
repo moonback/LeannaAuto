@@ -1,0 +1,1 @@
+Constitution source is treated as protected runtime policy. The current MVP embeds policy text and a basic action gate; production deployment must mount this directory read-only, verify its hash, and separate policy enforcement from the agent process.
