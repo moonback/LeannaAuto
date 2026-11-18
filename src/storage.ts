@@ -22,6 +22,7 @@ CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON events BEGIN SELE
 CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;
 CREATE INDEX IF NOT EXISTS audit_at ON audit(at);
 CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY,value TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ui_credentials(role TEXT PRIMARY KEY CHECK(role IN ('admin','operator')),token_hash TEXT NOT NULL DEFAULT '',revoked INTEGER NOT NULL DEFAULT 0,rotated_at TEXT NOT NULL);
 INSERT OR IGNORE INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
 `);
 function migrateColumn(table:string,column:string,definition:string){
