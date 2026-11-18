@@ -622,3 +622,15 @@ Branche : `feat/ui-page-screenshots`.
 - [x] Enregistrer une image PNG par page dans `artifacts/screenshots/ui` (dossier personnalisable en argument).
 - [x] Ajouter la commande npm `npm run capture:screenshots`.
 - [ ] Validation Windows : lancer l'UI, définir le jeton administrateur, exécuter la capture et vérifier les 13 PNG.
+
+
+### Vue d'ensemble — actions sur les interventions requises
+
+Branche : `fix/overview-interventions-actions`.
+
+- [x] Ajouter une action contextuelle pour ouvrir la gestion de l'agent concerné par une erreur ou un heartbeat en retard.
+- [x] Ajouter une action pour retrouver une tâche active sans agent actif.
+- [x] Ajouter une action pour filtrer les tâches en échec.
+- [x] Ajouter le réarmement de l'arrêt d'urgence directement depuis l'alerte, réservé à l'administrateur et confirmé.
+- [x] Actualiser les filtres et les listes à partir des données déjà chargées, sans exposer de nouvelle route API.
+- [ ] Validation Windows : build, tests et vérification des boutons depuis la Vue d'ensemble.
