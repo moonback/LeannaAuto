@@ -1,7 +1,7 @@
 import "dotenv/config";
 import http from "node:http";
 import {randomUUID} from "node:crypto";
-import {tokenRole,isAllowedUiRequest,isAllowedUiHost,isAllowedUiOrigin,readJsonBody} from "./ui-security.js";
+import {createUiToken,hashUiToken,storedTokenRole,isAllowedUiRequest,isAllowedUiHost,isAllowedUiOrigin,readJsonBody} from "./ui-security.js";
 import {db,log,audit,emergencyStopActive,setEmergencyStop} from "./storage.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox,deleteSandbox} from "./executor.js";
@@ -16,6 +16,21 @@ const port=Number(process.env.UI_PORT??3000);
 const adminToken=process.env.LEANNAAUTO_UI_TOKEN??"";
 const operatorToken=process.env.LEANNAAUTO_UI_OPERATOR_TOKEN??"";
 
+function resolveUiRole(value:string){
+ const admin=db.prepare("SELECT token_hash,revoked FROM ui_credentials WHERE role='admin'").get() as {token_hash:string;revoked:number}|undefined;
+ const operator=db.prepare("SELECT token_hash,revoked FROM ui_credentials WHERE role='operator'").get() as {token_hash:string;revoked:number}|undefined;
+ return storedTokenRole(value,admin,operator,adminToken,operatorToken);
+}
+function configuredInferenceQuota(){
+ const stored=db.prepare("SELECT value FROM system_state WHERE key='inference_quota'").get() as {value:string}|undefined;
+ const value=Number(stored?.value??process.env.INFERENCE_QUOTA??100000);
+ return Number.isSafeInteger(value)&&value>=0?value:100000;
+}
+function credentialStatus(role:"admin"|"operator",environmentToken:string){
+ const row=db.prepare("SELECT revoked,rotated_at FROM ui_credentials WHERE role=?").get(role) as {revoked:number;rotated_at:string}|undefined;
+ return {configured:row?row.revoked===0:Boolean(environmentToken),source:row?(row.revoked?"révoqué":"stockage local · empreinte dérivée"):environmentToken?"variable d’environnement":"non configuré",rotatedAt:row?.rotated_at??null};
+}
+
 const server=http.createServer(async(req,res)=>{
  const origin=String(req.headers.origin??"");
  const send=(code:number,obj:any)=>{const headers:Record<string,string>={"Content-Type":"application/json; charset=utf-8","X-Content-Type-Options":"nosniff","Cache-Control":"no-store","Vary":"Origin"};if(origin&&isAllowedUiOrigin(origin,port))headers["Access-Control-Allow-Origin"]=origin;res.writeHead(code,headers);res.end(JSON.stringify(obj));};
@@ -23,14 +38,41 @@ const server=http.createServer(async(req,res)=>{
  if(!isAllowedUiHost(host,port)){res.writeHead(400,{"Content-Type":"text/plain; charset=utf-8","X-Content-Type-Options":"nosniff"});res.end("Invalid host");return;}
  if(origin&&!isAllowedUiOrigin(origin,port)){res.writeHead(403,{"Content-Type":"text/plain; charset=utf-8","X-Content-Type-Options":"nosniff"});res.end("Invalid origin");return;}
  if(req.method==="OPTIONS"){if(origin&&!isAllowedUiOrigin(origin,port)){res.writeHead(403);res.end();return;}const headers:Record<string,string>={"Access-Control-Allow-Headers":"Authorization, Content-Type","Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Vary":"Origin"};if(origin)headers["Access-Control-Allow-Origin"]=origin;res.writeHead(204,headers);res.end();return;}
- if(req.url==="/"||req.url==="/index.html"){res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer","Cache-Control":"no-store"});res.end(html);return;}
+ if(req.url==="/"||req.url==="/index.html"){res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer","Content-Security-Policy":"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'","Cache-Control":"no-store"});res.end(html);return;}
  let pathname="/";try{pathname=new URL(req.url??"/","http://127.0.0.1").pathname;}catch{return send(400,{error:"URL invalide"});}
  if(!pathname.startsWith("/api/")){res.writeHead(404);res.end("Not found");return;}
  let body:any={};try{if(["POST","PATCH","DELETE"].includes(req.method??"")){const contentType=String(req.headers["content-type"]??"").split(";")[0].trim().toLowerCase();if(contentType!=="application/json")return send(415,{error:"Content-Type application/json requis"});body=await readJsonBody(req,1024*1024);}}catch(e){const message=e instanceof Error?e.message:"";return send(message==="BODY_TOO_LARGE"?413:400,{error:message==="BODY_TOO_LARGE"?"Corps de requête trop volumineux":"JSON invalide"});}
  try{
- if(pathname==="/api/auth"&&req.method==="POST"){const role=tokenRole(String(body.token??""),adminToken,operatorToken);if(!role){audit("auth.failure",null,"Tentative de connexion refusée");return send(401,{error:"Jeton invalide ou jeton UI non configuré"});}audit("auth.success",null,"Connexion "+role+" réussie");return send(200,{ok:true,role});}
- const authHeader=String(req.headers.authorization??"");const suppliedToken=authHeader.startsWith("Bearer ")?authHeader.slice(7):"";const role=tokenRole(suppliedToken,adminToken,operatorToken);if(!role)return send(401,{error:"Authentification requise"});
+ if(pathname==="/api/auth"&&req.method==="POST"){const role=resolveUiRole(String(body.token??""));if(!role){audit("auth.failure",null,"Tentative de connexion refusée");return send(401,{error:"Jeton invalide ou jeton UI non configuré"});}audit("auth.success",null,"Connexion "+role+" réussie");return send(200,{ok:true,role});}
+ const authHeader=String(req.headers.authorization??"");const suppliedToken=authHeader.startsWith("Bearer ")?authHeader.slice(7):"";const role=resolveUiRole(suppliedToken);if(!role)return send(401,{error:"Authentification requise"});
  if(!isAllowedUiRequest(role,req.method??"GET",pathname))return send(403,{error:"Action non autorisée pour ce rôle"});
+ if(pathname==="/api/security"&&req.method==="GET"){
+  const quota=configuredInferenceQuota(),total=(db.prepare("SELECT COALESCE(SUM(tokens),0) AS total FROM usage").get() as {total:number}).total;
+  return send(200,{credentials:{admin:credentialStatus("admin",adminToken),operator:credentialStatus("operator",operatorToken)},usage:{total,quota,remaining:Math.max(0,quota-total)},network:{host:"127.0.0.1",port,localOnly:true},session:{role}});
+ }
+ if(pathname==="/api/security/tokens"&&req.method==="POST"){
+  const target=String(body.role??"");if(target!=="admin"&&target!=="operator")return send(400,{error:"Rôle de jeton invalide"});
+  const action=String(body.action??"rotate");if(action!=="rotate"&&action!=="revoke")return send(400,{error:"Action de jeton invalide"});
+  if(action==="revoke"&&target!=="operator")return send(400,{error:"Le jeton administrateur ne peut pas être révoqué"});
+  const now=new Date().toISOString();
+  if(action==="revoke"){
+   db.prepare("INSERT INTO ui_credentials(role,token_hash,revoked,rotated_at) VALUES(?,?,1,?) ON CONFLICT(role) DO UPDATE SET token_hash='',revoked=1,rotated_at=excluded.rotated_at").run(target,"",now);
+   audit("security.token.revoke",target,"Jeton opérateur révoqué");
+   return send(200,{ok:true,role:target,revoked:true,rotatedAt:now});
+  }
+  const token=createUiToken(),digest=hashUiToken(token);
+  db.prepare("INSERT INTO ui_credentials(role,token_hash,revoked,rotated_at) VALUES(?,?,0,?) ON CONFLICT(role) DO UPDATE SET token_hash=excluded.token_hash,revoked=0,rotated_at=excluded.rotated_at").run(target,digest,now);
+  audit("security.token.rotate",target,"Jeton "+(target==="admin"?"administrateur":"opérateur")+" renouvelé");
+  return send(200,{ok:true,role:target,token,rotatedAt:now,shownOnce:true});
+ }
+ if(pathname==="/api/security/settings"&&req.method==="POST"){
+  const quota=Number(body.inferenceQuota);
+  if(!Number.isSafeInteger(quota)||quota<1||quota>1000000000)return send(400,{error:"Le quota doit être un entier compris entre 1 et 1 000 000 000"});
+  const now=new Date().toISOString();
+  db.prepare("INSERT INTO system_state(key,value,updated_at) VALUES('inference_quota',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").run(String(quota),now);
+  audit("settings.inference_quota",null,"Quota global mis à jour : "+quota+" tokens");
+  return send(200,{ok:true,inferenceQuota:quota,updatedAt:now});
+ }
  if(pathname==="/api/emergency-stop"&&req.method==="POST"){if(role!=="admin")return send(403,{error:"Action réservée à l’administrateur"});setEmergencyStop(true);const active=db.prepare("SELECT id FROM agents WHERE status='running'").all() as {id:string}[];db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE status='running'").run();for(const a of active){try{await stopSandbox(a.id);}catch{}log(a.id,"system","Global emergency stop activated");}audit("system.emergency_stop",null,"Arrêt global demandé par administrateur");return send(200,{ok:true,stopped:active.length});}
  if(pathname==="/api/emergency-stop/reset"&&req.method==="POST"){if(role!=="admin")return send(403,{error:"Action réservée à l’administrateur"});setEmergencyStop(false);audit("system.emergency_reset",null,"Verrouillage global désactivé");return send(200,{ok:true});}
 
@@ -77,7 +119,7 @@ const server=http.createServer(async(req,res)=>{
   const nextBefore=events.length===limitValue?(events[events.length-1] as {id:number}).id:null;
   return send(200,{events,page:{limit:limitValue,nextBefore}});
  }
- if(pathname==="/api/dashboard"){const agents=db.prepare("SELECT id,name,goal,parent_id,status,created_at,heartbeat_at,restart_count,last_error FROM agents ORDER BY created_at DESC").all() as any[];const tasks=db.prepare("SELECT * FROM tasks ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,created_at DESC LIMIT 200").all();const taskCounts=db.prepare("SELECT status,COUNT(*) AS count FROM tasks GROUP BY status").all() as {status:string;count:number}[];const taskSummary={active:taskCounts.find(x=>x.status==="active")?.count??0,pending:taskCounts.find(x=>x.status==="pending")?.count??0,failed:taskCounts.find(x=>x.status==="failed")?.count??0,completed:taskCounts.find(x=>x.status==="completed")?.count??0,total:taskCounts.reduce((n,x)=>n+x.count,0)};const logs=db.prepare("SELECT agent_id,at,level,message FROM logs ORDER BY id DESC LIMIT 100").all() as any[];const recentEvents=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events ORDER BY id DESC LIMIT 250").all() as any[];const events=recentEvents.map(e=>({...e,details:JSON.parse(e.detailsJson)}));const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) total FROM usage").get() as any).total;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));const auditRows=db.prepare("SELECT at,action,target,details FROM audit ORDER BY id DESC LIMIT 100").all();return send(200,{agents,tasks,taskCounts:taskSummary,logs,events,audit:auditRows,emergencyStop:emergencyStopActive(),role,usage:{total,quota,remaining:Math.max(0,quota-total),byAgent}});}
+ if(pathname==="/api/dashboard"){const agents=db.prepare("SELECT id,name,goal,parent_id,status,created_at,heartbeat_at,restart_count,last_error FROM agents ORDER BY created_at DESC").all() as any[];const tasks=db.prepare("SELECT * FROM tasks ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,created_at DESC LIMIT 200").all();const taskCounts=db.prepare("SELECT status,COUNT(*) AS count FROM tasks GROUP BY status").all() as {status:string;count:number}[];const taskSummary={active:taskCounts.find(x=>x.status==="active")?.count??0,pending:taskCounts.find(x=>x.status==="pending")?.count??0,failed:taskCounts.find(x=>x.status==="failed")?.count??0,completed:taskCounts.find(x=>x.status==="completed")?.count??0,total:taskCounts.reduce((n,x)=>n+x.count,0)};const logs=db.prepare("SELECT agent_id,at,level,message FROM logs ORDER BY id DESC LIMIT 100").all() as any[];const recentEvents=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events ORDER BY id DESC LIMIT 250").all() as any[];const events=recentEvents.map(e=>({...e,details:JSON.parse(e.detailsJson)}));const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) total FROM usage").get() as any).total;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();const quota=configuredInferenceQuota();const auditRows=db.prepare("SELECT at,action,target,details FROM audit ORDER BY id DESC LIMIT 100").all();return send(200,{agents,tasks,taskCounts:taskSummary,logs,events,audit:auditRows,emergencyStop:emergencyStopActive(),role,usage:{total,quota,remaining:Math.max(0,quota-total),byAgent}});}
  if(pathname==="/api/agents"&&req.method==="POST"){const name=String(body.name||"").trim(),goal=String(body.goal||"").trim();if(!name||!goal)return send(400,{error:"Nom et objectif requis"});const id=name.toLowerCase().replace(/[^a-z0-9-]/g,"-")+"-"+randomUUID().slice(0,8),created=new Date().toISOString(),identity=createIdentity();db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,name,goal,null,"stopped",created,identity,constitutionHash(),"0.1.0");log(id,"genesis","Mission: "+goal);audit("agent.create",id,"Agent créé depuis la console");return send(201,{id});}
  const startMatch=pathname.match(/^\/api\/agents\/([^/]+)\/start$/);if(startMatch&&req.method==="POST"){const id=decodeURIComponent(startMatch[1]);if(emergencyStopActive())return send(423,{error:"Arrêt d’urgence actif. Réarmez le système avant de démarrer un agent."});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});audit("agent.start",id,"Démarrage demandé depuis la console");try{const runtime=startAgent(id);runtime.catch(e=>{log(id,"ui-error",String(e).slice(0,1000));});return send(202,{ok:true});}catch(e){return send(409,{error:e instanceof Error?e.message:"Démarrage refusé"});}}
  const stopMatch=pathname.match(/^\/api\/agents\/([^/]+)\/stop$/);if(stopMatch&&req.method==="POST"){const id=decodeURIComponent(stopMatch[1]);db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped via dashboard");audit("agent.stop",id,"Arrêt demandé depuis la console");return send(200,{ok:true});}
