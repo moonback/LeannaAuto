@@ -70,6 +70,9 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("Décisions des outils");
   expect(html).toContain("Ressources système");
   expect(html).toContain("resourceDocker");
+  expect(html).toContain('autocomplete="username"');
+  expect(html).toContain("setInterval(()=>{if(sessionStorage.getItem");
+  expect(html).toContain("data:image/svg+xml");
  });
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
