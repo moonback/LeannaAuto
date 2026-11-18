@@ -6,7 +6,7 @@ const containerName=(id:string)=> "leanna-"+id.replace(/[^a-zA-Z0-9_.-]/g,"").sl
 export async function shell(agentId:string,command:string){
  const name=containerName(agentId);
  try{
-  const {stdout,stderr}=await execFileAsync("docker",["exec",name,"sh","-lc",command],{timeout:limits.timeoutMs,maxBuffer:1024*1024});
+  const {stdout,stderr}=await execFileAsync("docker",["exec","--user","1000:1000",name,"sh","-lc",command],{timeout:limits.timeoutMs,maxBuffer:1024*1024});
   return (stdout+"\n"+stderr).trim();
  }catch(e:any){return "Command failed: "+String(e.stderr??e.message).slice(0,3000);}
 }
@@ -17,7 +17,7 @@ export async function ensureSandbox(agentId:string){
   if(stdout.trim()!=="running")await execFileAsync("docker",["start",name]);
   return;
  }catch{
-  await execFileAsync("docker",["run","-d","--name",name,"--cpus","1","--memory","1g","--pids-limit","64","--network","none","--workdir","/workspace","--mount","type=volume,source="+name+"-workspace,target=/workspace",image,"sh","-lc","mkdir -p /workspace && chmod 777 /workspace && sleep infinity"],{timeout:30000});
+  await execFileAsync("docker",["run","-d","--name",name,"--cpus","1","--memory","1g","--pids-limit","64","--network","none","--cap-drop","ALL","--security-opt","no-new-privileges:true","--read-only","--tmpfs","/tmp:rw,nosuid,nodev,size=64m","--workdir","/workspace","--mount","type=volume,source="+name+"-workspace,target=/workspace",image,"sh","-lc","mkdir -p /workspace && chmod 777 /workspace && sleep infinity"],{timeout:30000});
  }
 }
 export async function stopSandbox(agentId:string){try{await execFileAsync("docker",["stop",containerName(agentId)],{timeout:15000});}catch{}}
