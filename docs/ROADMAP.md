@@ -682,3 +682,17 @@ Branche dédiée : `test/docker-agent-crash-recovery`, créée depuis `test/agen
 - [x] Test opt-in `tests/agent-docker-crash.integration.test.ts` avec `LEANNAAUTO_DOCKER_INTEGRATION=1` : 1 test réussi sur vrai Docker.
 
 Le test utilise un vrai processus enfant tué brutalement, le superviseur réel, la vraie boucle d'agent et une vraie sandbox Docker. Le modèle reste simulé et le test ne contacte pas OpenRouter. Il teste une reprise après perte du processus propriétaire avant la reprise de tâche, pas un crash au milieu d'une commande shell déjà en cours.
+
+
+### Commandes Docker orphelines après crash Node — caractérisation en attente
+
+Branche dédiée : `test/docker-exec-orphan-recovery`, créée depuis `test/docker-agent-crash-recovery`.
+
+- [x] Ajouter un test Docker opt-in qui lance une commande longue via `shell()` depuis un processus Node enfant.
+- [x] Tuer le processus Node propriétaire pendant que la commande Docker est en cours, puis lancer une seconde exécution identique.
+- [ ] Exécuter le test sur Windows avec Docker actif et déterminer si la première commande continue côté conteneur.
+- [ ] Confirmer si la commande de reprise chevauche la première et peut donc dupliquer ses effets.
+- [ ] Si le chevauchement est reproduit, concevoir une exclusion mutuelle persistante côté sandbox qui reste détenue tant que la commande orpheline tourne.
+- [ ] Tester le verrouillage en cas de fin normale, crash du client Docker, commande bloquée et arrêt/redémarrage du conteneur.
+
+Le test de caractérisation est opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1` et utilise uniquement un conteneur et un volume au nom aléatoire, supprimés au nettoyage. Aucun changement de comportement de production n'est encore effectué : la survie d'une commande après la mort de son client Node reste une hypothèse à mesurer sur le daemon Docker cible.
