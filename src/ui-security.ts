@@ -30,10 +30,11 @@ export function verifyUiToken(token:string,storedHash:string):boolean {
 }
 
 export function storedTokenRole(value:string,admin:{token_hash:string;revoked:number}|undefined,operator:{token_hash:string;revoked:number}|undefined,adminEnv:string,operatorEnv:string):UiRole|null {
- if(admin)return admin.revoked===0&&verifyUiToken(value,admin.token_hash)?"admin":null;
- if(operator&&operator.revoked===0&&verifyUiToken(value,operator.token_hash))return "operator";
- if(operator?.revoked===1)return tokenRole(value,adminEnv,"");
- return tokenRole(value,adminEnv,operatorEnv);
+ if(admin?.revoked===0&&verifyUiToken(value,admin.token_hash))return "admin";
+ if(operator?.revoked===0&&verifyUiToken(value,operator.token_hash))return "operator";
+ if(!admin&&tokenRole(value,adminEnv,"")==="admin")return "admin";
+ if(!operator&&tokenRole(value,"",operatorEnv)==="operator")return "operator";
+ return null;
 }
 
 export function isAllowedUiRequest(role:UiRole,method:string,pathname:string):boolean {
