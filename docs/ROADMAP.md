@@ -646,3 +646,24 @@ Branche : `feat/task-agent-assignment`.
 - [x] Refuser la réattribution d’une tâche active, terminée, annulée ou en erreur.
 - [x] Ajouter les tests HTTP de permission, de réattribution et de garde sur tâche active.
 - [ ] Validation Windows : `npm ci`, `npm run build`, `npm test`, puis vérifier l’attribution depuis l’interface.
+
+
+### Annulation des tâches et missions en cours
+
+- [x] Ajouter une action administrateur « Annuler » pour les tâches en attente ou actives.
+- [x] Lorsqu'une tâche active est annulée, arrêter également son agent, libérer son runtime owner et empêcher la reprise de la tâche.
+- [x] Ajouter une action « Annuler la mission » pour les agents en cours : arrêter l'agent, effacer l'objectif et annuler ses tâches en attente ou actives.
+- [x] Conserver les tâches terminées et en erreur ainsi que les historiques d'événements.
+- [x] Ajouter un statut « Annulée » et un filtre dédié dans la page des tâches.
+- [x] Réserver les nouvelles actions d'annulation à l'administrateur et ajouter des tests HTTP de permissions et transitions d'état.
+- [ ] Validation Windows : `npm ci`, `npm run build`, `npm test`, puis vérifier les actions sur un agent réellement actif dans Docker.
+
+### Journaux lisibles et activité des agents en direct
+
+- [x] Fiche agent : chronologie structurée, horodatages localisés, résumés et détails techniques repliables.
+- [x] Afficher l'activité actuelle déduite des événements runtime (analyse LLM, exécution d'outil, décision de sécurité) sans inventer de progression.
+- [x] Actualiser automatiquement la fiche agent et le journal de tâche toutes les 5 secondes lorsqu'ils sont ouverts.
+- [x] Afficher l'activité récente dans chaque carte de mission.
+- [x] Ajouter un accès au journal filtré par tâche depuis la liste des tâches et depuis la fiche agent.
+- [x] Exposer un lot borné des 250 événements récents dans la réponse dashboard pour alimenter les cartes Missions.
+- [ ] Validation Windows : build, tests, puis observation d'un agent actif exécutant plusieurs outils pour vérifier la fidélité des états « en direct ».
