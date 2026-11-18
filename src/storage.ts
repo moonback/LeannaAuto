@@ -32,7 +32,7 @@ migrateColumn("agents","last_error","TEXT");
 migrateColumn("agents","runtime_owner","TEXT");
 function redactEventText(value:string):string {
  return value
-  .replace(/(Bearer\\s+)[A-Za-z0-9._~+\\/-]+=*/gi,"$1[REDACTED]")
+  .replace(/(Bearer\s+)[A-Za-z0-9._~+\/-]+=*/gi,"$1[REDACTED]")
   .replace(/((?:api[_-]?key|token|password|secret)\\s*[=:]\\s*)[^\\s,;]+/gi,"$1[REDACTED]")
   .replace(/(sk-[A-Za-z0-9_-]{12,})/g,"[REDACTED]");
 }
