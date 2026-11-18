@@ -34,6 +34,11 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('class="nav-group-label"');
   expect(dashboardHtml).toContain("function initNavigationGroups()");
   expect(dashboardHtml).toContain("leanna_ui_nav_group_");
+  expect(dashboardHtml).toContain('id="auditExport"');
+  expect(dashboardHtml).toContain('id="auditActionFilter"');
+  expect(dashboardHtml).toContain("function renderAudit()");
+  expect(dashboardHtml).toContain("leanna-audit.csv");
+  expect(dashboardHtml).not.toContain('id="auditOutput"');
  });
  it("keeps every navigation target connected to a page section",()=>{
   const navigation=dashboardHtml.split('<nav aria-label="Navigation principale">')[1]?.split('</nav>')[0]??"";
