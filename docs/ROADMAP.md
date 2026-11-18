@@ -590,3 +590,23 @@ Le rendu 3D est volontairement réalisé avec CSS (perspective, profondeur, ombr
 
 - [x] PR #12 fusionnée dans `main` le 18 novembre 2026.
 - [x] Commit de fusion : `886d27239908f5a87633c1096220320aa38dea2d`.
+
+
+### Gestion des tâches et des missions — CRUD sécurisé
+
+Branche : `feat/task-mission-lifecycle-ui`, empilée sur `feat/immersive-agent-office-ui` (PR #13).
+
+- [x] Ajouter la modification des tâches depuis la page « Toutes les tâches » : titre et description.
+- [x] Ajouter la suppression explicite des tâches avec confirmation.
+- [x] Refuser côté API et interface la modification ou suppression d'une tâche active.
+- [x] Ajouter une modale dédiée pour modifier la mission (objectif) d'un agent.
+- [x] Ajouter la suppression de mission sans supprimer l'agent : l'objectif est vidé, l'agent et son identité restent conservés.
+- [x] Refuser côté API et interface la modification ou suppression d'une mission tant que l'agent est en cours d'exécution.
+- [x] Réserver les mutations de tâches et de missions au rôle administrateur ; la création de tâche existante reste accessible aux opérateurs.
+- [x] Journaliser chaque modification et suppression dans l'audit et les événements.
+- [x] Ajouter tests HTTP pour édition, suppression, validations, refus opérateur et garde-fous d'exécution active.
+- [x] Ajouter tests unitaires des règles d'autorisation.
+- [ ] Validation utilisateur Windows : `npm ci`, `npm run build`, `npm test`, puis contrôle visuel des modales et boutons.
+- [ ] Vérifier le scénario réel d'une tâche active et d'un agent actif dans Docker avant fusion.
+
+Règles de sécurité : les tâches actives ne peuvent pas être modifiées ou supprimées ; les missions ne peuvent être changées que lorsque l'agent est arrêté. Les suppressions de tâches sont auditables ; les événements historiques append-only ne sont pas supprimés.

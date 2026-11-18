@@ -1,4 +1,5 @@
 import {spawn, type ChildProcess} from "node:child_process";
+import Database from "better-sqlite3";
 import {request as httpRequest} from "node:http";
 import {createServer} from "node:net";
 import {mkdtemp, rm} from "node:fs/promises";
@@ -96,6 +97,13 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain('function closeAgentModal()');
   expect(html).toContain("function openEditAgent(id)");
   expect(html).toContain("function deleteAgent(id)");
+  expect(html).toContain('id="taskEditModal"');
+  expect(html).toContain('id="missionEditModal"');
+  expect(html).toContain("function renderTasks(tasks,agents)");
+  expect(html).toContain("function openTaskEdit(id)");
+  expect(html).toContain("function deleteTask(id)");
+  expect(html).toContain("function openMissionEdit(id)");
+  expect(html).toContain("function deleteMission(id)");
   expect(html).toContain('data-action="edit"');
   expect(html).toContain('data-action="delete"');
   expect(html).not.toContain("document.getElementById('nTasks')");
@@ -132,6 +140,71 @@ describe("dashboard HTTP security integration",()=>{
   expect(updated.status).toBe(200);
   const detail=await request("/api/agents/"+encodeURIComponent(agent.id));
   await expect(detail.json()).resolves.toMatchObject({agent:{name:"renamed-agent",goal:"Updated mission"}});
+ });
+
+ it("allows administrators to edit and delete non-active tasks, but rejects operators",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"task-lifecycle-agent",goal:"Task lifecycle test"})});
+  expect(created.status).toBe(201);
+  const agent=await created.json() as {id:string};
+  const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Original task",description:"Original description"})});
+  expect(made.status).toBe(201);
+  const task=await made.json() as {id:string};
+  const denied=await request("/api/tasks/"+encodeURIComponent(task.id),operatorToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Blocked",description:"Blocked"})});
+  expect(denied.status).toBe(403);
+  const updated=await request("/api/tasks/"+encodeURIComponent(task.id),adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Updated task",description:"Updated description"})});
+  expect(updated.status).toBe(200);
+  const dashboard=await request("/api/dashboard");
+  const data=await dashboard.json() as {tasks:Array<{id:string;title:string;description:string}>};
+  expect(data.tasks.find(item=>item.id===task.id)).toMatchObject({title:"Updated task",description:"Updated description"});
+  const deleted=await request("/api/tasks/"+encodeURIComponent(task.id),adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(deleted.status).toBe(200);
+  const after=await request("/api/dashboard");
+  const afterData=await after.json() as {tasks:Array<{id:string}>};
+  expect(afterData.tasks.some(item=>item.id===task.id)).toBe(false);
+  const missing=await request("/api/tasks/"+encodeURIComponent(task.id),adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(missing.status).toBe(404);
+ });
+ it("allows administrators to edit and clear missions only while the agent is stopped",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"mission-lifecycle-agent",goal:"Original mission"})});
+  expect(created.status).toBe(201);
+  const agent=await created.json() as {id:string};
+  const denied=await request("/api/agents/"+encodeURIComponent(agent.id)+"/mission",operatorToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:"Blocked"})});
+  expect(denied.status).toBe(403);
+  const updated=await request("/api/agents/"+encodeURIComponent(agent.id)+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:"Updated mission"})});
+  expect(updated.status).toBe(200);
+  const detail=await request("/api/agents/"+encodeURIComponent(agent.id));
+  await expect(detail.json()).resolves.toMatchObject({agent:{goal:"Updated mission"}});
+  const deleted=await request("/api/agents/"+encodeURIComponent(agent.id)+"/mission",adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(deleted.status).toBe(200);
+  const cleared=await request("/api/agents/"+encodeURIComponent(agent.id));
+  await expect(cleared.json()).resolves.toMatchObject({agent:{goal:""}});
+  const repeat=await request("/api/agents/"+encodeURIComponent(agent.id)+"/mission",adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(repeat.status).toBe(409);
+ });
+ it("validates task and mission edit payloads",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"validation-agent",goal:"Mission"})});
+  const agent=await created.json() as {id:string};
+  const taskResponse=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Validation task"})});
+  const task=await taskResponse.json() as {id:string};
+  expect((await request("/api/tasks/"+task.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"",description:"x"})})).status).toBe(400);
+  expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:" "})})).status).toBe(400);
+ });
+
+ it("refuses task and mission changes while their runtime is active",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"active-guard-agent",goal:"Active guard mission"})});
+  const agent=await created.json() as {id:string};
+  const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Active task",description:"Must be immutable while running"})});
+  const task=await made.json() as {id:string};
+  const database=new Database(path.join(directory,"test.db"));
+  try{
+   database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(task.id);
+   database.prepare("UPDATE agents SET status='running' WHERE id=?").run(agent.id);
+   expect((await request("/api/tasks/"+task.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Changed",description:"Changed"})})).status).toBe(409);
+   expect((await request("/api/tasks/"+task.id,adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:"Changed"})})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"active-guard-agent",goal:"Bypass attempt"})})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
+  }finally{database.close()}
  });
  it("restricts agent deletion to stopped leaf agents without tasks",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"deletable-agent",goal:"Deletion guard test"})});
