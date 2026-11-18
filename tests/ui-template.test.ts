@@ -14,6 +14,14 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('id="inferenceQuotaForm"');
   expect(dashboardHtml).not.toContain("__LEANNAAUTO_");
  });
+ it("exposes the shared spacing scale, semantic themes and accessible responsive controls",()=>{
+  expect(dashboardHtml).toContain("--space-1:4px");
+  expect(dashboardHtml).toContain("--space-16:64px");
+  expect(dashboardHtml).toContain('html[data-theme="light"]');
+  expect(dashboardHtml).toContain("prefers-reduced-motion:reduce");
+  expect(dashboardHtml).toContain("focus-visible");
+  expect(dashboardHtml).toContain("92dvh");
+ });
  it("keeps every navigation target connected to a page section",()=>{
   const navigation=dashboardHtml.split('<nav aria-label="Navigation principale">')[1]?.split('</nav>')[0]??"";
   const pages=[...navigation.matchAll(new RegExp("page\\('([^']+)'","g"))].map(match=>match[1]);
