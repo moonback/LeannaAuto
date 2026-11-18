@@ -380,6 +380,31 @@ const server=http.createServer(async(req,res)=>{
  if(!isAllowedUiRequest(role,req.method??"GET",pathname))return send(403,{error:"Action non autorisée pour ce rôle"});
  if(pathname==="/api/emergency-stop"&&req.method==="POST"){if(role!=="admin")return send(403,{error:"Action réservée à l’administrateur"});setEmergencyStop(true);const active=db.prepare("SELECT id FROM agents WHERE status='running'").all() as {id:string}[];db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE status='running'").run();for(const a of active){try{await stopSandbox(a.id);}catch{}log(a.id,"system","Global emergency stop activated");}audit("system.emergency_stop",null,"Arrêt global demandé par administrateur");return send(200,{ok:true,stopped:active.length});}
  if(pathname==="/api/emergency-stop/reset"&&req.method==="POST"){if(role!=="admin")return send(403,{error:"Action réservée à l’administrateur"});setEmergencyStop(false);audit("system.emergency_reset",null,"Verrouillage global désactivé");return send(200,{ok:true});}
+
+ const missionMatch=pathname.match(/^\/api\/agents\/([^/]+)\/mission$/);
+ if(missionMatch&&req.method==="PATCH"){
+  const id=decodeURIComponent(missionMatch[1]),goal=String(body.goal??"").trim();
+  if(!goal)return send(400,{error:"La mission ne peut pas être vide"});
+  if(goal.length>4000)return send(400,{error:"Mission limitée à 4000 caractères"});
+  const agent=db.prepare("SELECT id,status FROM agents WHERE id=?").get(id) as {id:string;status:string}|undefined;
+  if(!agent)return send(404,{error:"Agent introuvable"});
+  if(agent.status==="running")return send(409,{error:"Arrêtez l’agent avant de modifier sa mission"});
+  db.prepare("UPDATE agents SET goal=? WHERE id=? AND status<>'running'").run(goal,id);
+  audit("mission.update",id,"Mission modifiée depuis la console");
+  log(id,"system","Agent mission updated");
+  return send(200,{ok:true});
+ }
+ if(missionMatch&&req.method==="DELETE"){
+  const id=decodeURIComponent(missionMatch[1]);
+  const agent=db.prepare("SELECT id,status,goal FROM agents WHERE id=?").get(id) as {id:string;status:string;goal:string}|undefined;
+  if(!agent)return send(404,{error:"Agent introuvable"});
+  if(agent.status==="running")return send(409,{error:"Arrêtez l’agent avant de supprimer sa mission"});
+  if(!agent.goal)return send(409,{error:"Cet agent n’a pas de mission à supprimer"});
+  db.prepare("UPDATE agents SET goal='' WHERE id=? AND status<>'running'").run(id);
+  audit("mission.delete",id,"Mission supprimée depuis la console ; agent conservé");
+  log(id,"system","Agent mission cleared");
+  return send(200,{ok:true});
+ }
  const detailMatch=pathname.match(/^\/api\/agents\/([^/]+)$/);if(detailMatch&&req.method==="PATCH"){const id=decodeURIComponent(detailMatch[1]),name=String(body.name??"").trim(),goal=String(body.goal??"").trim();if(!name||!goal)return send(400,{error:"Nom et objectif requis"});if(name.length>80||goal.length>4000)return send(400,{error:"Nom limité à 80 caractères et objectif à 4000 caractères"});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});db.prepare("UPDATE agents SET name=?,goal=? WHERE id=?").run(name,goal,id);audit("agent.update",id,"Nom et mission modifiés depuis la console");log(id,"system","Agent profile updated");return send(200,{ok:true});}if(detailMatch&&req.method==="DELETE"){const id=decodeURIComponent(detailMatch[1]),agent=db.prepare("SELECT id,status FROM agents WHERE id=?").get(id) as {id:string;status:string}|undefined;if(!agent)return send(404,{error:"Agent introuvable"});if(agent.status==="running")return send(409,{error:"Arrêtez l’agent avant de le supprimer"});const children=(db.prepare("SELECT COUNT(*) AS count FROM agents WHERE parent_id=?").get(id) as any).count;if(children>0)return send(409,{error:"Impossible de supprimer un agent qui possède des agents enfants"});const tasks=(db.prepare("SELECT COUNT(*) AS count FROM tasks WHERE agent_id=?").get(id) as any).count;if(tasks>0)return send(409,{error:"Impossible de supprimer un agent qui possède des tâches. Supprimez ou réaffectez ses tâches d’abord."});await deleteSandbox(id);db.prepare("DELETE FROM agents WHERE id=?").run(id);audit("agent.delete",id,"Agent et sandbox supprimés depuis la console");return send(200,{ok:true});}if(detailMatch&&req.method==="GET"){const id=decodeURIComponent(detailMatch[1]);const agent=db.prepare("SELECT * FROM agents WHERE id=?").get(id);if(!agent)return send(404,{error:"Agent introuvable"});const logs=db.prepare("SELECT at,level,message FROM logs WHERE agent_id=? ORDER BY id DESC LIMIT 200").all(id);const tasks=db.prepare("SELECT * FROM tasks WHERE agent_id=? ORDER BY created_at DESC").all(id);return send(200,{agent,logs,tasks});}const wsFile=pathname.match(/^\/api\/agents\/([^/]+)\/workspace\/file$/);if(wsFile&&req.method==="GET"){const id=decodeURIComponent(wsFile[1]);if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});const params=new URL(req.url??"/","http://127.0.0.1").searchParams;try{return send(200,await readWorkspaceFile(id,params.get("path")??""));}catch(error){if(error instanceof WorkspaceError)return send(error.status,{error:error.message});throw error;}}const ws=pathname.match(/^\/api\/agents\/([^/]+)\/workspace$/);if(ws&&req.method==="GET"){const id=decodeURIComponent(ws[1]);if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});const params=new URL(req.url??"/","http://127.0.0.1").searchParams;try{return send(200,await listWorkspace(id,params.get("path")??""));}catch(error){if(error instanceof WorkspaceError)return send(error.status,{error:error.message});throw error;}}
  if(pathname==="/api/resources"&&req.method==="GET"){return send(200,await collectSystemMetrics());}
  if(pathname==="/api/events"&&req.method==="GET"){
@@ -401,6 +426,33 @@ const server=http.createServer(async(req,res)=>{
  if(pathname==="/api/agents"&&req.method==="POST"){const name=String(body.name||"").trim(),goal=String(body.goal||"").trim();if(!name||!goal)return send(400,{error:"Nom et objectif requis"});const id=name.toLowerCase().replace(/[^a-z0-9-]/g,"-")+"-"+randomUUID().slice(0,8),created=new Date().toISOString(),identity=createIdentity();db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,name,goal,null,"stopped",created,identity,constitutionHash(),"0.1.0");log(id,"genesis","Mission: "+goal);audit("agent.create",id,"Agent créé depuis la console");return send(201,{id});}
  const startMatch=pathname.match(/^\/api\/agents\/([^/]+)\/start$/);if(startMatch&&req.method==="POST"){const id=decodeURIComponent(startMatch[1]);if(emergencyStopActive())return send(423,{error:"Arrêt d’urgence actif. Réarmez le système avant de démarrer un agent."});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});audit("agent.start",id,"Démarrage demandé depuis la console");try{const runtime=startAgent(id);runtime.catch(e=>{log(id,"ui-error",String(e).slice(0,1000));});return send(202,{ok:true});}catch(e){return send(409,{error:e instanceof Error?e.message:"Démarrage refusé"});}}
  const stopMatch=pathname.match(/^\/api\/agents\/([^/]+)\/stop$/);if(stopMatch&&req.method==="POST"){const id=decodeURIComponent(stopMatch[1]);db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped via dashboard");audit("agent.stop",id,"Arrêt demandé depuis la console");return send(200,{ok:true});}
+
+ const taskMatch=pathname.match(/^\/api\/tasks\/([^/]+)$/);
+ if(taskMatch&&req.method==="PATCH"){
+  const id=decodeURIComponent(taskMatch[1]),title=String(body.title??"").trim(),description=String(body.description??"");
+  if(!title)return send(400,{error:"Le titre de la tâche est requis"});
+  if(title.length>200||description.length>4000)return send(400,{error:"Titre limité à 200 caractères et description à 4000 caractères"});
+  const task=db.prepare("SELECT id,agent_id,status FROM tasks WHERE id=?").get(id) as {id:string;agent_id:string;status:string}|undefined;
+  if(!task)return send(404,{error:"Tâche introuvable"});
+  if(task.status==="active")return send(409,{error:"Une tâche active ne peut pas être modifiée"});
+  const now=new Date().toISOString();
+  const result=db.prepare("UPDATE tasks SET title=?,description=?,updated_at=? WHERE id=? AND status<>'active'").run(title,description,now,id);
+  if(!result.changes)return send(409,{error:"La tâche est devenue active ; modification refusée"});
+  audit("task.update",id,"Tâche modifiée · "+title);
+  log(task.agent_id,"task","Task updated "+id+": "+title,{taskId:id,eventType:"task.update"});
+  return send(200,{ok:true});
+ }
+ if(taskMatch&&req.method==="DELETE"){
+  const id=decodeURIComponent(taskMatch[1]);
+  const task=db.prepare("SELECT id,agent_id,status,title FROM tasks WHERE id=?").get(id) as {id:string;agent_id:string;status:string;title:string}|undefined;
+  if(!task)return send(404,{error:"Tâche introuvable"});
+  if(task.status==="active")return send(409,{error:"Une tâche active ne peut pas être supprimée"});
+  const result=db.prepare("DELETE FROM tasks WHERE id=? AND status<>'active'").run(id);
+  if(!result.changes)return send(409,{error:"La tâche est devenue active ; suppression refusée"});
+  audit("task.delete",id,"Tâche supprimée · "+task.title);
+  log(task.agent_id,"task","Task deleted "+id+": "+task.title,{taskId:id,eventType:"task.delete"});
+  return send(200,{ok:true});
+ }
  if(pathname==="/api/tasks"&&req.method==="POST"){const agent=String(body.agent||""),title=String(body.title||"").trim(),desc=String(body.description||"");if(!agent||!title)return send(400,{error:"Agent et titre requis"});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(agent))return send(404,{error:"Agent introuvable"});const id=randomUUID(),now=new Date().toISOString();db.prepare("INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(id,agent,title,desc,"pending",now,now);log(agent,"task","Added task "+id+": "+title);audit("task.create",id,"Agent "+agent+" · "+title);return send(201,{id});}
  send(404,{error:"Route inconnue"});
  }catch(e){console.error("Dashboard API error:",e);send(500,{error:"Erreur interne du serveur"});}
