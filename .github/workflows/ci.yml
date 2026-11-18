@@ -13,9 +13,6 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-
 jobs:
   checkout:
     name: Repository checkout
@@ -24,7 +21,7 @@ jobs:
       - name: Check out exact source commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.PR_HEAD }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
   node:
     name: Node.js toolchain
