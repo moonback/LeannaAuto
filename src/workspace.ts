@@ -49,7 +49,7 @@ const listScript=String.raw`set -eu
 target=$(realpath -e -- "$1" 2>/dev/null) || exit 40
 case "$target" in /workspace|/workspace/*) ;; *) exit 40 ;; esac
 [ -d "$target" ] || exit 41
-find "$target" -mindepth 1 -maxdepth 1 ! -name '.leanna-shell.lock' -printf '%f\\0%y\\0%s\\0%T@\\0'
+find "$target" -mindepth 1 -maxdepth 1 ! -name '.leanna-shell.lock' -printf '%f\0%y\0%s\0%T@\0'
 `;
 
 export async function listWorkspace(agentId:string,pathValue=""):Promise<{path:string;entries:WorkspaceEntry[]}>{
@@ -73,7 +73,7 @@ case "$target" in /workspace/*) ;; *) exit 40 ;; esac
 [ -f "$target" ] || exit 41
 size=$(wc -c < "$target")
 [ "$size" -le 262144 ] || exit 42
-printf '%s\\n' "$size"
+printf '%s\n' "$size"
 head -c 262144 -- "$target"
 `;
 
