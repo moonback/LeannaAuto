@@ -572,3 +572,18 @@ Validation utilisateur sur `feat/api-supervisor-hardening` :
 - [x] Le test de reprise de bail et de continuité d'une tâche active est inclus dans cette suite verte.
 
 Cette validation confirme le comportement couvert par les tests automatisés. Elle ne remplace pas encore un test de crash réel avec deux processus ni un test sur un daemon Docker réel. Ces scénarios restent ouverts.
+
+
+## 6.4. Test d'intégration de reprise après crash de processus — en cours
+
+Branche dédiée : `test/supervisor-process-crash-recovery`, créée depuis `feat/api-supervisor-hardening`.
+
+- [x] Ajouter un test multi-processus utilisant une vraie base SQLite temporaire.
+- [x] Faire acquérir un bail runtime par un processus Node enfant, puis le terminer de force.
+- [x] Vérifier qu'un nouveau propriétaire peut reprendre le bail après expiration du heartbeat.
+- [x] Vérifier que la tâche persistante reste au statut `active` après la reprise.
+- [ ] Exécuter ce test sous Windows et confirmer que l'arrêt forcé du processus fonctionne dans cet environnement.
+- [ ] Ajouter ensuite un test de bout en bout qui démarre le véritable superviseur et vérifie la reprise d'un agent sans runtime concurrent.
+- [ ] Tester séparément la réconciliation avec un daemon Docker réel.
+
+Fichier ajouté : `tests/agent-runtime-process.test.ts`. Le test n'a pas encore été exécuté dans l'environnement Windows de référence ; aucune validation n'est présumée.
