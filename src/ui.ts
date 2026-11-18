@@ -157,7 +157,8 @@ const server=http.createServer(async(req,res)=>{
   const before=params.get("before");
   if(!/^\d+$/.test(before)||!Number.isSafeInteger(cursor)||cursor<1)return send(400,{error:"Curseur invalide"});
   const where=clauses.length?" WHERE "+clauses.join(" AND "):"";
-  const events=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS details,correlation_id AS correlationId FROM events"+where+" ORDER BY id DESC LIMIT ?").all(...values,limitValue);
+  const rows=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events"+where+" ORDER BY id DESC LIMIT ?").all(...values,limitValue) as any[];
+  const events=rows.map(row=>({...row,details:JSON.parse(row.detailsJson)}));
   const nextBefore=events.length===limitValue?(events[events.length-1] as {id:number}).id:null;
   return send(200,{events,page:{limit:limitValue,nextBefore}});
  }
