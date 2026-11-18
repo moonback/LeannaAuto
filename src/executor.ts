@@ -19,7 +19,7 @@ export async function shell(agentId:string,command:string){
  const name=containerName(agentId);
  try{
   const {stdout,stderr}=await execFileAsync("docker",["exec","--user","1000:1000",name,"sh","-lc",command],{timeout:limits.timeoutMs,maxBuffer:1024*1024});
-  return (stdout+"\\n"+stderr).trim();
+  return (stdout+"\n"+stderr).trim();
  }catch(e:any){return "Command failed: "+String(e.stderr??e.message).slice(0,3000);}
 }
 
