@@ -137,8 +137,7 @@ Objectif : empêcher les agents de dépasser les capacités de la machine et du 
 
 Travaux :
 - [ ] Définir un registre central des ressources disponibles et consommées.
-- [ ] Appliquer des quotas CPU, RAM, stockage, PIDs et durée par agent.
-- [ ] Définir des quotas globaux et des réserves pour le superviseur.
+- [ ] Appliquer des quotas CPU, RAM, stockage, PIDs et durée par agent.- [ ] Définir des quotas globaux et des réserves pour le superviseur.
 - [ ] Ajouter des budgets de tokens par agent, par tâche et globaux.
 - [ ] Réserver les ressources avant démarrage, puis libérer à l'arrêt ou à l'échec.
 - [ ] Définir des priorités et une file d'attente lorsque les ressources sont insuffisantes.
@@ -277,8 +276,7 @@ Travaux :
 - [ ] Ajouter vérification d'intégrité des versions et migrations.
 - [ ] Automatiser les sauvegardes SQLite et tester les restaurations.
 - [ ] Ajouter diagnostic système, export de rapports et collecte de métriques locales.
-- [ ] Définir une politique de compatibilité des versions d'agents et de protocoles.
-- [ ] Documenter désinstallation, purge et récupération après incident.
+- [ ] Définir une politique de compatibilité des versions d'agents et de protocoles.- [ ] Documenter désinstallation, purge et récupération après incident.
 - [ ] Préparer une distribution locale simple, sans dépendance à un service cloud propriétaire pour le contrôle du runtime.
 
 Critères de sortie :
@@ -418,7 +416,6 @@ Clôture de la vérification runtime — validation utilisateur Windows, 18 nove
 - [x] `npm ls picomatch --all` confirme que Picomatch 4.0.7 est uniquement dans l'arbre de développement : `vitest@4.1.12` → `vite@8.3.8` / `tinyglobby@0.2.17` → `fdir@6.5.0` → `picomatch@4.0.7`.
 - [ ] Le rapport complet `npm audit` conserve 5 avis high liés à Picomatch 4.0.7 dans cette chaîne de développement. Ils ne sont pas corrigés ; continuer à surveiller un correctif amont.
 - [x] Décision : ne pas appliquer `npm audit fix --force` ni ajouter un override arbitraire. Conserver Vitest 4.1.12 et le lockfile validé.
-
 Bilan du lot : installation reproductible (`npm ci`), build TypeScript réussi, 5 tests réussis sur 5, audit des dépendances de production sans vulnérabilité. Risque restant circonscrit à l'outillage de développement via Picomatch ; l'audit global n'est pas entièrement propre. Validations exécutées par l'utilisateur sous Windows.
 
 
@@ -557,8 +554,7 @@ Scénarios manuels prioritaires :
 2. Connexion avec jeton administrateur : création d'agent et arrêt d'urgence autorisés.
 3. Vérifier que le dashboard fonctionne via `http://127.0.0.1:3000` et `http://localhost:3000`, mais refuse un Host/Origin non local.
 4. Démarrer deux fois le même agent : le second appel doit être refusé avec HTTP 409.
-5. Vérifier qu'un arrêt manuel et l'arrêt d'urgence libèrent le runtime et empêchent toute nouvelle action d'outil.
-6. Sur une base SQLite existante, confirmer que la migration `runtime_owner` se déroule sans perte de données.
+5. Vérifier qu'un arrêt manuel et l'arrêt d'urgence libèrent le runtime et empêchent toute nouvelle action d'outil.6. Sur une base SQLite existante, confirmer que la migration `runtime_owner` se déroule sans perte de données.
 
 Le lot reste en cours jusqu'à la validation Windows, la vérification des refus API et un scénario réel de reprise après crash. Aucun changement n'a été fait sur `main`.
 
@@ -574,7 +570,7 @@ Validation utilisateur sur `feat/api-supervisor-hardening` :
 Cette validation confirme le comportement couvert par les tests automatisés. Elle ne remplace pas encore un test de crash réel avec deux processus ni un test sur un daemon Docker réel. Ces scénarios restent ouverts.
 
 
-## 6.4. Test d'intégration de reprise après crash de processus — en cours
+## 6.4. Test d'intégration de reprise après crash de processus — validation automatisée Windows
 
 Branche dédiée : `test/supervisor-process-crash-recovery`, créée depuis `feat/api-supervisor-hardening`.
 
@@ -584,8 +580,16 @@ Branche dédiée : `test/supervisor-process-crash-recovery`, créée depuis `fea
 - [x] Lancer le cycle de récupération dans un second processus Node et vérifier la reprise du bail par un nouveau propriétaire.
 - [x] Vérifier que la tâche persistante reste au statut `active` et que le compteur de redémarrage est incrémenté.
 - [x] Ajouter des tests unitaires pour les heartbeats périmés/invalides et empêcher la programmation de deux reprises simultanées.
-- [ ] Exécuter ces tests sous Windows et confirmer que l'arrêt forcé du processus fonctionne dans cet environnement.
+- [x] Exécuter les tests sous Windows : `npm run build` réussi ; `npm test` : 8 fichiers et 39 tests réussis (validation utilisateur, 18 novembre 2026).
+- [x] Confirmer que l'arrêt forcé du processus fonctionne sous Windows : le test multi-processus termine et le second processus reprend le bail.
 - [ ] Ajouter un test de bout en bout avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée, puis vérifier l'absence de runtime concurrent.
 - [ ] Tester séparément la réconciliation avec un daemon Docker réel.
 
-Fichiers ajoutés : `src/supervisor.ts`, `tests/supervisor.test.ts` et `tests/agent-runtime-process.test.ts`. Le cycle CLI utilise désormais la fonction extraite. Le test multi-processus utilise un faux démarrage d'agent qui exerce le vrai mécanisme de bail SQLite ; il ne valide pas encore l'exécution du vrai agent, l'appel LLM ou Docker. Aucun de ces nouveaux tests n'a encore été exécuté dans l'environnement Windows de référence.
+Fichiers ajoutés : `src/supervisor.ts`, `tests/supervisor.test.ts` et `tests/agent-runtime-process.test.ts`. Le cycle CLI utilise désormais la fonction extraite. Le test multi-processus utilise un faux démarrage d'agent qui exerce le vrai mécanisme de bail SQLite ; il valide la reprise après arrêt forcé et la conservation de la tâche active, mais pas encore l'exécution du vrai agent, l'appel LLM ou Docker.
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 8 fichiers réussis, 39 tests sur 39.
+- [x] Le test `agent-runtime-process.test.ts` passe : un processus détenteur du bail est tué, puis un second processus exécute le cycle superviseur et reprend le bail sans réinitialiser la tâche active.
+- [ ] Le redémarrage avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée reste à couvrir.
+- [ ] Le test avec un daemon Docker réel reste à effectuer.
