@@ -20,7 +20,7 @@ export async function startAgent(id:string){
   const taskPrompt=task?"\\nCurrent task: "+task.title+"\\nTask detail: "+task.description+"\\nTask ID: "+task.id+"\\nPrioritize this task; task status is updated using the CLI.\\n":"";
   const prompt="Identity: "+current.name+" ("+id+")\\nMission: "+current.goal+"\\nResource mode: "+mode+taskPrompt+"\\n"+toolHelp+"\\nUse exactly one tool per response, format TOOL name JSON on one line, or say DONE and explain progress.\\n";
   let answer="";
-  try{answer=await chat([{role:"system",content:constitutionText+"\n"+prompt},{role:"user",content:history.slice(-8).join("\n")||"Begin your mission."}]);}
+  try{answer=await chat([{role:"system",content:constitutionText+"\n"+prompt},{role:"user",content:history.slice(-8).join("\n")||"Begin your mission."}],id);}
   catch(e){log(id,"error",String(e));await delay(15000);continue;}
   log(id,"agent",answer);
   if(/^DONE\b/i.test(answer)){if(task)db.prepare("UPDATE tasks SET status='completed',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);history.push(answer);await delay(60000);continue;}
