@@ -37,6 +37,8 @@ describe("dashboard API authorization",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/security")).toBe(false);
   expect(isAllowedUiRequest("admin","POST","/api/security/tokens")).toBe(true);
   expect(isAllowedUiRequest("operator","POST","/api/security/tokens")).toBe(false);
+  expect(isAllowedUiRequest("admin","POST","/api/security/settings")).toBe(true);
+  expect(isAllowedUiRequest("operator","POST","/api/security/settings")).toBe(false);
  });
  it("allows operators to read dashboard data and agent details",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/dashboard")).toBe(true);
