@@ -420,3 +420,62 @@ Clôture de la vérification runtime — validation utilisateur Windows, 18 nove
 - [x] Décision : ne pas appliquer `npm audit fix --force` ni ajouter un override arbitraire. Conserver Vitest 4.1.12 et le lockfile validé.
 
 Bilan du lot : installation reproductible (`npm ci`), build TypeScript réussi, 5 tests réussis sur 5, audit des dépendances de production sans vulnérabilité. Risque restant circonscrit à l'outillage de développement via Picomatch ; l'audit global n'est pas entièrement propre. Validations exécutées par l'utilisateur sous Windows.
+
+
+## 6.3. Lot API et superviseur — en cours
+
+Branche : `feat/api-supervisor-hardening`, créée depuis `fix/npm-security-audit`.
+Pull request existante : #6, vers `main` ; aucune fusion effectuée.
+
+### API et dashboard
+- [x] Extraire les contrôles d'authentification et d'autorisation dans `src/ui-security.ts`, avec comparaison de jetons à temps constant.
+- [x] Appliquer une liste d'autorisation explicite par rôle, méthode HTTP et route ; refus par défaut.
+- [x] Restreindre les en-têtes Host et Origin aux adresses loopback attendues ; limiter CORS aux origines locales.
+- [x] Exiger `application/json` pour les écritures et plafonner les corps JSON à 1 Mio.
+- [x] Ajouter des délais de réception HTTP, des en-têtes de sécurité et des réponses d'erreur génériques sans détails internes.
+- [x] Échapper les contenus d'agents injectés dans le HTML et retirer les gestionnaires inline des boutons de fiches agents.
+- [x] Renvoyer un conflit HTTP 409 lorsqu'un démarrage échoue parce qu'un runtime détient déjà le bail.
+- [ ] Tester les refus admin/opérateur avec de vrais appels HTTP sous Windows et vérifier la navigation dans le navigateur.
+- [ ] Examiner le stockage du jeton dans `sessionStorage` et mettre en place une stratégie de session plus robuste dans un lot ultérieur.
+
+### Superviseur et cycle de vie
+- [x] Ajouter la migration SQLite idempotente de `agents.runtime_owner`.
+- [x] Ajouter des baux runtime atomiques : un seul propriétaire peut démarrer un agent dont le heartbeat est encore valide.
+- [x] Rafraîchir le heartbeat toutes les 15 secondes, y compris pendant une attente réseau du modèle.
+- [x] Permettre au superviseur de reprendre uniquement les agents au heartbeat périmé ; une date invalide est considérée comme périmée.
+- [x] Empêcher les démarrages si l'arrêt d'urgence est actif, avec vérification SQLite atomique au moment de la prise du bail.
+- [x] Vérifier à nouveau l'arrêt d'urgence après création de la sandbox et l'arrêter en cas de course au démarrage.
+- [x] Libérer le propriétaire et le heartbeat lors des arrêts CLI, dashboard, d'urgence ou de fin de boucle.
+- [x] Ajouter un délai maximal aux appels d'inférence via `LLM_TIMEOUT_MS` (120 000 ms par défaut).
+- [ ] Tester une vraie reprise après arrêt brutal du processus et vérifier qu'aucun runtime concurrent ne subsiste.
+- [ ] Tester la reprise après crash Docker et la cohérence des tâches restées au statut `active`.
+
+### Tests et validation
+- [x] Ajouter 10 tests unitaires sur les rôles, les routes, les hôtes/origines locales et les limites JSON.
+- [x] Ajouter 6 tests unitaires sur les baux runtime, les heartbeats périmés, les propriétaires et l'arrêt d'urgence.
+- [ ] Build TypeScript et suite complète à exécuter sur Windows ; aucune validation locale de ce lot n'est revendiquée à ce stade.
+- [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale.
+
+### Prochaine validation utilisateur
+
+Depuis PowerShell :
+
+```powershell
+git fetch origin
+git checkout feat/api-supervisor-hardening
+git pull
+npm ci
+npm run build
+npm test
+npm run ui
+```
+
+Scénarios manuels prioritaires :
+1. Connexion avec jeton opérateur : lecture dashboard, démarrage/arrêt et création de tâche autorisés ; création d'agent et arrêt d'urgence refusés.
+2. Connexion avec jeton administrateur : création d'agent et arrêt d'urgence autorisés.
+3. Vérifier que le dashboard fonctionne via `http://127.0.0.1:3000` et `http://localhost:3000`, mais refuse un Host/Origin non local.
+4. Démarrer deux fois le même agent : le second appel doit être refusé avec HTTP 409.
+5. Vérifier qu'un arrêt manuel et l'arrêt d'urgence libèrent le runtime et empêchent toute nouvelle action d'outil.
+6. Sur une base SQLite existante, confirmer que la migration `runtime_owner` se déroule sans perte de données.
+
+Le lot reste en cours jusqu'à la validation Windows, la vérification des refus API et un scénario réel de reprise après crash. Aucun changement n'a été fait sur `main`.
