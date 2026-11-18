@@ -202,6 +202,7 @@ describe("dashboard HTTP security integration",()=>{
    expect((await request("/api/tasks/"+task.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Changed",description:"Changed"})})).status).toBe(409);
    expect((await request("/api/tasks/"+task.id,adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
    expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:"Changed"})})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"active-guard-agent",goal:"Bypass attempt"})})).status).toBe(409);
    expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
   }finally{database.close()}
  });
