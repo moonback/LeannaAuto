@@ -27,6 +27,8 @@ function credentialStatus(role:"admin"|"operator",environmentToken:string){
  return {configured:row?row.revoked===0:Boolean(environmentToken),source:row?(row.revoked?"révoqué":"stockage local · empreinte dérivée"):environmentToken?"variable d’environnement":"non configuré",rotatedAt:row?.rotated_at??null};
 }
 
+const authFailures=new Map<string,{count:number;windowStart:number;blockedUntil:number}>();
+
 const server=http.createServer(async(req,res)=>{
  const origin=String(req.headers.origin??"");
  const send=(code:number,obj:any)=>{const headers:Record<string,string>={"Content-Type":"application/json; charset=utf-8","X-Content-Type-Options":"nosniff","Cache-Control":"no-store","Vary":"Origin"};if(origin&&isAllowedUiOrigin(origin,port))headers["Access-Control-Allow-Origin"]=origin;res.writeHead(code,headers);res.end(JSON.stringify(obj));};
@@ -39,7 +41,21 @@ const server=http.createServer(async(req,res)=>{
  if(!pathname.startsWith("/api/")){res.writeHead(404);res.end("Not found");return;}
  let body:any={};try{if(["POST","PATCH","DELETE"].includes(req.method??"")){const contentType=String(req.headers["content-type"]??"").split(";")[0].trim().toLowerCase();if(contentType!=="application/json")return send(415,{error:"Content-Type application/json requis"});body=await readJsonBody(req,1024*1024);}}catch(e){const message=e instanceof Error?e.message:"";return send(message==="BODY_TOO_LARGE"?413:400,{error:message==="BODY_TOO_LARGE"?"Corps de requête trop volumineux":"JSON invalide"});}
  try{
- if(pathname==="/api/auth"&&req.method==="POST"){const role=resolveUiRole(String(body.token??""));if(!role){audit("auth.failure",null,"Tentative de connexion refusée");return send(401,{error:"Jeton invalide ou jeton UI non configuré"});}audit("auth.success",null,"Connexion "+role+" réussie");return send(200,{ok:true,role});}
+ if(pathname==="/api/auth"&&req.method==="POST"){
+  const address=req.socket.remoteAddress??"unknown",now=Date.now(),attempt=authFailures.get(address);
+  if(attempt&&attempt.blockedUntil>now)return send(429,{error:"Trop de tentatives. Réessayez dans une minute."});
+  const token=String(body.token??"");
+  const role=token.length<=512?resolveUiRole(token):null;
+  if(!role){
+   const fresh=!attempt||now-attempt.windowStart>60000,current=fresh?{count:0,windowStart:now,blockedUntil:0}:attempt;
+   current.count++;if(current.count>=8)current.blockedUntil=now+60000;
+   authFailures.set(address,current);
+   if(authFailures.size>1024){for(const [key,value] of authFailures)if(value.blockedUntil<now&&now-value.windowStart>60000)authFailures.delete(key);if(authFailures.size>1024)authFailures.delete(authFailures.keys().next().value!);}
+   audit("auth.failure",null,"Tentative de connexion refusée");
+   return send(current.blockedUntil>now?429:401,{error:current.blockedUntil>now?"Trop de tentatives. Réessayez dans une minute.":"Jeton invalide ou jeton UI non configuré"});
+  }
+  authFailures.delete(address);audit("auth.success",null,"Connexion "+role+" réussie");return send(200,{ok:true,role});
+ }
  const authHeader=String(req.headers.authorization??"");const suppliedToken=authHeader.startsWith("Bearer ")?authHeader.slice(7):"";const role=resolveUiRole(suppliedToken);if(!role)return send(401,{error:"Authentification requise"});
  if(!isAllowedUiRequest(role,req.method??"GET",pathname))return send(403,{error:"Action non autorisée pour ce rôle"});
  if(pathname==="/api/security"&&req.method==="GET"){
