@@ -62,6 +62,13 @@ describe("dashboard HTTP security integration",()=>{
   expect(response.status).toBe(200);
   const html=await response.text();
   expect(html).toContain("Interventions requises");
+  expect(html).toContain("function handleControlAlertAction(action,target)");
+  expect(html).toContain("data-alert-action");
+  expect(html).toContain("Gérer cet agent");
+  expect(html).toContain("Examiner les tâches");
+  expect(html).toContain("Réarmer le système");
+  expect(html).toContain("window.__leannaRole==='admin'");
+
   expect(html).toContain("Bureau IA");
   expect(html).toContain('id="officeTree"');
   expect(html).toContain("function renderOfficeTree(agents,tasks)");
