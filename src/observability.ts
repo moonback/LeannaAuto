@@ -72,7 +72,7 @@ export async function collectSystemMetrics(){
  };
  let docker:{available:boolean;containers:Array<{name:string;cpuPercent:number|null;memoryUsedBytes:number|null;memoryLimitBytes:number|null;memoryPercent:number|null;pids:number|null}>;reason?:string};
  try{
-  const result=await execFileAsync("docker",["stats","--no-stream","--format","{{json .}}"],{timeout:6000,maxBuffer:1024*1024});
+  const result=await execFileAsync("docker",["stats","--no-stream","--format","{{json .}}"],{timeout:3000,maxBuffer:1024*1024});
   const containers=result.stdout.split(/\r?\n/).filter(Boolean).flatMap(line=>{
    try{
     const row=JSON.parse(line) as Record<string,string>;
