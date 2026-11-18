@@ -32,7 +32,13 @@ describe("secure UI credential storage",()=>{
 });
 
 describe("dashboard API authorization",()=>{
- it("allows only administrators to read security configuration",()=>{\n  expect(isAllowedUiRequest("admin","GET","/api/security")).toBe(true);\n  expect(isAllowedUiRequest("operator","GET","/api/security")).toBe(false);\n  expect(isAllowedUiRequest("admin","POST","/api/security/tokens")).toBe(true);\n  expect(isAllowedUiRequest("operator","POST","/api/security/tokens")).toBe(false);\n });\n it("allows operators to read dashboard data and agent details",()=>{
+ it("allows only administrators to read security configuration",()=>{
+  expect(isAllowedUiRequest("admin","GET","/api/security")).toBe(true);
+  expect(isAllowedUiRequest("operator","GET","/api/security")).toBe(false);
+  expect(isAllowedUiRequest("admin","POST","/api/security/tokens")).toBe(true);
+  expect(isAllowedUiRequest("operator","POST","/api/security/tokens")).toBe(false);
+ });
+ it("allows operators to read dashboard data and agent details",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/dashboard")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/resources")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1")).toBe(true);
