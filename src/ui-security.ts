@@ -16,6 +16,8 @@ export function tokenRole(value:string,adminToken:string,operatorToken:string):U
 export function isAllowedUiRequest(role:UiRole,method:string,pathname:string):boolean {
  if(method==="GET"&&(pathname==="/api/dashboard"||pathname==="/api/events"||pathname==="/api/resources"||/^\/api\/agents\/[^/]+(?:\/workspace(?:\/file)?)?$/.test(pathname)))return true;
  if(method==="POST"&&(pathname==="/api/tasks"||/^\/api\/agents\/[^/]+\/(?:start|stop)$/.test(pathname)))return true;
+ if(role==="admin"&&method==="POST"&&/^\/api\/tasks\/[^/]+\/assign$/.test(pathname))return true;
+ if(role==="admin"&&method==="POST"&&( /^\/api\/agents\/[^/]+\/mission\/cancel$/.test(pathname)||/^\/api\/tasks\/[^/]+\/cancel$/.test(pathname)))return true;
  if(role==="admin"&&method==="POST"&&(pathname==="/api/agents"||pathname==="/api/emergency-stop"||pathname==="/api/emergency-stop/reset"))return true;
  if(role==="admin"&&method==="PATCH"&&(/^\/api\/agents\/[^/]+$/.test(pathname)||/^\/api\/agents\/[^/]+\/mission$/.test(pathname)||/^\/api\/tasks\/[^/]+$/.test(pathname)))return true;
  if(role==="admin"&&method==="DELETE"&&(/^\/api\/agents\/[^/]+\/mission$/.test(pathname)||/^\/api\/tasks\/[^/]+$/.test(pathname)))return true;
