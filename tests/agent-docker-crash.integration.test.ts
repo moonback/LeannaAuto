@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import {execFile,spawn} from "node:child_process";
+import {rmSync} from "node:fs";
 import {promisify} from "node:util";
 import {randomUUID} from "node:crypto";
 import {afterEach,describe,it,expect} from "vitest";
@@ -18,10 +19,12 @@ describe.skipIf(!enabled)("Docker agent recovery after owner-process crash (opt-
  let db:Database|undefined;
  let container="";
  let volume="";
+ let databasePath="";
  afterEach(async()=>{
   if(container)await docker(["rm","-f",container]).catch(()=>undefined);
   if(volume)await docker(["volume","rm",volume]).catch(()=>undefined);
   if(db?.open)db.close();
+  if(databasePath)rmSync(databasePath,{force:true});
  });
 
  it("reclaims a killed process lease and resumes the active task in the persistent Docker workspace",async()=>{
