@@ -207,6 +207,21 @@ Branche : `feat/mission-control-ui`.
 
 Limites : la corrélation est créée par cycle de décision de l'agent ; les actions hors boucle d'agent et les événements historiques ne reçoivent pas rétroactivement de corrélation. Les logs legacy conservent leur format texte pour compatibilité.
 
+### Livraison — première page de mesures système
+
+Branche : `feat/mission-control-ui`.
+
+- [x] Ajouter une collecte à la demande des métriques hôte : CPU (différence entre deux échantillons), nombre de cœurs, RAM totale/libre/utilisée, uptime et plateforme.
+- [x] Mesurer l'espace disque du volume contenant le répertoire de travail de l'UI via `statfs`, en exposant explicitement l'indisponibilité si la plateforme ne fournit pas la mesure.
+- [x] Exposer les métriques du processus UI : PID, uptime, RSS, heap et mémoire externe.
+- [x] Exposer les limites configurées par sandbox (CPU, RAM, PIDs et timeout) séparément de la consommation observée.
+- [x] Collecter les statistiques ponctuelles des conteneurs `leanna-*` via Docker Stats, avec CPU, RAM et PIDs ; borner l'appel Docker et retourner un état indisponible en cas d'échec.
+- [x] Ajouter une route authentifiée `GET /api/resources` et une page Ressources dans l'interface.
+- [x] Ajouter un test HTTP couvrant la structure des métriques hôte, processus, disque, limites et Docker.
+- [ ] Validation utilisateur Windows : build, suite complète et vérification de la page Ressources avec Docker actif et inactif.
+
+Limites : les mesures sont collectées à la demande et ne sont pas encore historisées dans SQLite. Le CPU hôte nécessite deux échantillons pour calculer un pourcentage ; le premier affiche donc une valeur indisponible. La mesure disque concerne le volume qui héberge le répertoire de travail du serveur UI, pas une agrégation de tous les volumes. Les statistiques Docker portent uniquement sur les conteneurs en cours d'exécution dont le nom commence par `leanna-`. La consommation CPU/RAM par agent et les courbes temporelles restent à réaliser.
+
 ### Phase 1.5 — Contrat de données et API d'observabilité
 **Priorité : P0 · À réaliser en parallèle des vues, avant le temps réel**
 
