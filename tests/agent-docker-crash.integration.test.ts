@@ -1,14 +1,12 @@
 import Database from "better-sqlite3";
-import {execFile,spawn} from "node:child_process";
+import {spawn} from "node:child_process";
 import {rmSync} from "node:fs";
-import {promisify} from "node:util";
 import {randomUUID} from "node:crypto";
 import {afterEach,describe,it,expect} from "vitest";
 import {createAgentStarter} from "../src/agent.js";
 import {recoverStaleAgents} from "../src/supervisor.js";
 import {ensureSandboxWith,shell} from "../src/executor.js";
 
-const execFileAsync=promisify(execFile);
 const enabled=process.env.LEANNAAUTO_DOCKER_INTEGRATION==="1";
 async function docker(args:string[],timeoutMs=120000):Promise<string>{
  const {stdout}=await execFileAsync("docker",args,{timeout:timeoutMs,maxBuffer:1024*1024});
