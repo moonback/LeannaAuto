@@ -102,6 +102,10 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("function renderTasks(tasks,agents)");
   expect(html).toContain("function openTaskEdit(id)");
   expect(html).toContain("function deleteTask(id)");
+  expect(html).toContain("function cancelTask(id)");
+  expect(html).toContain("data-task-cancel");
+  expect(html).toContain("data-mission-cancel");
+  expect(html).toContain("function cancelMission(id)");
   expect(html).toContain("function openMissionEdit(id)");
   expect(html).toContain("function deleteMission(id)");
   expect(html).toContain('data-action="edit"');
