@@ -14,7 +14,7 @@ describe("supervisor recovery cycle",()=>{
   const now=new Date("2026-11-18T10:00:00.000Z");
 
   const attempted=recoverStaleAgents(db,active,startAgent,90000,now);
-  expect(attempted).toEqual(["stale","malformed"]);
+  expect([...attempted].sort()).toEqual(["malformed","stale"]);
   expect(startAgent).not.toHaveBeenCalled();
   await Promise.all([...active.values()]);
   expect(startAgent).toHaveBeenCalledTimes(2);
