@@ -20,8 +20,10 @@ describe("supervisor recovery with the real agent loop",()=>{
  afterEach(()=>{if(db?.open)db.close();});
 
  it("reclaims a crashed lease and runs the real agent loop without Docker or a live LLM",async()=>{
-  const log=vi.fn((id:string,level:string,message:string)=>{
+  const eventRecords:Array<{eventType?:string;taskId?:string|null;correlationId?:string|null;details?:unknown}>=[];
+  const log=vi.fn((id:string,level:string,message:string,metadata?:{eventType?:string;taskId?:string|null;correlationId?:string|null;details?:unknown})=>{
    db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(id,new Date().toISOString(),level,message);
+   if(metadata)eventRecords.push(metadata);
   });
   const ensureSandbox=vi.fn(async()=> "sandbox-ready");
   const stopSandbox=vi.fn(async()=>undefined);
@@ -50,6 +52,11 @@ describe("supervisor recovery with the real agent loop",()=>{
   });
   expect(db.prepare("SELECT status FROM tasks WHERE id='task-restart'").get()).toEqual({status:"active"});
   expect((db.prepare("SELECT COUNT(*) AS count FROM logs WHERE level='tool'").get() as {count:number}).count).toBe(1);
+  expect(eventRecords.map(event=>event.eventType)).toEqual(expect.arrayContaining(["task_transition","llm_call","tool_execution"]));
+  const correlated=eventRecords.filter(event=>event.taskId==="task-restart");
+  expect(correlated.length).toBeGreaterThanOrEqual(5);
+  expect(new Set(correlated.map(event=>event.correlationId)).size).toBe(1);
+  expect(correlated.every(event=>Boolean(event.correlationId))).toBe(true);
  });
 
  it("rejects a second start while the real agent loop still owns its lease",async()=>{
