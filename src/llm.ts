@@ -13,7 +13,9 @@ export async function chat(messages:LLMMessage[],agentId="unknown"){
  const headers:Record<string,string>={"Authorization":"Bearer "+key,"Content-Type":"application/json"};
  if(process.env.OPENROUTER_SITE_URL)headers["HTTP-Referer"]=process.env.OPENROUTER_SITE_URL;
  if(process.env.OPENROUTER_APP_NAME)headers["X-Title"]=process.env.OPENROUTER_APP_NAME;
- const response=await fetch(base.replace(/\/$/,"")+"/chat/completions",{method:"POST",headers,body:JSON.stringify({model,messages,temperature:.2})});
+ const configuredTimeout=Number(process.env.LLM_TIMEOUT_MS??120000);
+ const timeoutMs=Number.isFinite(configuredTimeout)?Math.max(1000,configuredTimeout):120000;
+ const response=await fetch(base.replace(/\/$/,"")+"/chat/completions",{method:"POST",headers,body:JSON.stringify({model,messages,temperature:.2}),signal:AbortSignal.timeout(timeoutMs)});
  if(!response.ok)throw new Error("OpenRouter HTTP "+response.status+": "+(await response.text()).slice(0,400));
  const data=await response.json() as any;
  const tokens=Math.max(0,Number(data.usage?.total_tokens??0));
