@@ -698,10 +698,11 @@ Branche dédiée : `test/docker-exec-orphan-recovery`, créée depuis `test/dock
 Le test de caractérisation est opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1` et utilise uniquement un conteneur et un volume au nom aléatoire, supprimés au nettoyage. Aucun changement de comportement de production n'est encore effectué : la survie d'une commande après la mort de son client Node reste une hypothèse à mesurer sur le daemon Docker cible.
 
 
-Premier retour Windows, 18 novembre 2026 :
-- `npm ci` a échoué car le lockfile référence Vitest 3.2.7 alors que `package.json` exige Vitest 4.1.12 ; les versions de Vite et plusieurs dépendances transitives sont également désynchronisées. Le build et les tests ont ensuite tourné avec les dépendances déjà présentes localement, ce qui ne valide pas une installation propre.
-- Build réussi avec l'installation existante.
-- La suite a compté 44 tests réussis et 1 échec ; le test de caractérisation Docker a lu zéro ligne d'événement (`starts: 0`, `completions: 0`). Ce résultat ne permet pas de conclure sur la survie de la commande orpheline.
-- Les trois tests Docker précédemment établis ont passé dans cette exécution.
-- [ ] Régénérer et committer `package-lock.json` pour le rendre cohérent avec `package.json`.
-- [ ] Rejouer le test de caractérisation avec les assertions de diagnostic ajoutées : vérifier le marqueur avant le crash, vérifier le résultat de la commande de reprise et consigner le nombre d'exécutions observées.
+Retour Windows suivant, 18 novembre 2026 :
+- `npm install --package-lock-only` n'a produit aucun changement : le dépôt était propre et aucun commit de lockfile n'était nécessaire.
+- `npm ci` a ensuite réussi et installé 90 packages ; l'installation propre est désormais confirmée avec Vitest 4.1.12.
+- `npm run build` a réussi.
+- `npm test` : 12 fichiers réussis, 1 échec ; 44 tests réussis et le test de caractérisation Docker échoue avant le crash. Les tests Docker déjà établis (agent end-to-end, reprise après crash et réconciliation/persistance) ont tous passé.
+- Le défaut vient d'une course dans le test : attendre seulement l'existence du fichier ne garantit pas que la commande ait déjà écrit `started`. La redirection crée le fichier avant l'écriture du marqueur. Le test a aussi été corrigé pour découper les lignes sur les vrais retours à la ligne.
+- [x] Corriger le test pour attendre explicitement le contenu `started` avant de tuer le processus Node et inclure le dernier contenu lu dans le diagnostic de timeout (commit `26d05bb`).
+- [ ] Rejouer build, suite complète et test opt-in après cette correction ; le comportement de la commande orpheline reste indéterminé tant que cette exécution n'a pas fourni le relevé `started/completed`.
