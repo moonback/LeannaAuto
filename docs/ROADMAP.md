@@ -74,12 +74,13 @@ Critères de sortie :
 Objectif : faire de l'interface le poste de pilotage quotidien. L'utilisateur doit comprendre en quelques secondes ce que fait chaque agent, pourquoi il le fait, sur quelle tâche il travaille, ce qui vient de se passer et quelle intervention est nécessaire.
 
 #### 1A — Vue d'ensemble / salle de contrôle
-- [ ] Construire une page d'accueil orientée exploitation : agents actifs, agents en attente, agents arrêtés, agents en erreur, tâches en cours, tâches en retard et approbations en attente.
-- [ ] Afficher l'état global du runtime, du superviseur, de SQLite, de Docker et du fournisseur LLM sans confondre état inconnu et état sain.
-- [ ] Ajouter un flux « activité récente » trié chronologiquement : démarrage, changement d'état, tâche prise/terminée, outil lancé/terminé, erreur, reprise, décision et intervention humaine.
+- [x] Construire la première page d'accueil opérationnelle : agents enregistrés/actifs, tâches actives, alertes, état des heartbeats et interventions requises.
+- [ ] Compléter les compteurs dédiés aux agents en attente/arrêtés, tâches en retard et approbations en attente.
+- [ ] Afficher l'état vérifié du runtime, du superviseur, de SQLite, de Docker et du fournisseur LLM sans confondre état inconnu et état sain.
+- [x] Ajouter un flux d'activité récent alimenté par les logs persistés, trié du plus récent au plus ancien.
 - [ ] Ajouter des filtres globaux par agent, statut, mission, période et niveau de gravité.
-- [ ] Rendre visibles les données périmées : heure de dernière actualisation, dernier heartbeat et avertissement lorsque la source ne répond plus.
-- [ ] Ajouter des liens directs depuis chaque indicateur vers la liste filtrée correspondante.
+- [x] Rendre visibles l'heure de dernière actualisation et les heartbeats absents ou périmés ; seuil de retard aligné sur le bail runtime (90 secondes).
+- [x] Ajouter des accès directs vers les missions et le journal complet depuis la salle de contrôle.
 
 #### 1B — Tableau des missions
 - [x] Première vue Missions : cartes d'agents, objectif, tâche active/prochaine tâche, dernière activité, heartbeat, état et actions démarrer/arrêter.
@@ -155,6 +156,23 @@ Objectif : faire de l'interface le poste de pilotage quotidien. L'utilisateur do
 - Une mission peut être suivie de sa création à sa clôture dans une chronologie cohérente.
 - Toute action est autorisée côté serveur, confirmée si nécessaire, auditée et reflétée par l'état réel.
 - Le dashboard reste utilisable lorsque des agents, tâches et événements sont nombreux, et lorsque le serveur ou Docker est momentanément indisponible.
+
+
+
+### Livraison — première salle de contrôle opérationnelle
+
+Branche : `feat/mission-control-ui`.
+
+- [x] Remplacer la vue d'ensemble générique par une salle de contrôle structurée : synthèse, santé opérationnelle, interventions requises, agents actifs et flux d'activité récent.
+- [x] Détecter les agents en erreur, les heartbeats manquants ou vieux de plus de 90 secondes, les tâches actives sans agent en cours et l'arrêt d'urgence global.
+- [x] Afficher un état « Données insuffisantes » lorsqu'aucun agent n'est enregistré au lieu d'afficher artificiellement un système sain.
+- [x] Ajouter l'heure de dernière actualisation et des liens vers Missions, Logs et fiches agents.
+- [x] Ajouter `taskCounts` dans `GET /api/dashboard` : compteurs exacts calculés en SQL, indépendants de la limite de 200 tâches renvoyées pour l'affichage.
+- [x] Ordonner les tâches renvoyées en donnant priorité aux tâches actives et en attente, puis aux tâches historiques récentes.
+- [x] Ajouter des tests HTTP couvrant la structure de la salle de contrôle et les compteurs de tâches.
+- [ ] Validation utilisateur Windows de ce nouveau lot : `npm run build`, `npm test` et vérification visuelle dans le navigateur.
+
+Limites connues : l'état Docker, SQLite, du fournisseur LLM et du superviseur n'est pas encore sondé indépendamment ; il n'est donc pas présenté comme sain. Le flux utilise les logs existants, pas encore un journal d'événements typé. Les alertes sont calculées à partir des champs actuellement persistés ; les approbations et métriques de ressources ne sont pas encore disponibles.
 
 ### Phase 1.5 — Contrat de données et API d'observabilité
 **Priorité : P0 · À réaliser en parallèle des vues, avant le temps réel**
@@ -413,7 +431,7 @@ Les phases 2 et 3 doivent progresser ensemble : la fiabilité ne doit jamais con
 | Phase | Statut initial | Prochaine preuve attendue |
 |---|---|---|
 | 0 — Stabilisation | Validation locale partielle | Build et 45 tests validés sous Windows sur `feat/mission-control-ui` ; CI, sauvegarde/restauration et audit npm restent ouverts. |
-| 1 — Centre de contrôle | En cours | Validation visuelle de la vue Missions, puis livraison progressive des vues 1A à 1H. | pages et actions. |
+| 1 — Centre de contrôle | En cours | Valider la salle de contrôle et poursuivre les vues 1B à 1H. |
 | 2 — Superviseur | À faire / partiel | Tests de crash, reprise et réconciliation Docker. |
 | 3 — Sécurité | À faire / partiel | Audit des routes, secrets, Docker et tests adversariaux. |
 | 4 — Ressources | Partiel | Quotas CPU/RAM/stockage/temps appliqués et mesurés. |
