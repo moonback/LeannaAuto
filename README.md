@@ -1,97 +1,129 @@
 # LeannaAuto
 
-Autonomous agents ("automatons") with persistent missions, Linux sandbox execution, a constitution, resource supervision, self-improvement proposals and bounded replication. No wallets, money or blockchain.
+Agents autonomes (« automatons ») avec missions persistantes, exécution en sandbox Linux, constitution, supervision des ressources, propositions d'auto-amélioration et réplication limitée. Ni wallets, ni argent, ni blockchain.
 
-## Requirements
+## Prérequis
 - Node.js 20+
-- Docker installed and accessible (shell tool runs in a container)
-- An OpenRouter API key and model ID
+- Docker installé et accessible (l'outil shell s'exécute dans un conteneur)
+- Une clé API et un identifiant de modèle OpenRouter
 
-## Quickstart
+## Démarrage rapide
 ```bash
 cp .env.example .env
-# Set OPENROUTER_API_KEY and OPENROUTER_MODEL
+# Renseigner OPENROUTER_API_KEY et OPENROUTER_MODEL
 npm install
 npm run dev -- init --name Researcher --goal "Build a useful open-source tool"
-npm run dev -- start researcher-XXXXXXXX # replace with generated id
+npm run dev -- start researcher-XXXXXXXX # remplacer par l'identifiant généré
 npm run dev -- status researcher-XXXXXXXX
 npm run dev -- logs researcher-XXXXXXXX --follow
 ```
 
-`init` writes the genesis mission. `start` runs a foreground loop. Stop with Ctrl+C or the stop command.
-The Docker executor creates isolated containers with CPU, memory and PID limits and disables networking by default. The constitution has a simple command gate; it is not a safety guarantee. The MVP is not production-ready.
+`init` écrit la mission de genèse. `start` exécute une boucle en avant-plan. Arrêt par Ctrl+C ou la commande `stop`.
+L'exécuteur Docker crée des conteneurs isolés avec des limites de CPU, de mémoire et de PID, et désactive le réseau par défaut. La constitution applique un simple filtrage des commandes ; ce n'est pas une garantie de sécurité. Le MVP n'est pas prêt pour la production.
 
 ## CLI
-- `init --name NAME --goal GOAL`
+- `init --name NOM --goal OBJECTIF` (option `--parent ID` pour créer un agent enfant)
 - `start ID`
 - `stop ID`
 - `status ID`
-- `resources ID`\n- `usage [ID]` (token totals and global quota)
-- `logs ID --follow`
+- `resources ID`
+- `usage [ID]` (totaux de tokens et quota global)
+- `logs ID --tail N --follow`
 - `identity ID`
-- `spawn ID --goal GOAL` (creates a child manifest; child must be separately started)
+- `spawn ID --goal GOAL` (crée le manifeste d'un enfant ; l'enfant doit être démarré séparément)
 
-## Limitations
-- Agent loops run in the foreground. `supervise` is a foreground watchdog that uses SQLite runtime leases and heartbeats to avoid duplicate starts and reclaim stale agent loops. It is not a replacement for an external process manager or Docker daemon recovery.
-- Tool calling uses a simple text protocol, not structured native tool calls.
-- Identity currently exposes a fingerprint; private key signing and key custody are not implemented.
-- Replication creates a child record only; resource budgeting/automatic spawning is not implemented.
-- Self-modification is not yet implemented.
-- Network access is disabled inside the sandbox; no web/API tools yet.
-- Constitution checks are basic heuristics. This is a prototype and should not be run on a machine with sensitive data.
-- Docker socket access, if used for host orchestration, is effectively a powerful host permission. Keep the host dedicated and never expose the socket to the agent container.
-
-
-## Persistent task tracking
-Tasks can be stored and tracked separately from the agent loop:
+### Tâches persistantes
+Les tâches peuvent être stockées et suivies séparément de la boucle de l'agent :
 ```bash
 npm run dev -- task add AGENT_ID --title "Investigate issue" --description "Write findings to workspace"
 npm run dev -- task list AGENT_ID
 npm run dev -- task set TASK_ID active
 npm run dev -- task set TASK_ID completed
 ```
-Task state is stored in SQLite (pending, active, completed, failed). This CLI tracking is not yet automatically consumed by the agent planner.
+Leurs états sont stockés en SQLite (`pending`, `active`, `completed`, `failed`). Ce suivi CLI n'est pas encore consommé automatiquement par le planificateur de l'agent.
 
-## OpenRouter
-Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default endpoint is `https://openrouter.ai/api/v1`. Optional attribution headers are configured with `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME`. `LLM_TIMEOUT_MS` bounds each inference HTTP request (default: 120000 ms).
-
-## Inference budget\n\n`INFERENCE_QUOTA` is a global token ceiling. OpenRouter-reported `usage.total_tokens` is persisted to SQLite per agent. Calls are blocked when the recorded total reaches the ceiling. Use `npm run dev -- usage` for global totals or append an agent ID for per-agent usage. Models/providers that omit usage fields may be undercounted.\n\n## Supervisor
+### Superviseur
 ```bash
 npm run dev -- supervise --interval 10 --stale 90
 ```
-The watchdog starts loops for database agents marked `running`, records heartbeat timestamps, and logs stale heartbeat detections. For production process-level recovery, run it under systemd, Docker restart policy, or another external process manager; a hung loop is not yet force-killed/replaced by this MVP.
+Le watchdog démarre les boucles des agents marqués `running` en base, enregistre les horodatages de heartbeat et détecte les heartbeats obsolètes. Les boucles en avant-plan utilisent des leases SQLite pour éviter les démarrages en double et récupérer les boucles obsolètes. Pour une récupération au niveau processus en production, exécutez-le sous systemd, une politique de redémarrage Docker ou un autre gestionnaire de processus externe ; ce MVP ne force pas encore l'arrêt ni le remplacement d'une boucle bloquée.
 
+## Dashboard (interface web)
 
-## Dashboard authentication and security
+Le dashboard se lance avec :
+```bash
+npm run ui
+```
+Il est accessible par défaut sur `http://127.0.0.1:3000`. Vue d'ensemble, Bureau IA, Univers 3D, Supervision, Agents, Missions, Tâches, Filiation & dépendances, Logs système, Audit, Quota IA, Ressources, Workspace et Sécurité & paramètres y sont disponibles.
 
-The dashboard binds to `127.0.0.1`. Before the first start, set a unique random `LEANNAAUTO_UI_TOKEN` in `.env`; this is the bootstrap administrator credential. The optional `LEANNAAUTO_UI_OPERATOR_TOKEN` bootstraps a restricted operator credential. The dashboard accepts either role and applies explicit per-route authorization.
+### Authentification et sécurité
 
-Administrators can manage credentials in **Sécurité & paramètres**:
-- Generate a new administrator or operator token.
-- Revoke the operator token.
-- A generated token is displayed only once. Copy it before closing the panel.
-- Tokens generated by the dashboard are stored in SQLite only as salted scrypt-derived hashes; raw tokens are never stored or written to audit logs.
-- A stored credential overrides its corresponding environment token. Rotation therefore invalidates the previous token immediately.
-- Invalid login attempts are rate-limited (8 failures per minute per source address).
-- The browser stores the active bearer token in `sessionStorage` for the current tab only.
+Le dashboard écoute uniquement sur `127.0.0.1`. Avant le premier démarrage, définissez dans `.env` un `LEANNAAUTO_UI_TOKEN` unique et aléatoire ; c'est le credential administrateur d'amorçage. Le `LEANNAAUTO_UI_OPERATOR_TOKEN` optionnel amorce un credential opérateur restreint. Le dashboard accepte l'un ou l'autre rôle et applique une autorisation explicite par route.
 
-The administrator can also change the global inference token quota in the settings page. The value is persisted in SQLite and is used by the inference runtime, the dashboard and the CLI. `INFERENCE_QUOTA` remains the initial/default value until an administrator saves an override.
+L'administrateur peut gérer les credentials dans **Sécurité & paramètres** :
+- Générer un nouveau token administrateur ou opérateur.
+- Révoquer le token opérateur.
+- Un token généré n'est affiché qu'une seule fois. Copiez-le avant de fermer le panneau.
+- Les tokens générés par le dashboard sont stockés en SQLite uniquement sous forme de hachés scrypt salés ; les tokens bruts ne sont jamais stockés ni écrits dans les logs d'audit.
+- Un credential stocké prime sur le token d'environnement correspondant. La rotation invalide donc immédiatement le token précédent.
+- Les tentatives de connexion invalides sont limitées en fréquence (8 échecs par minute et par adresse source).
+- Le navigateur conserve le token porteur actif dans `sessionStorage`, pour l'onglet courant uniquement.
 
-If the administrator token is lost, run the local recovery command from the repository directory:
+L'administrateur peut également modifier le quota global de tokens d'inférence dans la page de paramètres. La valeur est persistée en SQLite et utilisée par le runtime d'inférence, le dashboard et le CLI. `INFERENCE_QUOTA` reste la valeur initiale/par défaut tant qu'aucun administrateur n'a enregistré un remplacement.
+
+En cas de perte du token administrateur, exécutez la commande locale de récupération depuis le répertoire du dépôt :
 ```bash
 npm run dev -- security reset-admin-token
 ```
-The new token is printed once to the terminal. This replaces any stored administrator credential. To revoke an operator token from the local shell:
+Le nouveau token est affiché une seule fois dans le terminal. Il remplace tout credential administrateur stocké. Pour révoquer un token opérateur depuis le shell local :
 ```bash
 npm run dev -- security revoke-operator-token
 ```
 
-The API accepts only loopback Host/Origin values, caps JSON request bodies at 1 MiB, applies request/header timeouts and sends restrictive browser security headers. Do not expose the dashboard port publicly or reuse its tokens elsewhere. Keep the bootstrap secret out of source control.
+L'API n'accepte que des valeurs Host/Origin en boucle locale, plafonne les corps JSON à 1 Mio, applique des délais d'expiration de requête et d'en-tête, et envoie des en-têtes de sécurité restrictifs pour le navigateur. N'exposez pas publiquement le port du dashboard et ne réutilisez pas ses tokens ailleurs. Ne commettez pas le secret d'amorçage dans le dépôt.
 
-Generate a bootstrap token with Node.js:
+Générez un token d'amorçage avec Node.js :
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-## Global emergency stop
-The dashboard administrator can activate a persistent global emergency stop. It marks every running agent as stopped, asks its Docker sandbox to stop, and prevents new agent loops from starting through both the dashboard and CLI while the lock is active. Resetting the lock only permits future starts; it does not restart agents automatically. The emergency-stop state is stored in SQLite and survives dashboard restarts.
+### Arrêt d'urgence global
+L'administrateur du dashboard peut activer un arrêt d'urgence global persistant. Il marque tous les agents en cours d'exécution comme arrêtés, demande l'arrêt de leurs sandbox Docker et empêche le démarrage de nouvelles boucles d'agents, via le dashboard comme via le CLI, tant que le verrou est actif. La réinitialisation du verrou n'autorise que les démarrages futurs ; elle ne redémarre pas automatiquement les agents. L'état d'arrêt d'urgence est stocké en SQLite et survit aux redémarrages du dashboard.
+
+## Configuration
+
+Variables d'environnement (voir `.env.example`) :
+
+| Variable | Rôle | Défaut |
+|---|---|---|
+| `OPENROUTER_API_KEY` | Clé API OpenRouter | — |
+| `OPENROUTER_MODEL` | Identifiant du modèle | — |
+| `OPENROUTER_BASE_URL` | Point de terminaison de l'API | `https://openrouter.ai/api/v1` |
+| `OPENROUTER_SITE_URL` / `OPENROUTER_APP_NAME` | En-têtes d'attribution optionnels | — / `LeannaAuto` |
+| `LLM_TIMEOUT_MS` | Délai maximum de chaque requête d'inférence | `120000` |
+| `AUTOMATON_DB` | Chemin de la base SQLite | `./data/automaton.db` |
+| `DOCKER_IMAGE` | Image utilisée pour les sandbox | `node:22-bookworm-slim` |
+| `INFERENCE_QUOTA` | Plafond global de tokens d'inférence | `100000` |
+| `INFERENCE_QUOTA_USED` | Compteur initial de tokens consommés | `0` |
+| `MAX_CHILDREN_PER_AGENT` | Enfants maximum par agent | `3` |
+| `MAX_AGENTS_TOTAL` | Nombre total maximum d'agents | `20` |
+| `LEANNAAUTO_UI_TOKEN` | Token administrateur d'amorçage du dashboard | — |
+| `LEANNAAUTO_UI_OPERATOR_TOKEN` | Token opérateur optionnel | — |
+
+## OpenRouter
+
+Configurez `OPENROUTER_API_KEY` et `OPENROUTER_MODEL` dans `.env`. Le point de terminaison par défaut est `https://openrouter.ai/api/v1`. Les en-têtes d'attribution optionnels sont configurés avec `OPENROUTER_SITE_URL` et `OPENROUTER_APP_NAME`. `LLM_TIMEOUT_MS` borne chaque requête HTTP d'inférence (par défaut : 120000 ms).
+
+## Budget d'inférence
+
+`INFERENCE_QUOTA` est un plafond global de tokens. Le `usage.total_tokens` rapporté par OpenRouter est persisté en SQLite par agent. Les appels sont bloqués lorsque le total enregistré atteint le plafond. Utilisez `npm run dev -- usage` pour les totaux globaux, ou ajoutez un identifiant d'agent pour l'usage par agent. Les modèles/fournisseurs qui omettent les champs d'usage peuvent être sous-comptabilisés.
+
+## Limitations
+- Les boucles des agents tournent en avant-plan. `supervise` est un watchdog en avant-plan qui s'appuie sur des leases SQLite et des heartbeats pour éviter les démarrages en double et récupérer les boucles obsolètes. Il ne remplace pas un gestionnaire de processus externe ni la récupération du démon Docker.
+- L'appel d'outils utilise un simple protocole texte, pas des appels d'outils natifs structurés.
+- L'identité expose actuellement une empreinte ; la signature par clé privée et la garde des clés ne sont pas implémentées.
+- La réplication crée uniquement un enregistrement d'enfant ; la budgétisation des ressources et le spawn automatique ne sont pas implémentés.
+- L'auto-modification n'est pas encore implémentée.
+- L'accès au réseau est désactivé dans la sandbox ; pas d'outils web/API pour l'instant.
+- Les vérifications de la constitution sont des heuristiques basiques. C'est un prototype : ne l'exécutez pas sur une machine contenant des données sensibles.
+- L'accès au socket Docker, s'il est utilisé pour l'orchestration de l'hôte, équivaut à une permission hôte très puissante. Gardez l'hôte dédié et n'exposez jamais le socket au conteneur de l'agent.
