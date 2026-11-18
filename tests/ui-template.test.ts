@@ -39,6 +39,10 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain("function renderAudit()");
   expect(dashboardHtml).toContain("leanna-audit.csv");
   expect(dashboardHtml).not.toContain('id="auditOutput"');
+  expect(dashboardHtml).toContain('id="eventLevelFilter"');
+  expect(dashboardHtml).toContain('role="log"');
+  expect(dashboardHtml).toContain("event-details-toggle");
+  expect(dashboardHtml).toContain("data-copy-event");
  });
  it("keeps every navigation target connected to a page section",()=>{
   const navigation=dashboardHtml.split('<nav aria-label="Navigation principale">')[1]?.split('</nav>')[0]??"";
