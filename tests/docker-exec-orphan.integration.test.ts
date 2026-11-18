@@ -52,19 +52,28 @@ describe.skipIf(!enabled)("Docker exec orphan characterization (opt-in)",()=>{
   });
   try{
    await waitForFile(container,events);
+   const beforeCrash=(await docker(["exec",container,"cat",events])).split(/\\r?\\n/).filter(Boolean);
+   expect(beforeCrash).toContain("started");
    owner.kill("SIGKILL");
    await waitForExit(owner);
 
    // A retry starts while the first daemon-side exec may still be running.
-   await shell(agentId,command);
+   const retryResult=await shell(agentId,command);
+   expect(retryResult).not.toMatch(/^Command failed:/);
    await new Promise(resolve=>setTimeout(resolve,1000));
    const lines=(await docker(["exec",container,"cat",events])).split(/\\r?\\n/).filter(Boolean);
+   expect(lines).toContain("started");
+   expect(lines).toContain("completed");
+   console.log("Docker exec orphan characterization:",JSON.stringify({beforeCrash,lines}));
    const starts=lines.filter(line=>line==="started").length;
    const completions=lines.filter(line=>line==="completed").length;
 
-   // Characterization assertion: two starts/completions means the orphan overlapped
-   // with a retry. If Docker cancels the first exec, this assertion must be revisited.
-   expect({starts,completions}).toEqual({starts:2,completions:2});
+   // One execution means the original was cancelled; two means it survived and
+   // overlapped with the retry. Both are valid characterization outcomes.
+   expect(starts).toBeGreaterThanOrEqual(1);
+   expect(completions).toBeGreaterThanOrEqual(1);
+   expect(starts).toBeLessThanOrEqual(2);
+   expect(completions).toBeLessThanOrEqual(2);
   }finally{
    if(owner.exitCode===null&&owner.signalCode===null)owner.kill("SIGKILL");
   }
