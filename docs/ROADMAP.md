@@ -567,3 +567,58 @@ Le premier retour Windows du 18 novembre 2026 confirmait le build et le démarra
 
 
 Résultat de validation confirmé par l'utilisateur sous Windows le 18 novembre 2026 : `npm run build` passe ; `npm test` passe avec 14 fichiers et 56 tests réussis sur 56. Les tests Docker opt-in sont actifs et réussis, dont la récupération après crash, la sérialisation de `docker exec` orphelin et la réconciliation du sandbox. `npm ci` avait également indiqué 0 vulnérabilité sur cette branche. Le contrôle visuel des actions Modifier/Supprimer reste à effectuer.
+
+
+### Refonte UI/UX — bureau immersif des agents
+
+Branche : `feat/immersive-agent-office-ui`.
+
+- [x] Ajouter une navigation dédiée « Bureau IA » dans la console.
+- [x] Créer une scène isométrique en CSS 3D, sans dépendance WebGL ni nouvelle dépendance npm.
+- [x] Représenter chaque agent par un petit personnage à son poste, avec nom, statut, mission et tâche associée.
+- [x] Reconstituer l'arbre hiérarchique à partir de `parent_id`, avec gestion des agents orphelins et prévention des cycles d'affichage.
+- [x] Rendre les personnages interactifs : clic pour ouvrir la fiche agent.
+- [x] Synchroniser les compteurs et les tâches depuis les données du tableau de bord toutes les cinq secondes.
+- [x] Renforcer le système visuel global : arrière-plans, surfaces, navigation, actions, focus clavier et adaptation mobile.
+- [x] Étendre le test HTTP de présence de l'interface et de son rendu.
+- [ ] Validation utilisateur Windows : `npm ci`, `npm run build`, `npm test`, puis contrôle visuel du Bureau IA sur plusieurs agents avec liens parent/enfant et tâches.
+- [ ] Vérifier le rendu sur écran mobile et la navigation clavier.
+
+Le rendu 3D est volontairement réalisé avec CSS (perspective, profondeur, ombres et avatars composés en éléments HTML) afin de rester léger et compatible avec la console locale existante. Aucune donnée agent n'est simulée : la scène utilise les agents et tâches renvoyés par `/api/dashboard`.
+
+### Fusion — cycle de vie des agents
+
+- [x] PR #12 fusionnée dans `main` le 18 novembre 2026.
+- [x] Commit de fusion : `886d27239908f5a87633c1096220320aa38dea2d`.
+
+
+### Gestion des tâches et des missions — CRUD sécurisé
+
+Branche : `feat/task-mission-lifecycle-ui`, empilée sur `feat/immersive-agent-office-ui` (PR #13).
+
+- [x] Ajouter la modification des tâches depuis la page « Toutes les tâches » : titre et description.
+- [x] Ajouter la suppression explicite des tâches avec confirmation.
+- [x] Refuser côté API et interface la modification ou suppression d'une tâche active.
+- [x] Ajouter une modale dédiée pour modifier la mission (objectif) d'un agent.
+- [x] Ajouter la suppression de mission sans supprimer l'agent : l'objectif est vidé, l'agent et son identité restent conservés.
+- [x] Refuser côté API et interface la modification ou suppression d'une mission tant que l'agent est en cours d'exécution.
+- [x] Réserver les mutations de tâches et de missions au rôle administrateur ; la création de tâche existante reste accessible aux opérateurs.
+- [x] Journaliser chaque modification et suppression dans l'audit et les événements.
+- [x] Ajouter tests HTTP pour édition, suppression, validations, refus opérateur et garde-fous d'exécution active.
+- [x] Ajouter tests unitaires des règles d'autorisation.
+- [ ] Validation utilisateur Windows : `npm ci`, `npm run build`, `npm test`, puis contrôle visuel des modales et boutons.
+- [ ] Vérifier le scénario réel d'une tâche active et d'un agent actif dans Docker avant fusion.
+
+Règles de sécurité : les tâches actives ne peuvent pas être modifiées ou supprimées ; les missions ne peuvent être changées que lorsque l'agent est arrêté. Les suppressions de tâches sont auditables ; les événements historiques append-only ne sont pas supprimés.
+
+
+### Outil — captures d'écran de toutes les pages UI
+
+Branche : `feat/ui-page-screenshots`.
+
+- [x] Ajouter `scripts/capture-screenshots.mjs`, autonome sans dépendance npm supplémentaire, basé sur le protocole DevTools de Chromium.
+- [x] Parcourir les 13 pages de navigation : vue d'ensemble, bureau IA, agents, missions, tâches, supervision, filiation, logs, audit, quota IA, ressources, workspace et sécurité/paramètres.
+- [x] Authentifier le navigateur avec `LEANNAAUTO_UI_TOKEN` sans écrire le jeton dans les fichiers de capture.
+- [x] Enregistrer une image PNG par page dans `artifacts/screenshots/ui` (dossier personnalisable en argument).
+- [x] Ajouter la commande npm `npm run capture:screenshots`.
+- [ ] Validation Windows : lancer l'UI, définir le jeton administrateur, exécuter la capture et vérifier les 13 PNG.
