@@ -669,3 +669,14 @@ Branche dédiée : `test/agent-docker-end-to-end`, créée depuis `test/docker-r
 - [x] La suite complète a également exécuté les deux tests Docker réels : test agent end-to-end et test de réconciliation/persistance du workspace.
 
 Le test de bout en bout reste opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1`. Il crée et supprime un conteneur ainsi qu'un volume portant un identifiant aléatoire propre au test. Il ne contacte pas OpenRouter. La validation réelle de l'agent avec un fournisseur LLM et le scénario de crash du processus pendant une exécution Docker restent distincts.
+
+### Reprise d'un agent Docker après crash du processus — test ajouté, validation en attente
+
+Branche dédiée : `test/docker-agent-crash-recovery`, créée depuis `test/agent-docker-end-to-end`.
+- [x] Ajouter un scénario opt-in qui acquiert le bail SQLite dans un processus enfant, rend son heartbeat périmé, puis tue brutalement ce processus.
+- [x] Faire intervenir `recoverStaleAgents` et la vraie fabrique `createAgentStarter` pour reprendre le bail et relancer la boucle réelle.
+- [x] Utiliser un vrai conteneur Docker et la vraie commande `shell` ; vérifier l'écriture du marqueur dans le workspace persistant.
+- [x] Vérifier que le compteur de redémarrage augmente, que le bail est libéré à la fin et que la tâche déjà active n'est pas réinitialisée.
+- [ ] Valider sous Windows : build, suite standard et test opt-in `tests/agent-docker-crash.integration.test.ts`.
+
+Le test est activé par `LEANNAAUTO_DOCKER_INTEGRATION=1`. Le processus propriétaire du premier bail est réellement tué ; le modèle reste simulé et le test ne contacte pas OpenRouter. Il teste une reprise après perte du processus propriétaire avant la reprise de tâche, pas un crash au milieu d'une commande shell déjà en cours.
