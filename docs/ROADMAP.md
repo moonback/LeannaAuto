@@ -478,6 +478,16 @@ Validation utilisateur Windows après correction `082bf0c`, 18 novembre 2026 :
 - [ ] Les tests HTTP réels, les refus admin/opérateur sur serveur et les scénarios de reprise après crash restent à effectuer.
 - [ ] Ne pas considérer le lot API/superviseur comme terminé avant ces scénarios.
 
+### Tests HTTP d'intégration ajoutés — 18 novembre 2026
+
+- [x] Ajouter `tests/ui-http.test.ts` qui démarre le vrai serveur UI avec une base SQLite temporaire et des jetons de test.
+- [x] Couvrir la lecture dashboard par opérateur, le refus d'une création d'agent par opérateur, la création par administrateur, le rejet d'un Content-Type non JSON et le rejet de Host/Origin non fiables.
+- [ ] Exécuter ces tests sur Windows ; le nouveau fichier est livré mais aucune exécution n'est encore revendiquée.
+- [ ] Vérifier la stabilité du démarrage/arrêt du processus de test sur Windows et dans la CI.
+- [ ] Ajouter ensuite les scénarios runtime de reprise après arrêt brutal et de conteneur Docker absent.
+
+Commit tests : `2545a5f`.
+
 ### Prochaine validation utilisateur
 
 Depuis PowerShell :
