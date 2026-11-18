@@ -550,7 +550,8 @@ Branche : `feat/agent-lifecycle-actions`.
 - [x] Refuser la suppression d’un agent actif, d’un agent parent ou d’un agent qui possède encore des tâches.
 - [x] Supprimer la sandbox Docker et son volume workspace avant de retirer l’agent de SQLite.
 - [x] Étendre les tests HTTP aux permissions, à la modification et aux refus de suppression.
-- [ ] Validation utilisateur Windows : build, tests complets, puis vérification visuelle des actions Modifier et Supprimer.
+- [x] Validation utilisateur Windows : `npm run build` réussi et `npm test` réussi, 14 fichiers et 56 tests sur 56 (18 novembre 2026).
+- [ ] Vérification visuelle des actions Modifier et Supprimer dans le navigateur.
 
 Les journaux et événements historiques sont conservés après suppression. Les tâches et les agents enfants doivent être traités explicitement avant de pouvoir supprimer leur agent parent.
 
@@ -560,6 +561,9 @@ Branche : `feat/agent-lifecycle-actions`.
 
 - [x] Aligner le test de sécurité avec la nouvelle politique : PATCH et DELETE sur un agent sont autorisés à l'administrateur et refusés à l'opérateur.
 - [x] Ajouter une assertion confirmant que même l'administrateur ne peut pas appeler une route POST inconnue.
-- [ ] Validation utilisateur Windows après correctif : `npm run build` et `npm test`.
+- [x] Validation utilisateur Windows après correctif : `npm run build` réussi et `npm test` réussi, 14 fichiers et 56 tests sur 56 (18 novembre 2026).
 
 Le premier retour Windows du 18 novembre 2026 confirmait le build et le démarrage UI, mais signalait 55/56 tests réussis. L'échec provenait d'une ancienne assertion qui attendait à tort le refus de DELETE pour l'administrateur, alors que cette permission est désormais nécessaire à la suppression d'agents. Le test a été corrigé ; la suite doit être relancée.
+
+
+Résultat de validation confirmé par l'utilisateur sous Windows le 18 novembre 2026 : `npm run build` passe ; `npm test` passe avec 14 fichiers et 56 tests réussis sur 56. Les tests Docker opt-in sont actifs et réussis, dont la récupération après crash, la sérialisation de `docker exec` orphelin et la réconciliation du sandbox. `npm ci` avait également indiqué 0 vulnérabilité sur cette branche. Le contrôle visuel des actions Modifier/Supprimer reste à effectuer.
