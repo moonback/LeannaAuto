@@ -49,4 +49,10 @@ html.sidebar-collapsed .nav-group-label span{display:none}
 .event-details-toggle pre{max-height:260px;margin-top:8px;font-size:11px}
 .event-marker.warning{background:var(--ui-warning)}
 @media(max-width:650px){.log-filters{display:grid;grid-template-columns:1fr 1fr}.log-filters>div{min-width:0}.event-item{grid-template-columns:1fr 10px minmax(0,1fr)}.event-time{grid-column:1/-1}.event-copy{margin-left:0}}
+
+/* Usage budget visualization */
+.usage-progress-card{margin-bottom:16px}
+.usage-progress-track{height:12px;overflow:hidden;border:1px solid var(--ui-border);border-radius:999px;background:var(--ui-bg)}
+.usage-progress-track span{display:block;width:0;height:100%;border-radius:inherit;background:var(--ui-accent);transition:width var(--ui-transition)}
+.usage-progress-card>p{margin:10px 0 0;font-size:11px}
 \n";
