@@ -181,9 +181,9 @@ describe("dashboard HTTP security integration",()=>{
   const target=await second.json() as {id:string};
   const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:source.id,title:"Task to assign"})});
   const task=await made.json() as {id:string};
-  const path="/api/tasks/"+encodeURIComponent(task.id)+"/assign";
-  expect((await request(path,operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})})).status).toBe(403);
-  const assigned=await request(path,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})});
+  const assignPath="/api/tasks/"+encodeURIComponent(task.id)+"/assign";
+  expect((await request(assignPath,operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})})).status).toBe(403);
+  const assigned=await request(assignPath,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})});
   expect(assigned.status).toBe(200);
   await expect(assigned.json()).resolves.toMatchObject({ok:true,agentId:target.id});
   const dashboard=await request("/api/dashboard");
@@ -192,7 +192,7 @@ describe("dashboard HTTP security integration",()=>{
   const database=new Database(path.join(directory,"test.db"));
   try{
    database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(task.id);
-   expect((await request(path,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:source.id})})).status).toBe(409);
+   expect((await request(assignPath,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:source.id})})).status).toBe(409);
   }finally{database.close()}
  });
  it("allows administrators to edit and clear missions only while the agent is stopped",async()=>{
