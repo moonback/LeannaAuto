@@ -108,6 +108,9 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain('id="missionEditModal"');
   expect(html).toContain("function renderTasks(tasks,agents)");
   expect(html).toContain("function openTaskEdit(id)");
+  expect(html).toContain("function openTaskAssign(id)");
+  expect(html).toContain("data-task-assign");
+  expect(html).toContain('id="taskAssignModal"');
   expect(html).toContain("function deleteTask(id)");
   expect(html).toContain("function openMissionEdit(id)");
   expect(html).toContain("function deleteMission(id)");
@@ -170,6 +173,27 @@ describe("dashboard HTTP security integration",()=>{
   expect(afterData.tasks.some(item=>item.id===task.id)).toBe(false);
   const missing=await request("/api/tasks/"+encodeURIComponent(task.id),adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
   expect(missing.status).toBe(404);
+ });
+ it("allows administrators to reassign pending tasks to another agent",async()=>{
+  const first=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"assignment-source",goal:"Source"})});
+  const source=await first.json() as {id:string};
+  const second=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"assignment-target",goal:"Target"})});
+  const target=await second.json() as {id:string};
+  const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:source.id,title:"Task to assign"})});
+  const task=await made.json() as {id:string};
+  const path="/api/tasks/"+encodeURIComponent(task.id)+"/assign";
+  expect((await request(path,operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})})).status).toBe(403);
+  const assigned=await request(path,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:target.id})});
+  expect(assigned.status).toBe(200);
+  await expect(assigned.json()).resolves.toMatchObject({ok:true,agentId:target.id});
+  const dashboard=await request("/api/dashboard");
+  const data=await dashboard.json() as {tasks:Array<{id:string;agent_id:string}>};
+  expect(data.tasks.find(item=>item.id===task.id)?.agent_id).toBe(target.id);
+  const database=new Database(path.join(directory,"test.db"));
+  try{
+   database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(task.id);
+   expect((await request(path,adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agentId:source.id})})).status).toBe(409);
+  }finally{database.close()}
  });
  it("allows administrators to edit and clear missions only while the agent is stopped",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"mission-lifecycle-agent",goal:"Original mission"})});
