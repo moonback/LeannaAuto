@@ -52,6 +52,7 @@ const server=http.createServer(async(req,res)=>{
  const send=(code:number,obj:any)=>{const headers:Record<string,string>={"Content-Type":"application/json; charset=utf-8","X-Content-Type-Options":"nosniff","Cache-Control":"no-store","Vary":"Origin"};if(origin&&isAllowedUiOrigin(origin,port))headers["Access-Control-Allow-Origin"]=origin;res.writeHead(code,headers);res.end(JSON.stringify(obj));};
  const host=String(req.headers.host??"");
  if(!isAllowedUiHost(host,port)){res.writeHead(400,{"Content-Type":"text/plain; charset=utf-8","X-Content-Type-Options":"nosniff"});res.end("Invalid host");return;}
+ if(origin&&!isAllowedUiOrigin(origin,port)){res.writeHead(403,{"Content-Type":"text/plain; charset=utf-8","X-Content-Type-Options":"nosniff"});res.end("Invalid origin");return;}
  if(req.method==="OPTIONS"){if(origin&&!isAllowedUiOrigin(origin,port)){res.writeHead(403);res.end();return;}const headers:Record<string,string>={"Access-Control-Allow-Headers":"Authorization, Content-Type","Access-Control-Allow-Methods":"GET,POST,OPTIONS","Vary":"Origin"};if(origin)headers["Access-Control-Allow-Origin"]=origin;res.writeHead(204,headers);res.end();return;}
  if(req.url==="/"||req.url==="/index.html"){res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer","Cache-Control":"no-store"});res.end(html);return;}
  let pathname="/";try{pathname=new URL(req.url??"/","http://127.0.0.1").pathname;}catch{return send(400,{error:"URL invalide"});}
@@ -72,4 +73,7 @@ const server=http.createServer(async(req,res)=>{
  send(404,{error:"Route inconnue"});
  }catch(e){console.error("Dashboard API error:",e);send(500,{error:"Erreur interne du serveur"});}
 });
+server.requestTimeout=15000;
+server.headersTimeout=10000;
+server.maxHeadersCount=100;
 server.listen(port,"127.0.0.1",()=>console.log("LeannaAuto dashboard: http://127.0.0.1:"+port));
