@@ -642,7 +642,11 @@ Branche dédiée : `test/docker-runtime-reconciliation`, créée depuis `test/ag
 - [x] Ajouter un test opt-in utilisant le vrai exécutable Docker et `ensureSandboxWith`.
 - [x] Couvrir création, arrêt/redémarrage, suppression/recréation du conteneur et conservation d'un fichier dans le volume workspace.
 - [x] Vérifier dans le conteneur les paramètres effectifs : réseau `none`, filesystem racine read-only, mémoire 1 Gio, CPU 1 et limite PIDs 64.
-- [ ] Exécuter le test sur une machine avec Docker Desktop/Engine actif.
+- [ ] Exécuter le test sur une machine avec Docker Desktop/Engine actif après correction.
 - [ ] Vérifier le nettoyage du conteneur et du volume de test après succès et échec.
+
+Premier retour utilisateur sous Windows : build réussi ; suite standard 9 fichiers passés, 1 test Docker ignoré (41 tests réussis). À l’exécution opt-in, le test a échoué dès le premier `docker exec` : le test utilisait le nom complet `leanna-<agentId>`, alors que la production tronque l’identifiant à 40 caractères dans `containerName()`. Le conteneur avait donc été créé sous un nom plus court.
+
+Correction commit `13d17fc` : le test applique la même normalisation et troncature que `src/executor.ts` pour le conteneur et son volume. Cette correction du test n’est pas encore validée ; relancer le build, la suite standard et le test Docker opt-in.
 
 Le test est volontairement ignoré par défaut pour ne pas exiger Docker dans la suite standard et ne supprimer que des ressources portant un identifiant aléatoire propre au test. Pour l'activer sous PowerShell : `$env:LEANNAAUTO_DOCKER_INTEGRATION="1"; npm test -- tests/executor-docker.integration.test.ts`. Le test peut télécharger `node:22-bookworm-slim` si l'image n'est pas présente localement. Ne pas exécuter sur un daemon partagé sans comprendre que le test crée puis supprime son propre conteneur et son propre volume. Build et tests après cette correction : en attente du retour Windows.
