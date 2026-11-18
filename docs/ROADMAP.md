@@ -379,18 +379,19 @@ Critères de sortie :
 
 | Ordre | Phase | Pourquoi |
 |---:|---|---|
-| 1 | Phase 0 — Stabilisation | Éviter d'empiler des fonctions sur une base fragile. |
-| 2 | Phase 1 — Dashboard | Rendre l'état et les opérations visibles. |
-| 3 | Phase 2 — Superviseur | Fiabiliser le cycle de vie des agents. |
-| 4 | Phase 3 — Sécurité | Fermer les risques avant d'augmenter l'autonomie. |
-| 5 | Phase 4 — Ressources | Contrôler les limites de la machine et des modèles. |
-| 6 | Phase 5 — Identité | Vérifier cryptographiquement les agents. |
-| 7 | Phase 6 — Permissions | Restreindre les capacités par agent. |
-| 8 | Phase 7 — Constitution | Garantir l'application indépendante des règles. |
-| 9 | Phase 8 — Mémoire | Ajouter une mémoire traçable et gouvernée. |
-| 10 | Phase 9 — Coopération | Permettre la délégation et la réplication maîtrisées. |
-| 11 | Phase 10 — Auto-évolution | N'ouvrir l'évolution du code qu'après les garde-fous. |
-| 12 | Phase 11 — Exploitation | Consolider installation, sauvegarde et distribution. |
+| 1 | Phase 0 — Stabilisation | Garder une base reproductible et testée. |
+| 2 | Phase 1 — Centre de contrôle | Rendre chaque agent et chaque mission observables et pilotables. |
+| 3 | Phase 1.5 — API d'observabilité | Alimenter l'interface avec des événements persistants et des métriques fiables. |
+| 4 | Phase 2 — Superviseur | Fiabiliser le cycle de vie des agents et les états affichés. |
+| 5 | Phase 3 — Sécurité | Fermer les risques avant d'augmenter l'autonomie. |
+| 6 | Phase 4 — Ressources | Contrôler les limites de la machine et des modèles. |
+| 7 | Phase 5 — Identité | Vérifier cryptographiquement les agents. |
+| 8 | Phase 6 — Permissions | Restreindre les capacités par agent. |
+| 9 | Phase 7 — Constitution | Garantir l'application indépendante des règles. |
+| 10 | Phase 8 — Mémoire | Ajouter une mémoire traçable et gouvernée. |
+| 11 | Phase 9 — Coopération | Permettre la délégation et la réplication maîtrisées. |
+| 12 | Phase 10 — Auto-évolution | N'ouvrir l'évolution du code qu'après les garde-fous. |
+| 13 | Phase 11 — Exploitation | Consolider installation, sauvegarde et distribution. |
 
 Les phases 2 et 3 doivent progresser ensemble : la fiabilité ne doit jamais contourner la sécurité. La phase 10 reste bloquée tant que les phases 2 à 7 ne sont pas suffisamment validées.
 
@@ -411,8 +412,8 @@ Les phases 2 et 3 doivent progresser ensemble : la fiabilité ne doit jamais con
 
 | Phase | Statut initial | Prochaine preuve attendue |
 |---|---|---|
-| 0 — Stabilisation | En cours | Validation Windows et CI de la branche UI actuelle. |
-| 1 — Dashboard | En cours | Vérification fonctionnelle de toutes les pages et actions. |
+| 0 — Stabilisation | Validation locale partielle | Build et 45 tests validés sous Windows sur `feat/mission-control-ui` ; CI, sauvegarde/restauration et audit npm restent ouverts. |
+| 1 — Centre de contrôle | En cours | Validation visuelle de la vue Missions, puis livraison progressive des vues 1A à 1H. | pages et actions. |
 | 2 — Superviseur | À faire / partiel | Tests de crash, reprise et réconciliation Docker. |
 | 3 — Sécurité | À faire / partiel | Audit des routes, secrets, Docker et tests adversariaux. |
 | 4 — Ressources | Partiel | Quotas CPU/RAM/stockage/temps appliqués et mesurés. |
