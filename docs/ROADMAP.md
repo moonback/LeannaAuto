@@ -622,3 +622,16 @@ Branche : `feat/ui-page-screenshots`.
 - [x] Enregistrer une image PNG par page dans `artifacts/screenshots/ui` (dossier personnalisable en argument).
 - [x] Ajouter la commande npm `npm run capture:screenshots`.
 - [ ] Validation Windows : lancer l'UI, définir le jeton administrateur, exécuter la capture et vérifier les 13 PNG.
+
+
+### Journaux lisibles et activité des agents en direct
+
+Branche : `feat/live-agent-activity-timeline`.
+
+- [x] Remplacer le bloc de logs brut de la fiche agent par une chronologie structurée : horodatage, type, niveau, résumé et détails techniques repliables.
+- [x] Afficher l’activité actuelle déduite des événements runtime (analyse LLM, exécution d’outil, décision de sécurité) sans inventer de progression.
+- [x] Actualiser automatiquement la fiche agent toutes les 5 secondes lorsqu’elle est ouverte.
+- [x] Afficher l’activité récente dans chaque carte de mission.
+- [x] Ajouter un accès au journal filtré par tâche depuis la liste des tâches et depuis la fiche agent.
+- [x] Exposer un lot borné des 250 événements récents dans la réponse dashboard pour alimenter les cartes Missions.
+- [ ] Validation Windows : build, tests, puis observation d’un agent actif exécutant plusieurs outils pour vérifier la fidélité des états « en direct ».
