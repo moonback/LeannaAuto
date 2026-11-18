@@ -494,3 +494,15 @@ Branche : `feat/workspace-explorer`, créée depuis `main` après intégration d
 - [ ] Validation utilisateur Windows : build, suite complète, vérification visuelle du Workspace et navigation sur un agent avec fichiers réels.
 
 Limites : la recherche est locale au dossier courant (pas une recherche plein texte récursive). Les aperçus sont limités à 256 Kio et destinés aux fichiers texte ; le contenu binaire n'est pas encore détecté explicitement. Le service requiert une sandbox Docker démarrée et ne la démarre pas automatiquement. Les liens symboliques sont affichés mais non ouvrables. Le composant ne permet volontairement aucune modification des fichiers.
+
+
+### Correctif — expressions régulières des routes Workspace
+
+Branche : `feat/workspace-explorer`.
+
+- [x] Corriger les expressions régulières des deux routes GET Workspace : les antislashs excédentaires empêchaient TypeScript et esbuild d'analyser `src/ui.ts`.
+- [x] Conserver les chemins et contrôles d'accès des deux routes.
+- [ ] Validation utilisateur Windows après correctif : `npm run build`, `npm test` et `npm run ui`.
+- [ ] Vérifier la navigation Workspace et l'aperçu d'un fichier réel.
+
+Le rapport utilisateur du 18 novembre 2026 montre que les tests Docker opt-in passaient, mais que le build échouait sur `src/ui.ts:202`. Les tests HTTP ne pouvaient pas démarrer leur serveur Dashboard. Aucune validation après ce correctif n'est encore disponible.
