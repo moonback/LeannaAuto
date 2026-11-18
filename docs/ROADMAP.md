@@ -604,8 +604,15 @@ Objectif : vérifier que le superviseur ne se contente pas de reprendre le bail 
 - [x] Extraire une fabrique `createAgentStarter` utilisée par l'entrée de production `startAgent`, avec dépendances externes injectables.
 - [x] Ajouter un test qui combine `recoverStaleAgents`, la prise du bail réelle, la boucle d'agent réelle et une sandbox/modèle simulés.
 - [x] Vérifier que la tâche active reste active, que l'outil simulé est appelé et que le bail est libéré à l'arrêt.
-- [ ] Exécuter build et tests sous Windows.
+- [x] Exécuter build et tests sous Windows : `npm run build` réussi ; `npm test` : 9 fichiers et 40 tests réussis (validation utilisateur, 18 novembre 2026).
 - [ ] Ajouter un test de concurrence prouvant qu'un second démarrage ne peut pas prendre le bail pendant que la boucle réelle tourne.
 - [ ] Tester séparément le démarrage avec un daemon Docker réel.
 
 Limite de ce lot : le test exécute la vraie boucle d'agent et le vrai mécanisme de bail, mais remplace le transport LLM, l'exécuteur Docker et l'action shell par des doubles déterministes. Il ne constitue pas un test de daemon Docker réel ni un appel réseau OpenRouter.
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm run build` : compilation TypeScript réussie.
+- [x] `npm test` : 9 fichiers réussis, 40 tests sur 40.
+- [x] Le test `agent-restart-integration.test.ts` passe : récupération via `recoverStaleAgents`, exécution de la vraie boucle d'agent, appel du modèle simulé et de l'outil simulé, conservation de la tâche active et libération du bail.
+- [ ] La concurrence entre deux tentatives de démarrage pendant une boucle réelle reste à tester.
+- [ ] Le démarrage avec un daemon Docker réel reste à tester.
