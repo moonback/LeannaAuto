@@ -150,12 +150,12 @@ const server=http.createServer(async(req,res)=>{
  if(pathname==="/api/events"&&req.method==="GET"){
   const params=new URL(req.url??"/api/events","http://127.0.0.1").searchParams;
   const rawLimit=params.get("limit")??"50",limitValue=Number(rawLimit);
-  if(!/^\\d+$/.test(rawLimit)||!Number.isSafeInteger(limitValue)||limitValue<1||limitValue>100)return send(400,{error:"Paramètre limit invalide (1-100)"});
+  if(!/^\d+$/.test(rawLimit)||!Number.isSafeInteger(limitValue)||limitValue<1||limitValue>100)return send(400,{error:"Paramètre limit invalide (1-100)"});
   const clauses:string[]=[],values:unknown[]=[];
   const filters:[string,string][]=[["agentId","agent_id"],["taskId","task_id"],["type","type"],["level","level"],["from","at"],["to","at"]];
   for(const [parameter,column] of filters){const value=params.get(parameter);if(value){if(value.length>128)return send(400,{error:"Filtre trop long"});clauses.push(column+(parameter==="from"?">=":parameter==="to"?"<=":"=")+"?");values.push(value);}}
   const before=params.get("before");
-  if(before!==null){const cursor=Number(before);if(!/^\\d+$/.test(before)||!Number.isSafeInteger(cursor)||cursor<1)return send(400,{error:"Curseur invalide"});clauses.push("id<?");values.push(cursor);}
+  if(!/^\d+$/.test(before)||!Number.isSafeInteger(cursor)||cursor<1)return send(400,{error:"Curseur invalide"});
   const where=clauses.length?" WHERE "+clauses.join(" AND "):"";
   const events=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS details,correlation_id AS correlationId FROM events"+where+" ORDER BY id DESC LIMIT ?").all(...values,limitValue);
   const nextBefore=events.length===limitValue?(events[events.length-1] as {id:number}).id:null;
