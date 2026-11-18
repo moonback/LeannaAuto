@@ -48,4 +48,37 @@ describe("supervisor recovery with the real agent loop",()=>{
   expect(db.prepare("SELECT status FROM tasks WHERE id='task-restart'").get()).toEqual({status:"active"});
   expect((db.prepare("SELECT COUNT(*) AS count FROM logs WHERE level='tool'").get() as {count:number}).count).toBe(1);
  });
+
+ it("rejects a second start while the real agent loop still owns its lease",async()=>{
+  let announceStarted!:()=>void;
+  let unblockChat!:()=>void;
+  const enteredChat=new Promise<void>(resolve=>{announceStarted=resolve;});
+  const chatGate=new Promise<void>(resolve=>{unblockChat=resolve;});
+  const log=vi.fn();
+  const getAgent=(id:string)=>db.prepare("SELECT * FROM agents WHERE id=?").get(id) as any;
+  const chat=vi.fn(async()=>{
+   announceStarted();
+   await chatGate;
+   db.prepare("UPDATE agents SET status='stopped' WHERE id='agent-restart'").run();
+   return "DONE";
+  });
+  const startAgent=createAgentStarter({
+   db,getAgent,log,emergencyStopActive:()=>false,chat,
+   ensureSandbox:async()=>undefined,stopSandbox:async()=>undefined,
+   runTool:async()=>"",toolHelp:"test tools",constitutionText:"test constitution",
+   resourceMode:()=>"NORMAL",heartbeatIntervalMs:60000,delay:async()=>undefined
+  });
+
+  const firstRun=startAgent("agent-restart");
+  await enteredChat;
+  expect(()=>startAgent("agent-restart")).toThrow("Agent already has an active runtime lease.");
+  expect(chat).toHaveBeenCalledOnce();
+
+  unblockChat();
+  await firstRun;
+  expect(db.prepare("SELECT runtime_owner,heartbeat_at,status FROM agents WHERE id='agent-restart'").get()).toMatchObject({
+   runtime_owner:null,heartbeat_at:null,status:"stopped"
+  });
+ });
+
 });
