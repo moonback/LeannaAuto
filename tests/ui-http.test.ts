@@ -74,10 +74,16 @@ describe("dashboard HTTP security integration",()=>{
   const response=await request("/api/agents",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"blocked",goal:"must be denied"})});
   expect(response.status).toBe(403);
  });
- it("allows an administrator to create an agent",async()=>{
+ it("creates an agent and reports exact pending task counts",async()=>{
   const response=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"integration-agent",goal:"HTTP integration test"})});
   expect(response.status).toBe(201);
-  await expect(response.json()).resolves.toHaveProperty("id");
+  const created=await response.json() as {id:string};
+  expect(created.id).toBeTruthy();
+  const taskResponse=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:created.id,title:"Control room counter test",description:"Verify task aggregation"})});
+  expect(taskResponse.status).toBe(201);
+  const dashboard=await request("/api/dashboard");
+  expect(dashboard.status).toBe(200);
+  await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
  });
  it("rejects non-JSON write requests",async()=>{
   const response=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"text/plain"},body:"not-json"});
