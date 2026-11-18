@@ -1,7 +1,7 @@
 import {Readable} from "node:stream";
 import type {IncomingMessage} from "node:http";
 import {describe,it,expect} from "vitest";
-import {isAllowedUiHost,isAllowedUiOrigin,isAllowedUiRequest,readJsonBody,tokenRole} from "../src/ui-security.js";
+import {createUiToken,hashUiToken,verifyUiToken,storedTokenRole,isAllowedUiHost,isAllowedUiOrigin,isAllowedUiRequest,readJsonBody,tokenRole} from "../src/ui-security.js";
 
 describe("dashboard authentication",()=>{
  it("matches configured tokens without accepting empty secrets",()=>{
@@ -12,7 +12,34 @@ describe("dashboard authentication",()=>{
  });
 });
 
+describe("secure UI credential storage",()=>{
+ it("generates strong tokens and stores only a salted derived hash",()=>{
+  const token=createUiToken(),digest=hashUiToken(token);
+  expect(token).toMatch(/^[A-Za-z0-9_-]{40,}$/);
+  expect(digest).not.toContain(token);
+  expect(verifyUiToken(token,digest)).toBe(true);
+  expect(verifyUiToken("wrong-token",digest)).toBe(false);
+  expect(verifyUiToken(token,"invalid")).toBe(false);
+ });
+ it("uses persisted credentials in preference to environment secrets and supports revocation",()=>{
+  const digest=hashUiToken("new-admin-secret"),operatorDigest=hashUiToken("new-operator-secret");
+  expect(storedTokenRole("new-admin-secret",{token_hash:digest,revoked:0},undefined,"old-admin","old-operator")).toBe("admin");
+  expect(storedTokenRole("old-admin",{token_hash:digest,revoked:0},undefined,"old-admin","old-operator")).toBeNull();
+  expect(storedTokenRole("new-operator-secret",undefined,{token_hash:operatorDigest,revoked:0},"old-admin","old-operator")).toBe("operator");
+  expect(storedTokenRole("old-operator",undefined,{token_hash:"",revoked:1},"old-admin","old-operator")).toBeNull();
+  expect(storedTokenRole("old-admin",{token_hash:"",revoked:1},undefined,"old-admin","old-operator")).toBeNull();
+ });
+});
+
 describe("dashboard API authorization",()=>{
+ it("allows only administrators to read security configuration",()=>{
+  expect(isAllowedUiRequest("admin","GET","/api/security")).toBe(true);
+  expect(isAllowedUiRequest("operator","GET","/api/security")).toBe(false);
+  expect(isAllowedUiRequest("admin","POST","/api/security/tokens")).toBe(true);
+  expect(isAllowedUiRequest("operator","POST","/api/security/tokens")).toBe(false);
+  expect(isAllowedUiRequest("admin","POST","/api/security/settings")).toBe(true);
+  expect(isAllowedUiRequest("operator","POST","/api/security/settings")).toBe(false);
+ });
  it("allows operators to read dashboard data and agent details",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/dashboard")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/resources")).toBe(true);

@@ -22,6 +22,7 @@ CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON events BEGIN SELE
 CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;
 CREATE INDEX IF NOT EXISTS audit_at ON audit(at);
 CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY,value TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ui_credentials(role TEXT PRIMARY KEY CHECK(role IN ('admin','operator')),token_hash TEXT NOT NULL DEFAULT '',revoked INTEGER NOT NULL DEFAULT 0,rotated_at TEXT NOT NULL);
 INSERT OR IGNORE INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
 `);
 function migrateColumn(table:string,column:string,definition:string){
@@ -61,3 +62,13 @@ export function audit(action:string,target:string|null,details:string){
 
 export function emergencyStopActive(){const row=db.prepare("SELECT value FROM system_state WHERE key='emergency_stop'").get() as {value:string}|undefined;return row?.value==="1";}
 export function setEmergencyStop(active:boolean){db.prepare("INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").run(active?"1":"0",new Date().toISOString());}
+
+export function getInferenceQuota(){
+ const row=db.prepare("SELECT value FROM system_state WHERE key='inference_quota'").get() as {value:string}|undefined;
+ const value=Number(row?.value??process.env.INFERENCE_QUOTA??100000);
+ return Number.isSafeInteger(value)&&value>=0?value:100000;
+}
+export function setInferenceQuota(quota:number){
+ if(!Number.isSafeInteger(quota)||quota<1||quota>1000000000)throw new Error("Invalid inference quota");
+ db.prepare("INSERT INTO system_state(key,value,updated_at) VALUES('inference_quota',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").run(String(quota),new Date().toISOString());
+}

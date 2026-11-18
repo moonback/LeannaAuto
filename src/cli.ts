@@ -1,7 +1,8 @@
 import "dotenv/config";
 import {Command} from "commander";
 import {randomUUID} from "node:crypto";
-import {db,log,emergencyStopActive} from "./storage.js";
+import {db,log,audit,emergencyStopActive,getInferenceQuota} from "./storage.js";
+import {createUiToken,hashUiToken} from "./ui-security.js";
 import {createIdentity,constitutionHash} from "./identity.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox} from "./executor.js";
@@ -19,7 +20,7 @@ program.command("status").argument("<id>").action((id)=>{
  const a=db.prepare("SELECT * FROM agents WHERE id=?").get(id);if(!a){console.error("Not found");process.exitCode=1;return;}console.log(JSON.stringify(a,null,2));
 });
 program.command("usage").argument("[id]").description("Show recorded inference token usage").action((id)=>{
- const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));
+ const quota=getInferenceQuota();
  if(id){const row=db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage WHERE agent_id=?").get(id) as any;console.log(JSON.stringify({agent:id,tokens:row.tokens,globalQuota:quota},null,2));return;}
  const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage").get() as any).tokens;
  const byAgent=db.prepare("SELECT agent_id,SUM(tokens) as tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();
@@ -34,6 +35,19 @@ program.command("logs").argument("<id>").option("--tail <n>","number of rows","5
 });
 program.command("stop").argument("<id>").action(async(id)=>{
  db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped by CLI");console.log("Stopped "+id);
+});
+const security=program.command("security").description("Manage local dashboard credentials");
+security.command("reset-admin-token").description("Rotate the dashboard administrator token and print it once").action(()=>{
+ const token=createUiToken(),now=new Date().toISOString();
+ db.prepare("INSERT INTO ui_credentials(role,token_hash,revoked,rotated_at) VALUES('admin',?,0,?) ON CONFLICT(role) DO UPDATE SET token_hash=excluded.token_hash,revoked=0,rotated_at=excluded.rotated_at").run(hashUiToken(token),now);
+ audit("security.token.rotate","admin","Jeton administrateur renouvelé depuis le CLI");
+ console.log("Nouveau jeton administrateur (affiché une seule fois) :\n"+token);
+});
+security.command("revoke-operator-token").description("Revoke the dashboard operator token").action(()=>{
+ const now=new Date().toISOString();
+ db.prepare("INSERT INTO ui_credentials(role,token_hash,revoked,rotated_at) VALUES('operator','',1,?) ON CONFLICT(role) DO UPDATE SET token_hash='',revoked=1,rotated_at=excluded.rotated_at").run(now);
+ audit("security.token.revoke","operator","Jeton opérateur révoqué depuis le CLI");
+ console.log("Jeton opérateur révoqué.");
 });
 program.command("identity").argument("<id>").action((id)=>{const a=db.prepare("SELECT id,name,identity,constitution_hash,parent_id,version FROM agents WHERE id=?").get(id);console.log(JSON.stringify(a??{},null,2));});
 program.command("spawn").argument("<parent>").requiredOption("--goal <goal>").action((parent,opts)=>{

@@ -1,10 +1,10 @@
 import "dotenv/config";
 import type {LLMMessage} from "./types.js";
-import {db,log} from "./storage.js";
+import {db,log,getInferenceQuota} from "./storage.js";
 import type {EventMetadata} from "./storage.js";
 
 export async function chat(messages:LLMMessage[],agentId="unknown",context:Pick<EventMetadata,"taskId"|"correlationId">={}){
- const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));
+ const quota=getInferenceQuota();
  const used=(db.prepare("SELECT COALESCE(SUM(tokens),0) as total FROM usage").get() as {total:number}).total;
  if(used>=quota)throw new Error("Global inference token quota exhausted ("+used+"/"+quota+").");
  const base=process.env.OPENROUTER_BASE_URL??"https://openrouter.ai/api/v1";

@@ -1,4 +1,4 @@
-import {timingSafeEqual} from "node:crypto";
+import {randomBytes,scryptSync,timingSafeEqual} from "node:crypto";
 import type {IncomingMessage} from "node:http";
 
 export type UiRole = "admin" | "operator";
@@ -13,12 +13,37 @@ export function tokenRole(value:string,adminToken:string,operatorToken:string):U
  return null;
 }
 
+export function createUiToken():string {
+ return randomBytes(32).toString("base64url");
+}
+
+export function hashUiToken(token:string):string {
+ const salt=randomBytes(16).toString("hex");
+ return salt+":"+scryptSync(token,salt,64).toString("hex");
+}
+
+export function verifyUiToken(token:string,storedHash:string):boolean {
+ const [salt,digest,...extra]=storedHash.split(":");
+ if(!salt||!digest||extra.length||!/^[a-f0-9]{32}$/.test(salt)||!/^[a-f0-9]{128}$/.test(digest))return false;
+ const expected=Buffer.from(digest,"hex"),actual=scryptSync(token,salt,64);
+ return actual.length===expected.length&&timingSafeEqual(actual,expected);
+}
+
+export function storedTokenRole(value:string,admin:{token_hash:string;revoked:number}|undefined,operator:{token_hash:string;revoked:number}|undefined,adminEnv:string,operatorEnv:string):UiRole|null {
+ if(admin?.revoked===0&&verifyUiToken(value,admin.token_hash))return "admin";
+ if(operator?.revoked===0&&verifyUiToken(value,operator.token_hash))return "operator";
+ if(!admin&&tokenRole(value,adminEnv,"")==="admin")return "admin";
+ if(!operator&&tokenRole(value,"",operatorEnv)==="operator")return "operator";
+ return null;
+}
+
 export function isAllowedUiRequest(role:UiRole,method:string,pathname:string):boolean {
- if(method==="GET"&&(pathname==="/api/dashboard"||pathname==="/api/events"||pathname==="/api/resources"||/^\/api\/agents\/[^/]+(?:\/workspace(?:\/file)?)?$/.test(pathname)))return true;
+ if(method==="GET"&&(pathname==="/api/security"&&role==="admin"))return true;
+ if(method==="GET"&&(pathname==="/api/dashboard"||pathname==="/api/events"||pathname==="/api/resources"||/^\/api\/agents\/[^/]+$/.test(pathname)||/^\/api\/agents\/[^/]+\/workspace(?:\/file)?$/.test(pathname)))return true;
  if(method==="POST"&&(pathname==="/api/tasks"||/^\/api\/agents\/[^/]+\/(?:start|stop)$/.test(pathname)))return true;
  if(role==="admin"&&method==="POST"&&/^\/api\/tasks\/[^/]+\/assign$/.test(pathname))return true;
  if(role==="admin"&&method==="POST"&&( /^\/api\/agents\/[^/]+\/mission\/cancel$/.test(pathname)||/^\/api\/tasks\/[^/]+\/cancel$/.test(pathname)))return true;
- if(role==="admin"&&method==="POST"&&(pathname==="/api/agents"||pathname==="/api/emergency-stop"||pathname==="/api/emergency-stop/reset"))return true;
+ if(role==="admin"&&method==="POST"&&(pathname==="/api/security/tokens"||pathname==="/api/security/settings"||pathname==="/api/agents"||pathname==="/api/emergency-stop"||pathname==="/api/emergency-stop/reset"))return true;
  if(role==="admin"&&method==="PATCH"&&(/^\/api\/agents\/[^/]+$/.test(pathname)||/^\/api\/agents\/[^/]+\/mission$/.test(pathname)||/^\/api\/tasks\/[^/]+$/.test(pathname)))return true;
  if(role==="admin"&&method==="DELETE"&&(/^\/api\/agents\/[^/]+\/mission$/.test(pathname)||/^\/api\/tasks\/[^/]+$/.test(pathname)))return true;
  if(role==="admin"&&method==="DELETE"&&/^\/api\/agents\/[^/]+$/.test(pathname))return true;
