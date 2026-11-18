@@ -17,11 +17,17 @@ program.command("start").argument("<id>").action(async(id)=>{await startAgent(id
 program.command("status").argument("<id>").action((id)=>{
  const a=db.prepare("SELECT * FROM agents WHERE id=?").get(id);if(!a){console.error("Not found");process.exitCode=1;return;}console.log(JSON.stringify(a,null,2));
 });
-program.command("usage").argument("[id]").description("Show recorded inference token usage").action((id)=>{\n const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));\n if(id){const row=db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage WHERE agent_id=?").get(id) as any;console.log(JSON.stringify({agent:id,tokens:row.tokens,globalQuota:quota},null,2));return;}\n const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage").get() as any).tokens;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) as tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();console.log(JSON.stringify({totalTokens:total,quota,remaining:Math.max(0,quota-total),agents:byAgent},null,2));\n});\nprogram.command("resources").argument("<id>").action(async(id)=>{
+program.command("usage").argument("[id]").description("Show recorded inference token usage").action((id)=>{
+ const quota=Math.max(0,Number(process.env.INFERENCE_QUOTA??100000));
+ if(id){const row=db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage WHERE agent_id=?").get(id) as any;console.log(JSON.stringify({agent:id,tokens:row.tokens,globalQuota:quota},null,2));return;}
+ const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) as tokens FROM usage").get() as any).tokens;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) as tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();console.log(JSON.stringify({totalTokens:total,quota,remaining:Math.max(0,quota-total),agents:byAgent},null,2));
+});
+program.command("resources").argument("<id>").action(async(id)=>{
  try{const {execFileSync}=await import("node:child_process");console.log(execFileSync("docker",["stats","--no-stream","leanna-"+id.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40)],{encoding:"utf8"}));}catch{console.log("Sandbox not running or stats unavailable.");}
 });
 program.command("logs").argument("<id>").option("--tail <n>","number of rows","50").option("--follow").action(async(id,opts)=>{
- const show=()=>{const rows=db.prepare("SELECT at,level,message FROM logs WHERE agent_id=? ORDER BY id DESC LIMIT ?").all(id,Number(opts.tail)) as any[];console.log(rows.reverse().map(r=>`[${r.at}] ${r.level}: ${r.message}`).join("\n"));};
+ const show=()=>{const rows=db.prepare("SELECT at,level,message FROM logs WHERE agent_id=? ORDER BY id DESC LIMIT ?").all(id,Number(opts.tail)) as any[];console.log(rows.reverse().map(r=>`[${r.at}] ${r.level}: ${r.message}`).join("
+"));};
  show();if(opts.follow){while(true){await new Promise(r=>setTimeout(r,3000));show();}}
 });
 program.command("stop").argument("<id>").action(async(id)=>{
