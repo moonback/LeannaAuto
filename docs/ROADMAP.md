@@ -610,3 +610,15 @@ Branche : `feat/task-mission-lifecycle-ui`, empilée sur `feat/immersive-agent-o
 - [ ] Vérifier le scénario réel d'une tâche active et d'un agent actif dans Docker avant fusion.
 
 Règles de sécurité : les tâches actives ne peuvent pas être modifiées ou supprimées ; les missions ne peuvent être changées que lorsque l'agent est arrêté. Les suppressions de tâches sont auditables ; les événements historiques append-only ne sont pas supprimés.
+
+
+### Outil — captures d'écran de toutes les pages UI
+
+Branche : `feat/ui-page-screenshots`.
+
+- [x] Ajouter `scripts/capture-screenshots.mjs`, autonome sans dépendance npm supplémentaire, basé sur le protocole DevTools de Chromium.
+- [x] Parcourir les 13 pages de navigation : vue d'ensemble, bureau IA, agents, missions, tâches, supervision, filiation, logs, audit, quota IA, ressources, workspace et sécurité/paramètres.
+- [x] Authentifier le navigateur avec `LEANNAAUTO_UI_TOKEN` sans écrire le jeton dans les fichiers de capture.
+- [x] Enregistrer une image PNG par page dans `artifacts/screenshots/ui` (dossier personnalisable en argument).
+- [x] Ajouter la commande npm `npm run capture:screenshots`.
+- [ ] Validation Windows : lancer l'UI, définir le jeton administrateur, exécuter la capture et vérifier les 13 PNG.
