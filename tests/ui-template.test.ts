@@ -29,6 +29,11 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).not.toContain("confirm(");
   expect(dashboardHtml).not.toContain("alert(");
   expect(dashboardHtml).toContain("92dvh");
+  expect(dashboardHtml).toContain('id="pageDescription"');
+  expect(dashboardHtml).toContain('id="breadcrumbCurrent"');
+  expect(dashboardHtml).toContain('class="nav-group-label"');
+  expect(dashboardHtml).toContain("function initNavigationGroups()");
+  expect(dashboardHtml).toContain("leanna_ui_nav_group_");
  });
  it("keeps every navigation target connected to a page section",()=>{
   const navigation=dashboardHtml.split('<nav aria-label="Navigation principale">')[1]?.split('</nav>')[0]??"";
