@@ -532,6 +532,10 @@ Branche : `feat/agents-management-ui`, créée depuis `main` après fusion de la
 - [x] Ajouter recherche locale et filtre par statut sans modifier les données serveur.
 - [x] Conserver les actions Démarrer, Arrêter et Voir la fiche, avec échappement HTML des données dynamiques.
 - [x] Étendre le test HTTP de la coquille UI pour vérifier la présence de la modale, des filtres et des informations agents.
-- [ ] Validation Windows : `npm run build`, `npm test` et contrôle visuel de l'ouverture/fermeture de la modale, de la recherche, des filtres et des cartes agent.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm ci` réussi (90 packages) ; audit npm sans vulnérabilité ; `npm run build` réussi.
+- [x] Validation utilisateur Windows : `npm test` réussi, 14 fichiers et 54 tests sur 54.
+- [x] Les tests Docker opt-in réels sont actifs et réussis : intégration agent, récupération après crash, sérialisation des commandes orphelines (ordre `started → completed → started → completed`) et réconciliation du conteneur.
+- [x] `npm run ui` démarre sur `http://127.0.0.1:3000`.
+- [ ] Contrôle visuel et fonctionnel dans le navigateur : ouverture/fermeture de la modale, validation formulaire, recherche, filtres et cartes agent.
 
-État de validation : modifications poussées sur la branche dédiée ; aucun build ni test n'a été exécuté dans l'environnement de modification. La validation locale Windows reste requise. La fusion de la PR #10 a été demandée explicitement et réalisée avant ce nouveau lot ; aucune modification supplémentaire n'est faite sur `main`.
+État de validation : build, suite automatisée et démarrage du serveur confirmés par l'utilisateur sous Windows. Le contrôle visuel des interactions reste à effectuer. La fusion de la PR #10 a été réalisée avant ce lot ; ce lot reste isolé de `main` dans la PR #11.
