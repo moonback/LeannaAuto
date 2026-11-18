@@ -42,6 +42,9 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('id="eventLevelFilter"');
   expect(dashboardHtml).toContain('id="usageProgress"');
   expect(dashboardHtml).toContain("usagePercent=d.usage.quota>0");
+  expect(dashboardHtml).toContain('data-task-view="kanban"');
+  expect(dashboardHtml).toContain("task-kanban-column");
+  expect(dashboardHtml).toContain("let taskView='table'");
   expect(dashboardHtml).toContain('role="log"');
   expect(dashboardHtml).toContain("event-details-toggle");
   expect(dashboardHtml).toContain("data-copy-event");
