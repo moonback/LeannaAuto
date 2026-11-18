@@ -33,12 +33,12 @@ Principes :
 | Audit | En place, à durcir | Historique persistant et événements d'actions. La rédaction des secrets et données sensibles reste à vérifier. |
 | Authentification UI | En place, à auditer | Jetons admin et opérateur, autorisations appliquées côté serveur. |
 | Arrêt d'urgence | En place | Verrouillage global persistant et blocage des démarrages. |
-| Dashboard | En place, refonte en cours | Vue d'ensemble, agents, tâches, logs, quotas, audit, supervision, workspace et sécurité. |
+| Dashboard | En place, centre de contrôle à construire | Pages et API locales existantes ; première vue Missions ajoutée. Les vues de pilotage approfondi, événements structurés, métriques fiables et interventions guidées restent à livrer. |
 | Identité | Partielle | Empreinte d'identité ; pas encore de clés Ed25519 et de signatures vérifiables. |
 | Auto-évolution | Non livrée | Pas de système sûr de proposition, revue, test et déploiement de modifications. |
 | Réplication contrôlée | Non livrée | La création d'un agent enfant ne constitue pas encore une réplication opérationnelle complète. |
 
-Validation utilisateur rapportée pour la branche précédente : `npm run build` réussi et `npm test` avec 5 tests réussis. La refonte UI de la branche `feat/pro-dashboard-ui` doit être vérifiée séparément sur l'environnement Windows avant d'être considérée comme validée.
+Validation utilisateur Windows du 18 novembre 2026 sur `feat/mission-control-ui` : `npm ci` réussi ; `npm run build` réussi ; `npm test` réussi avec 13 fichiers et 45 tests (tous les tests Docker opt-in activés) ; `npm run ui` démarre sur `http://127.0.0.1:3000`. Cette validation confirme la compilation, les tests et le démarrage serveur ; la validation visuelle et fonctionnelle de la nouvelle vue Missions reste à faire.
 
 ## 2.1. Consolidation et nouveau chantier interface
 
@@ -68,29 +68,112 @@ Critères de sortie :
 - Mise à jour depuis une installation existante sans perte de données.
 - Les scénarios critiques sont couverts par des tests automatisés.
 
-### Phase 1 — Dashboard professionnel et pilotage complet
-**Priorité : P1**
+### Phase 1 — Centre de contrôle opérationnel
+**Priorité : P0 · Chantier produit principal**
 
-Objectif : faire de l'interface le centre de contrôle opérationnel.
+Objectif : faire de l'interface le poste de pilotage quotidien. L'utilisateur doit comprendre en quelques secondes ce que fait chaque agent, pourquoi il le fait, sur quelle tâche il travaille, ce qui vient de se passer et quelle intervention est nécessaire.
 
-Travaux :
-- [ ] Finaliser le design responsive et vérifier chaque page.
-- [x] Ajouter une vue « Missions » avec cartes d'agents, objectif, tâche active/prochaine tâche, dernière activité, heartbeat, état et actions de démarrage/arrêt ; données alimentées par le dashboard existant.
-- [ ] Faire valider visuellement la vue Missions sous Windows et ajuster les informations affichées selon le retour utilisateur.
-- [ ] Ajouter une fiche agent détaillée : identité, statut, mission, parent, heartbeat, ressources, tâches, erreurs et historique.
-- [ ] Ajouter recherche, filtres, tri et pagination aux listes d'agents, tâches, logs et audits.
-- [ ] Ajouter des vues détaillées des tâches : attente, exécution, réussite, échec, durée et agent assigné.
-- [ ] Afficher l'utilisation des tokens par agent et dans le temps.
-- [ ] Afficher les limites CPU/RAM/processus et leur consommation réelle lorsqu'elle est disponible.
-- [ ] Ajouter des états vides, chargements, erreurs et confirmations explicites.
-- [ ] Ajouter un indicateur clair du rôle connecté et une action de déconnexion.
-- [ ] Ajouter une page de configuration qui distingue paramètres effectifs, variables manquantes et valeurs par défaut.
-- [ ] Conserver le workspace en lecture seule tant que les contrôles d'accès et d'isolation ne sont pas renforcés.
+#### 1A — Vue d'ensemble / salle de contrôle
+- [ ] Construire une page d'accueil orientée exploitation : agents actifs, agents en attente, agents arrêtés, agents en erreur, tâches en cours, tâches en retard et approbations en attente.
+- [ ] Afficher l'état global du runtime, du superviseur, de SQLite, de Docker et du fournisseur LLM sans confondre état inconnu et état sain.
+- [ ] Ajouter un flux « activité récente » trié chronologiquement : démarrage, changement d'état, tâche prise/terminée, outil lancé/terminé, erreur, reprise, décision et intervention humaine.
+- [ ] Ajouter des filtres globaux par agent, statut, mission, période et niveau de gravité.
+- [ ] Rendre visibles les données périmées : heure de dernière actualisation, dernier heartbeat et avertissement lorsque la source ne répond plus.
+- [ ] Ajouter des liens directs depuis chaque indicateur vers la liste filtrée correspondante.
 
-Critères de sortie :
-- Toutes les pages ont un comportement cohérent sur desktop et mobile.
-- Chaque action sensible est confirmée, autorisée côté serveur et journalisée.
-- Les données affichées correspondent à l'état réel de la base et des sandboxes.
+#### 1B — Tableau des missions
+- [x] Première vue Missions : cartes d'agents, objectif, tâche active/prochaine tâche, dernière activité, heartbeat, état et actions démarrer/arrêter.
+- [ ] Faire valider la première vue Missions visuellement sous Windows et corriger les problèmes de navigation, responsive et lisibilité.
+- [ ] Transformer la grille en tableau/kanban filtrable : En attente, En cours, Bloqué, Terminé, Échec, Arrêté.
+- [ ] Distinguer explicitement mission de l'agent, tâche courante, prochaine tâche et dernier résultat ; ne jamais présenter une tâche pending comme une tâche en cours.
+- [ ] Afficher depuis combien de temps l'agent travaille sur la tâche, le dernier progrès observé et la raison d'un éventuel blocage, uniquement si ces données sont enregistrées.
+- [ ] Ajouter recherche, tri, filtres persistants et sélection multiple pour les opérations sûres.
+- [ ] Ajouter un indicateur de santé avec états explicites : sain, heartbeat en retard, erreur, sandbox indisponible, état inconnu.
+
+#### 1C — Fiche agent complète
+- [ ] Créer une fiche avec identité, identifiant, mission, statut runtime, date de création, parent/enfants, version, empreinte de constitution et capacités autorisées.
+- [ ] Ajouter un panneau « maintenant » : tâche active, étape courante, dernier message du modèle, dernier outil exécuté, résultat et durée.
+- [ ] Afficher une chronologie unifiée des événements de l'agent avec filtres et recherche.
+- [ ] Afficher tâches passées, présentes et planifiées, avec statut, dates, durée, tentatives et résultat.
+- [ ] Afficher heartbeat, propriétaire du bail, redémarrages, erreurs récentes et état de la sandbox.
+- [ ] Afficher consommation réelle et historique : CPU, mémoire, stockage, PIDs et tokens, avec indication des métriques indisponibles.
+- [ ] Ajouter des onglets lisibles : Vue d'ensemble, Mission, Activité, Tâches, Ressources, Workspace, Configuration et Audit.
+- [ ] Garder le workspace en lecture seule ; afficher les chemins et métadonnées sans exposer les secrets.
+
+#### 1D — Gestion complète des tâches
+- [ ] Ajouter une page Tâches avec vues liste et kanban, recherche, filtres, tri et pagination.
+- [ ] Ajouter création, modification, affectation, réaffectation, priorité, échéance et annulation avec autorisations serveur.
+- [ ] Définir une machine d'état documentée : pending, active, blocked, completed, failed, cancelled ; contrôler toutes les transitions côté serveur.
+- [ ] Ajouter description, critères de réussite, dépendances, tentatives, timestamps, agent responsable et historique des changements.
+- [ ] Distinguer tâche bloquée, agent inactif, attente de modèle et attente d'approbation.
+- [ ] Ajouter réessayer, remettre en attente et réassigner avec confirmation et journal d'audit.
+- [ ] Ajouter une vue de détail qui relie la tâche à tous les événements, outils et agents impliqués.
+- [ ] Ne déclarer une tâche terminée que sur un signal de réussite vérifiable, pas sur la seule disparition du processus.
+
+#### 1E — Journal d'activité et traçabilité
+- [ ] Définir un modèle d'événement persistant et structuré : id, date UTC, agent, tâche, type, niveau, source, résumé, détails expurgés et corrélation d'exécution.
+- [ ] Enregistrer les transitions d'état, appels LLM (métadonnées seulement), outils, débuts/fins/erreurs, reprises, validations humaines et opérations opérateur.
+- [ ] Ajouter un identifiant de corrélation commun à une boucle, une tâche et ses appels d'outils.
+- [ ] Construire une chronologie par agent, par tâche et globale.
+- [ ] Ajouter filtres, recherche textuelle, export JSON/CSV et politique de rétention.
+- [ ] Prévoir une diffusion live via Server-Sent Events ou WebSocket après stabilisation de l'API ; conserver une stratégie de repli par polling.
+- [ ] Ne jamais journaliser clés API, jetons d'authentification, variables secrètes ou contenus sensibles non nécessaires.
+- [ ] Distinguer événement confirmé, diagnostic estimé et donnée absente.
+
+#### 1F — Pilotage et interventions humaines
+- [ ] Centraliser les actions : démarrer, arrêter, redémarrer, mettre en pause/reprendre si le runtime le permet, annuler une tâche et relancer une tâche échouée.
+- [ ] Ajouter des confirmations contextualisées indiquant l'agent, la tâche et les conséquences de l'action.
+- [ ] Afficher le résultat réel de chaque commande : acceptée, en cours, terminée ou refusée, avec motif.
+- [ ] Ajouter une file d'approbations humaines pour les actions sensibles, avec contexte, risque, agent demandeur, expiration et décision.
+- [ ] Ajouter un arrêt d'urgence global toujours accessible, son état verrouillé et une procédure explicite de réarmement réservée à l'administrateur.
+- [ ] Ajouter opérations groupées uniquement pour les actions idempotentes et autorisées ; demander confirmation renforcée pour les actions de masse.
+- [ ] Empêcher les doubles clics et les commandes concurrentes ; rendre les actions idempotentes ou détecter les répétitions.
+- [ ] Afficher le rôle connecté, ses permissions et un bouton de déconnexion ; ne jamais faire confiance aux contrôles UI seuls.
+
+#### 1G — Ressources et santé du système
+- [ ] Construire une page système : CPU/RAM de l'hôte, Docker, conteneurs, stockage workspace, nombre de processus, uptime et espace disque.
+- [ ] Afficher pour chaque agent ses limites configurées et ses mesures réellement observées.
+- [ ] Afficher consommation de tokens par agent, tâche et période, ainsi que quota, restant et rythme de consommation.
+- [ ] Distinguer mesure instantanée, cumul, estimation et valeur non disponible.
+- [ ] Déclencher des alertes configurables : heartbeat périmé, quota proche, mémoire élevée, disque faible, conteneur absent, erreur répétée.
+- [ ] Ajouter graphiques temporels et historique de santé avec granularité adaptée.
+- [ ] Ne pas exposer une fausse précision : documenter fréquence d'échantillonnage et source de chaque métrique.
+
+#### 1H — UX, accessibilité et fiabilité du dashboard
+- [ ] Uniformiser navigation, composants, couleurs de statut, dates, fuseaux horaires, tableaux, formulaires et notifications.
+- [ ] Finaliser responsive desktop/tablette/mobile, états vides, chargements, erreurs réseau et données périmées.
+- [ ] Ajouter pagination côté serveur pour les gros historiques ; éviter de charger tous les logs en mémoire.
+- [ ] Ajouter actualisation manuelle, fréquence réglable et indication « dernière mise à jour ».
+- [ ] Ajouter raccourcis clavier non dangereux, navigation clavier, contrastes et libellés accessibles.
+- [ ] Ajouter tests API et UI pour rôles, transitions de tâches, filtres, actions et affichage des erreurs.
+- [ ] Ajouter tests d'intégration de la diffusion live, reconnexion et repli polling.
+- [ ] Ajouter tests de non-régression XSS sur tous les contenus fournis par les agents.
+
+**Critères de sortie de la Phase 1**
+- En moins de quelques secondes, l'utilisateur peut identifier les agents actifs, leur tâche courante, les erreurs et les interventions requises.
+- Toute donnée affichée possède une source, une date et un état de fraîcheur ; aucune progression n'est inventée.
+- Une mission peut être suivie de sa création à sa clôture dans une chronologie cohérente.
+- Toute action est autorisée côté serveur, confirmée si nécessaire, auditée et reflétée par l'état réel.
+- Le dashboard reste utilisable lorsque des agents, tâches et événements sont nombreux, et lorsque le serveur ou Docker est momentanément indisponible.
+
+### Phase 1.5 — Contrat de données et API d'observabilité
+**Priorité : P0 · À réaliser en parallèle des vues, avant le temps réel**
+
+- [ ] Définir les contrats TypeScript des agents, tâches, événements, métriques, alertes et approbations.
+- [ ] Ajouter une table d'événements append-only avec index par date, agent, tâche, type et corrélation.
+- [ ] Ajouter une table de métriques échantillonnées avec source, unité, date et qualité de mesure.
+- [ ] Ajouter les champs de progression explicite d'une tâche : étape, message, pourcentage optionnel, date de mise à jour et origine.
+- [ ] Ne permettre le pourcentage que si l'agent ou l'outil fournit une mesure justifiée ; sinon afficher une progression qualitative.
+- [ ] Exposer des endpoints paginés et filtrables pour événements, tâches, métriques et approbations.
+- [ ] Versionner les réponses API et valider les entrées/sorties.
+- [ ] Ajouter migrations SQLite rétrocompatibles, tests de migration et stratégie de sauvegarde.
+- [ ] Ajouter un endpoint de santé en lecture seule indiquant l'état des composants sans révéler les secrets.
+- [ ] Garder l'API compatible avec le polling avant d'introduire le flux temps réel.
+
+**Critères de sortie**
+- Le backend fournit des événements persistants et cohérents, pas seulement des logs textuels.
+- L'interface peut reconstruire l'historique après un redémarrage.
+- Les données manquantes sont représentées comme inconnues, jamais remplacées par des suppositions.
 
 ### Phase 2 — Superviseur et fiabilité des agents
 **Priorité : P0**
