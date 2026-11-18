@@ -1,8 +1,8 @@
 import {shell} from "./executor.js";
 import {checkAction} from "./constitution.js";
-import path from "node:path";
+import path from "node:path";\nimport {log} from "./storage.js";
 export async function runTool(agentId:string,name:string,args:Record<string,unknown>){
- const verdict=checkAction(name,args); if(!verdict.allowed)return "Rejected: "+verdict.reason;
+ const verdict=checkAction(name,args); log(agentId,"decision",JSON.stringify({tool:name,allowed:verdict.allowed,reason:verdict.reason,args})); if(!verdict.allowed)return "Rejected: "+verdict.reason;
  if(name==="shell")return await shell(agentId,String(args.command??""));
  if(name==="read_file"){
   const p=workspacePath(String(args.path??""));
