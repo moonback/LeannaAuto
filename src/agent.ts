@@ -14,7 +14,10 @@ export async function startAgent(id:string){
  while(true){
   const current=get(id); if(!current||current.status!=="running")break;
   const mode=resourceMode();
-  const prompt="Identity: "+current.name+" ("+id+")\nMission: "+current.goal+"\nResource mode: "+mode+"\n"+toolHelp+"\nUse exactly one tool per response, format TOOL name JSON on one line, or say DONE and explain progress.\n";
+  const task=db.prepare("SELECT id,title,description,status FROM tasks WHERE agent_id=? AND status IN ('pending','active') ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END,created_at LIMIT 1").get(id) as {id:string;title:string;description:string;status:string}|undefined;
+  if(task && task.status==="pending")db.prepare("UPDATE tasks SET status='active',updated_at=? WHERE id=?").run(new Date().toISOString(),task.id);
+  const taskPrompt=task?"\\nCurrent task: "+task.title+"\\nTask detail: "+task.description+"\\nTask ID: "+task.id+"\\nPrioritize this task; task status is updated using the CLI.\\n":"";
+  const prompt="Identity: "+current.name+" ("+id+")\\nMission: "+current.goal+"\\nResource mode: "+mode+taskPrompt+"\\n"+toolHelp+"\\nUse exactly one tool per response, format TOOL name JSON on one line, or say DONE and explain progress.\\n";
   let answer="";
   try{answer=await chat([{role:"system",content:constitutionText+"\n"+prompt},{role:"user",content:history.slice(-8).join("\n")||"Begin your mission."}]);}
   catch(e){log(id,"error",String(e));await delay(15000);continue;}
