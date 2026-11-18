@@ -579,11 +579,13 @@ Cette validation confirme le comportement couvert par les tests automatisés. El
 Branche dédiée : `test/supervisor-process-crash-recovery`, créée depuis `feat/api-supervisor-hardening`.
 
 - [x] Ajouter un test multi-processus utilisant une vraie base SQLite temporaire.
+- [x] Extraire un cycle de récupération testable dans `src/supervisor.ts` et l'utiliser depuis la commande CLI `supervise`.
 - [x] Faire acquérir un bail runtime par un processus Node enfant, puis le terminer de force.
-- [x] Vérifier qu'un nouveau propriétaire peut reprendre le bail après expiration du heartbeat.
-- [x] Vérifier que la tâche persistante reste au statut `active` après la reprise.
-- [ ] Exécuter ce test sous Windows et confirmer que l'arrêt forcé du processus fonctionne dans cet environnement.
-- [ ] Ajouter ensuite un test de bout en bout qui démarre le véritable superviseur et vérifie la reprise d'un agent sans runtime concurrent.
+- [x] Lancer le cycle de récupération dans un second processus Node et vérifier la reprise du bail par un nouveau propriétaire.
+- [x] Vérifier que la tâche persistante reste au statut `active` et que le compteur de redémarrage est incrémenté.
+- [x] Ajouter des tests unitaires pour les heartbeats périmés/invalides et empêcher la programmation de deux reprises simultanées.
+- [ ] Exécuter ces tests sous Windows et confirmer que l'arrêt forcé du processus fonctionne dans cet environnement.
+- [ ] Ajouter un test de bout en bout avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée, puis vérifier l'absence de runtime concurrent.
 - [ ] Tester séparément la réconciliation avec un daemon Docker réel.
 
-Fichier ajouté : `tests/agent-runtime-process.test.ts`. Le test n'a pas encore été exécuté dans l'environnement Windows de référence ; aucune validation n'est présumée.
+Fichiers ajoutés : `src/supervisor.ts`, `tests/supervisor.test.ts` et `tests/agent-runtime-process.test.ts`. Le cycle CLI utilise désormais la fonction extraite. Le test multi-processus utilise un faux démarrage d'agent qui exerce le vrai mécanisme de bail SQLite ; il ne valide pas encore l'exécution du vrai agent, l'appel LLM ou Docker. Aucun de ces nouveaux tests n'a encore été exécuté dans l'environnement Windows de référence.
