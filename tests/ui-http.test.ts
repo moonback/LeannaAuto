@@ -73,6 +73,10 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain('autocomplete="username"');
   expect(html).toContain("setInterval(()=>{if(sessionStorage.getItem");
   expect(html).toContain("data:image/svg+xml");
+  expect(html).toContain("document.getElementById('agentTable').innerHTML=agents.map");
+  expect(html).not.toContain("document.getElementById('nTasks')");
+  expect(html).not.toContain("document.getElementById('nTokens')");
+  expect(html).not.toContain("document.getElementById('recent')");
  });
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
