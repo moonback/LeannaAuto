@@ -45,10 +45,12 @@ function appendEvent(input:{at:string;agentId:string|null;taskId?:string|null;ty
   .run(input.at,input.agentId,input.taskId??null,input.type,input.level,input.source,redactEventText(input.summary),redactEventText(details),input.correlationId??null);
 }
 
-export function log(agentId:string,level:string,message:string){
+export type EventMetadata={eventType?:string;source?:string;taskId?:string|null;correlationId?:string|null;details?:unknown};
+
+export function log(agentId:string,level:string,message:string,metadata:EventMetadata={}){
  const at=new Date().toISOString();
  db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(agentId,at,level,message);
- appendEvent({at,agentId,type:"log",level,source:"runtime-log",summary:message});
+ appendEvent({at,agentId,taskId:metadata.taskId,type:metadata.eventType??"log",level,source:metadata.source??"runtime-log",summary:message,details:metadata.details,correlationId:metadata.correlationId});
 }
 
 export function audit(action:string,target:string|null,details:string){
