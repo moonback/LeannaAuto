@@ -24,6 +24,8 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('role="alertdialog"');
   expect(dashboardHtml).toContain('id="toastRegion"');
   expect(dashboardHtml).toContain("function confirmDialog(message)");
+  expect(dashboardHtml).toContain("Jeton opérateur révoqué.");
+  expect(dashboardHtml).toContain("Quota d’inférence mis à jour.");
   expect(dashboardHtml).not.toContain("confirm(");
   expect(dashboardHtml).not.toContain("alert(");
   expect(dashboardHtml).toContain("92dvh");
