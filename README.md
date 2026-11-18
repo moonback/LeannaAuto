@@ -5,12 +5,12 @@ Autonomous agents ("automatons") with persistent missions, Linux sandbox executi
 ## Requirements
 - Node.js 20+
 - Docker installed and accessible (shell tool runs in a container)
-- An OpenAI-compatible inference endpoint (OpenAI, local Ollama with compatibility, etc.)
+- An OpenRouter API key and model ID
 
 ## Quickstart
 ```bash
 cp .env.example .env
-# Set LLM_BASE_URL, LLM_API_KEY and LLM_MODEL
+# Set OPENROUTER_API_KEY and OPENROUTER_MODEL
 npm install
 npm run dev -- init --name Researcher --goal "Build a useful open-source tool"
 npm run dev -- start researcher-XXXXXXXX # replace with generated id
@@ -32,7 +32,7 @@ The Docker executor creates isolated containers with CPU, memory and PID limits 
 - `spawn ID --goal GOAL` (creates a child manifest; child must be separately started)
 
 ## Limitations
-- The agent runs in the foreground; no service manager or restart daemon yet.
+- Agent loops run in the foreground. `supervise` is a foreground watchdog for agents marked running; it can start loops and log heartbeat staleness, but is not yet a process-level kill/recovery mechanism.
 - Tool calling uses a simple text protocol, not structured native tool calls.
 - Identity currently exposes a fingerprint; private key signing and key custody are not implemented.
 - Replication creates a child record only; resource budgeting/automatic spawning is not implemented.
@@ -51,3 +51,12 @@ npm run dev -- task set TASK_ID active
 npm run dev -- task set TASK_ID completed
 ```
 Task state is stored in SQLite (pending, active, completed, failed). This CLI tracking is not yet automatically consumed by the agent planner.
+
+## OpenRouter
+Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default endpoint is `https://openrouter.ai/api/v1`. Optional attribution headers are configured with `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME`.
+
+## Supervisor
+```bash
+npm run dev -- supervise --interval 10 --stale 90
+```
+The watchdog starts loops for database agents marked `running`, records heartbeat timestamps, and logs stale heartbeat detections. For production process-level recovery, run it under systemd, Docker restart policy, or another external process manager; a hung loop is not yet force-killed/replaced by this MVP.
