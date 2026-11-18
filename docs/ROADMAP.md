@@ -684,21 +684,32 @@ Branche dédiée : `test/docker-agent-crash-recovery`, créée depuis `test/agen
 Le test utilise un vrai processus enfant tué brutalement, le superviseur réel, la vraie boucle d'agent et une vraie sandbox Docker. Le modèle reste simulé et le test ne contacte pas OpenRouter. Il teste une reprise après perte du processus propriétaire avant la reprise de tâche, pas un crash au milieu d'une commande shell déjà en cours.
 
 
-### Commandes Docker orphelines après crash Node — caractérisation en attente
+### Commandes Docker orphelines après crash Node — risque confirmé, sérialisation ajoutée
 
-Branche dédiée : `test/docker-exec-orphan-recovery`, créée depuis `test/docker-agent-crash-recovery`.
+Branche de caractérisation : `test/docker-exec-orphan-recovery`.
+Branche de correction : `fix/docker-exec-orphan-lock`, créée depuis la branche de caractérisation.
 
-- [x] Ajouter un test Docker opt-in qui lance une commande longue via `shell()` depuis un processus Node enfant.
-- [x] Tuer le processus Node propriétaire pendant que la commande Docker est en cours, puis lancer une seconde exécution identique.
-- [ ] Exécuter le test sur Windows avec Docker actif et déterminer si la première commande continue côté conteneur.
-- [ ] Confirmer si la commande de reprise chevauche la première et peut donc dupliquer ses effets.
-- [ ] Si le chevauchement est reproduit, concevoir une exclusion mutuelle persistante côté sandbox qui reste détenue tant que la commande orpheline tourne.
-- [ ] Tester le verrouillage en cas de fin normale, crash du client Docker, commande bloquée et arrêt/redémarrage du conteneur.
+Caractérisation réelle sur Windows/Docker, 18 novembre 2026 :
+- [x] Le processus Node enfant est tué par `SIGKILL` pendant qu'une commande shell longue tourne dans le conteneur.
+- [x] La commande d'origine continue après la mort du client Node/Docker.
+- [x] Une relance immédiate provoque deux exécutions concurrentes : relevé exact `["started","started","completed","completed"]`.
+- [x] Le risque de double effet de bord est donc confirmé ; le comportement ne doit pas être traité comme une annulation implicite.
+- [x] Build TypeScript réussi et suite complète : 13 fichiers, 45 tests réussis sur 45, avec les tests Docker opt-in activés.
+- [x] Le test de caractérisation isolé réussit et reproduit les deux exécutions concurrentes.
+- [x] `npm ci` réussit après synchronisation déjà présente du lockfile ; `npm install --package-lock-only` n'avait aucun changement à produire.
+- [ ] Les 5 vulnérabilités high signalées par `npm audit` restent à examiner séparément ; ne pas lancer `npm audit fix --force` sans analyse.
 
-Le test de caractérisation est opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1` et utilise uniquement un conteneur et un volume au nom aléatoire, supprimés au nettoyage. Aucun changement de comportement de production n'est encore effectué : la survie d'une commande après la mort de son client Node reste une hypothèse à mesurer sur le daemon Docker cible.
+Correction en cours sur `fix/docker-exec-orphan-lock` :
+- [x] Ajouter un verrou `flock` exclusif dans le workspace persistant de chaque agent, partagé par toutes les commandes `shell()` de cet agent.
+- [x] Garder le verrou dans le processus shell du conteneur, et non dans le processus Node client : si Node est tué, le verrou noyau reste détenu tant que la commande orpheline tourne.
+- [x] Passer la commande comme argument séparé au shell pour ne pas construire une chaîne shell à partir de l'entrée utilisateur.
+- [x] Renforcer le test Docker pour exiger l'ordre `started, completed, started, completed` après le crash et la relance.
+- [ ] Valider sous Windows que l'image Docker contient `flock`, que le build passe et que le test prouve l'absence de chevauchement.
+- [ ] Tester fin normale, expiration du timeout client, commande bloquée et arrêt/redémarrage du conteneur.
 
+Le verrou est volontairement par agent : il sérialise les appels shell sur un même workspace, sans bloquer les commandes d'autres agents. `flock` libère automatiquement le verrou à la fin du processus qui l'a acquis ; le fichier de verrou peut rester dans le volume sans conserver un verrou actif. La correction ne prétend pas annuler une commande orpheline : elle empêche la relance de commencer avant que celle-ci ait terminé.
 
-Retour Windows suivant, 18 novembre 2026 :
+18 novembre 2026 :
 - `npm install --package-lock-only` n'a produit aucun changement : le dépôt était propre et aucun commit de lockfile n'était nécessaire.
 - `npm ci` a ensuite réussi et installé 90 packages ; l'installation propre est désormais confirmée avec Vitest 4.1.12.
 - `npm run build` a réussi.
