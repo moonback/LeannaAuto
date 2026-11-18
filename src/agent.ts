@@ -2,7 +2,7 @@ import {randomUUID} from "node:crypto";
 import {db,log,emergencyStopActive} from "./storage.js";
 import {claimAgentRuntime,refreshAgentHeartbeat,releaseAgentRuntime} from "./agent-runtime.js";
 import {chat} from "./llm.js";
-import {ensureSandbox} from "./executor.js";
+import {ensureSandbox,stopSandbox} from "./executor.js";
 import {runTool,toolHelp} from "./tools.js";
 import {constitutionText} from "./constitution.js";
 import {resourceMode} from "./resources.js";
@@ -26,6 +26,11 @@ async function runAgentLoop(id:string,owner:string):Promise<void>{
  let history:string[]=[];
  try{
   await ensureSandbox(id);
+  if(emergencyStopActive()){
+   db.prepare("UPDATE agents SET status='stopped' WHERE id=? AND runtime_owner=?").run(id,owner);
+   await stopSandbox(id);
+   return;
+  }
   log(id,"system","Agent started");
   while(true){
    const current=get(id);
