@@ -43,6 +43,9 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('id="usageProgress"');
   expect(dashboardHtml).toContain("usagePercent=d.usage.quota>0");
   expect(dashboardHtml).toContain('data-task-view="kanban"');
+  expect(dashboardHtml).toContain('data-agent-view="table"');
+  expect(dashboardHtml).toContain('id="agentSort"');
+  expect(dashboardHtml).toContain("let agentView='cards'");
   expect(dashboardHtml).toContain("task-kanban-column");
   expect(dashboardHtml).toContain("let taskView='table'");
   expect(dashboardHtml).toContain('role="log"');
