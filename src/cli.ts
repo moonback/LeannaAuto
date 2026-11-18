@@ -30,6 +30,8 @@ program.command("stop").argument("<id>").action(async(id)=>{
 program.command("identity").argument("<id>").action((id)=>{const a=db.prepare("SELECT id,name,identity,constitution_hash,parent_id,version FROM agents WHERE id=?").get(id);console.log(JSON.stringify(a??{},null,2));});
 program.command("spawn").argument("<parent>").requiredOption("--goal <goal>").action((parent,opts)=>{
  const p=db.prepare("SELECT * FROM agents WHERE id=?").get(parent) as any;if(!p)throw new Error("Parent not found");
+ const maxChildren=Math.max(0,Number(process.env.MAX_CHILDREN_PER_AGENT??3));const childCount=(db.prepare("SELECT COUNT(*) as n FROM agents WHERE parent_id=?").get(parent) as any).n;if(childCount>=maxChildren)throw new Error("Parent child quota reached (MAX_CHILDREN_PER_AGENT).");
+ const maxAgents=Math.max(1,Number(process.env.MAX_AGENTS_TOTAL??20));const total=(db.prepare("SELECT COUNT(*) as n FROM agents").get() as any).n;if(total>=maxAgents)throw new Error("Global agent quota reached (MAX_AGENTS_TOTAL).");
  const id="child-"+randomUUID().slice(0,8);
  db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,"Child of "+p.name,opts.goal,parent,"stopped",new Date().toISOString(),createIdentity(),constitutionHash(),"0.1.0");
  log(parent,"lineage","Created child "+id+" (stopped; start separately)");log(id,"genesis","Parent "+parent+"; mission: "+opts.goal);console.log("Created "+id);
