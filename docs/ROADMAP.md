@@ -171,7 +171,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Ordonner les tâches renvoyées en donnant priorité aux tâches actives et en attente, puis aux tâches historiques récentes.
 - [x] Ajouter des tests HTTP couvrant la structure de la salle de contrôle, les compteurs vides et le comptage exact après création d'une tâche.
 - [x] Signaler les tâches en échec comme intervention requise et distinguer visuellement les niveaux d'alerte.
-- [ ] Validation utilisateur Windows de ce nouveau lot : `npm run build`, `npm test` et vérification visuelle dans le navigateur.
+- [x] Validation utilisateur Windows : `npm run build` réussi, `npm test` réussi (46/46 tests) et serveur UI démarré. La vérification visuelle détaillée dans le navigateur reste à faire.
 
 Limites connues : l'état Docker, SQLite, du fournisseur LLM et du superviseur n'est pas encore sondé indépendamment ; il n'est donc pas présenté comme sain. Le flux utilise les logs existants, pas encore un journal d'événements typé. Les alertes sont calculées à partir des champs actuellement persistés ; les approbations et métriques de ressources ne sont pas encore disponibles.
 
@@ -187,7 +187,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Connecter la page Journal système à l'API d'événements structurés, avec filtres agent et type.
 - [x] Ajouter un test HTTP de lecture opérateur, filtrage par type et navigation entre pages.
 - [x] Validation utilisateur Windows du lot initial : build réussi, 49/49 tests réussis et serveur UI démarré.
-- [ ] Validation utilisateur Windows de ce lot : build, suite complète et vérification de l'API.
+- [x] Validation utilisateur Windows : build réussi, suite complète réussie (49/49 tests) et serveur UI démarré ; les tests HTTP couvrent la lecture opérateur, les filtres et la pagination de l'API.
 
 Limites : les événements hérités des logs et audits ne contiennent pas encore systématiquement un identifiant de tâche ou de corrélation. Les événements structurés dédiés couvrent maintenant les transitions de tâches, les appels LLM et l'exécution des outils sur la boucle d'agent. La rédaction actuelle est défensive et fondée sur des motifs, pas une garantie de détection de tous les secrets.
 
@@ -203,7 +203,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Supprimer les arguments bruts des messages de décision d'outil afin de ne pas recopier inutilement commandes et contenus dans les journaux.
 - [x] Ajouter un test d'intégration vérifiant que les événements tâche/LLM/outil d'un même cycle partagent la même corrélation.
 - [x] Étendre le filtre du Journal système aux transitions de tâches, appels/usage LLM, décisions et exécutions d'outils.
-- [ ] Validation utilisateur Windows : build, suite complète et tests Docker opt-in.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm run build` réussi ; `npm test` : 13 fichiers et 49 tests réussis, tous les tests Docker opt-in activés ; `npm run ui` démarre sur `http://127.0.0.1:3000`.
 
 Limites : la corrélation est créée par cycle de décision de l'agent ; les actions hors boucle d'agent et les événements historiques ne reçoivent pas rétroactivement de corrélation. Les logs legacy conservent leur format texte pour compatibilité.
 
