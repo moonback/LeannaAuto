@@ -46,6 +46,8 @@ describe("supervisor recovery with the real agent loop",()=>{
   expect(ensureSandbox).toHaveBeenCalledOnce();
   expect(chat).toHaveBeenCalledOnce();
   expect(runTool).toHaveBeenCalledOnce();
+  expect(chat).toHaveBeenCalledWith(expect.any(Array),"agent-restart",expect.objectContaining({taskId:"task-restart",correlationId:expect.any(String)}));
+  expect(runTool).toHaveBeenCalledWith("agent-restart","shell",{command:"true"},expect.objectContaining({taskId:"task-restart",correlationId:expect.any(String)}));
   expect(stopSandbox).not.toHaveBeenCalled();
   expect(db.prepare("SELECT status,runtime_owner,heartbeat_at,restart_count FROM agents WHERE id='agent-restart'").get()).toMatchObject({
    status:"stopped",runtime_owner:null,heartbeat_at:null,restart_count:1
