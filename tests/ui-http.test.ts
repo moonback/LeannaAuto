@@ -121,8 +121,8 @@ describe("dashboard HTTP security integration",()=>{
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
   expect(response.status).toBe(200);
-  await expect(response.json()).resolves.toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
-  const dashboard=await response.json() as {events:unknown[]};
+  const dashboard=await response.json() as {role:string;taskCounts:{active:number;pending:number;failed:number;completed:number;total:number};events:unknown[]};
+  expect(dashboard).toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
   expect(Array.isArray(dashboard.events)).toBe(true);
  });
  it("rejects privileged writes from an operator",async()=>{
