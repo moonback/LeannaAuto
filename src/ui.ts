@@ -8,11 +8,9 @@ import {stopSandbox,deleteSandbox} from "./executor.js";
 import {createIdentity,constitutionHash} from "./identity.js";
 import {collectSystemMetrics} from "./observability.js";
 import {listWorkspace,readWorkspaceFile,WorkspaceError} from "./workspace.js";
-
-const port=Number(process.env.UI_PORT??3000);
 import {dashboardHtml as html} from "./ui/template.js";
 
-;
+const port=Number(process.env.UI_PORT??3000);
 
 const adminToken=process.env.LEANNAAUTO_UI_TOKEN??"";
 const operatorToken=process.env.LEANNAAUTO_UI_OPERATOR_TOKEN??"";
