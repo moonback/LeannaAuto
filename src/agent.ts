@@ -10,13 +10,17 @@ import type {Agent} from "./types.js";
 
 const get=(id:string)=>db.prepare("SELECT * FROM agents WHERE id=?").get(id) as (Agent & {runtime_owner?:string})|undefined;
 
-export async function startAgent(id:string,options:{staleAfterMs?:number}={}){
+export function startAgent(id:string,options:{staleAfterMs?:number}={}):Promise<void>{
  const agent=get(id);
  if(!agent)throw new Error("Agent not found");
  if(emergencyStopActive())throw new Error("Global emergency stop is active; reset it before starting agents.");
  const owner=process.pid+":"+randomUUID();
  const staleAfterMs=Math.max(30000,options.staleAfterMs??90000);
  if(!claimAgentRuntime(db,id,owner,new Date(),staleAfterMs))throw new Error("Agent already has an active runtime lease.");
+ return runAgentLoop(id,owner);
+}
+
+async function runAgentLoop(id:string,owner:string):Promise<void>{
  const heartbeatTimer=setInterval(()=>{refreshAgentHeartbeat(db,id,owner,new Date());},15000);
  heartbeatTimer.unref();
  let history:string[]=[];
