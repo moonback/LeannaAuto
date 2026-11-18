@@ -1,4 +1,5 @@
 import {spawn, type ChildProcess} from "node:child_process";
+import Database from "better-sqlite3";
 import {request as httpRequest} from "node:http";
 import {createServer} from "node:net";
 import {mkdtemp, rm} from "node:fs/promises";
@@ -187,6 +188,22 @@ describe("dashboard HTTP security integration",()=>{
   const task=await taskResponse.json() as {id:string};
   expect((await request("/api/tasks/"+task.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"",description:"x"})})).status).toBe(400);
   expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:" "})})).status).toBe(400);
+ });
+
+ it("refuses task and mission changes while their runtime is active",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"active-guard-agent",goal:"Active guard mission"})});
+  const agent=await created.json() as {id:string};
+  const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Active task",description:"Must be immutable while running"})});
+  const task=await made.json() as {id:string};
+  const database=new Database(path.join(directory,"test.db"));
+  try{
+   database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(task.id);
+   database.prepare("UPDATE agents SET status='running' WHERE id=?").run(agent.id);
+   expect((await request("/api/tasks/"+task.id,adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Changed",description:"Changed"})})).status).toBe(409);
+   expect((await request("/api/tasks/"+task.id,adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({goal:"Changed"})})).status).toBe(409);
+   expect((await request("/api/agents/"+agent.id+"/mission",adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
+  }finally{database.close()}
  });
  it("restricts agent deletion to stopped leaf agents without tasks",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"deletable-agent",goal:"Deletion guard test"})});
