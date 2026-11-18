@@ -28,8 +28,7 @@ program.command("resources").argument("<id>").action(async(id)=>{
  try{const {execFileSync}=await import("node:child_process");console.log(execFileSync("docker",["stats","--no-stream","leanna-"+id.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40)],{encoding:"utf8"}));}catch{console.log("Sandbox not running or stats unavailable.");}
 });
 program.command("logs").argument("<id>").option("--tail <n>","number of rows","50").option("--follow").action(async(id,opts)=>{
- const show=()=>{const rows=db.prepare("SELECT at,level,message FROM logs WHERE agent_id=? ORDER BY id DESC LIMIT ?").all(id,Number(opts.tail)) as any[];console.log(rows.reverse().map(r=>`[${r.at}] ${r.level}: ${r.message}`).join("
-"));};
+ const show=()=>{const rows=db.prepare("SELECT at,level,message FROM logs WHERE agent_id=? ORDER BY id DESC LIMIT ?").all(id,Number(opts.tail)) as any[];console.log(rows.reverse().map(r=>`[${r.at}] ${r.level}: ${r.message}`).join("\n"));};
  show();if(opts.follow){while(true){await new Promise(r=>setTimeout(r,3000));show();}}
 });
 program.command("stop").argument("<id>").action(async(id)=>{
