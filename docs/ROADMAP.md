@@ -531,7 +531,7 @@ Commits :
 
 - [x] Étendre les tests du bail runtime pour vérifier qu'une reprise après heartbeat périmé ne réinitialise pas une tâche déjà `active`.
 - [x] Vérifier que l'ancien propriétaire ne peut ni rafraîchir ni libérer le bail après la reprise par un nouveau propriétaire.
-- [ ] Exécuter la suite étendue sous Windows.
+- [x] Exécuter la suite étendue sous Windows : `npm run build` réussi ; `npm test` : 6 fichiers et 36 tests réussis (validation utilisateur, 18 novembre 2026).
 - [ ] Valider avec une interruption réelle du processus que le superviseur reprend l'agent et que sa tâche active continue sans être dupliquée.
 
 Commit : `fa7cdc5`.
@@ -561,3 +561,14 @@ Scénarios manuels prioritaires :
 6. Sur une base SQLite existante, confirmer que la migration `runtime_owner` se déroule sans perte de données.
 
 Le lot reste en cours jusqu'à la validation Windows, la vérification des refus API et un scénario réel de reprise après crash. Aucun changement n'a été fait sur `main`.
+
+
+### Validation de la continuité des tâches — Windows, 18 novembre 2026
+
+Validation utilisateur sur `feat/api-supervisor-hardening` :
+- [x] `git pull` : branche déjà à jour.
+- [x] `npm run build` : compilation TypeScript réussie.
+- [x] `npm test` : 6 fichiers réussis, 36 tests sur 36.
+- [x] Le test de reprise de bail et de continuité d'une tâche active est inclus dans cette suite verte.
+
+Cette validation confirme le comportement couvert par les tests automatisés. Elle ne remplace pas encore un test de crash réel avec deux processus ni un test sur un daemon Docker réel. Ces scénarios restent ouverts.
