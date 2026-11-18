@@ -457,6 +457,19 @@ Pull request existante : #6, vers `main` ; aucune fusion effectuée.
 - [x] Workflow CI basculé sur `npm ci` pour installer exactement le lockfile.
 - [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale. Les exécutions du 18 novembre (dont le run `44345121441`) échouent immédiatement avec `steps: null` et aucun runner assigné ; logs indisponibles.
 
+### Validation Windows et correction TypeScript — 18 novembre 2026
+
+Retour utilisateur après mise à jour de la branche :
+- [x] `npm ci` terminé ; 91 paquets installés, 5 alertes high restantes dans l'arbre de développement (Picomatch).
+- [ ] `npm run build` a échoué sur trois erreurs TS2709 dans `src/agent-runtime.ts` : le type d'instance SQLite était déclaré directement comme `Database`, alors que les définitions `better-sqlite3` exposent le type d'instance sous `Database.Database`.
+- [x] Correction appliquée : alias explicite `SqliteDatabase = DatabaseConstructor.Database` utilisé par les trois fonctions de bail runtime. Commit : `082bf0c`.
+- [x] `npm test` réussi selon le retour utilisateur : 4 fichiers, 26 tests.
+- [x] `npm run ui` démarre le serveur sur `http://127.0.0.1:3000`.
+- [ ] Rejouer `npm run build` après le commit de correction ; le build de la correction n'est pas encore validé.
+- [ ] Effectuer les scénarios API et de reprise après crash listés ci-dessous.
+
+Attention environnement local : Git a signalé des modifications non commitées dans `.gitignore` et `package-lock.json`. Les conserver et les examiner séparément ; ne pas les écraser lors de la synchronisation de la correction.
+
 ### Prochaine validation utilisateur
 
 Depuis PowerShell :
