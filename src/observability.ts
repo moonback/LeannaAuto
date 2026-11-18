@@ -41,7 +41,7 @@ function diskMetrics(){
 }
 
 function bytesFrom(value:string):number|null{
- const match=value.trim().match(/^([0-9]+(?:\\.[0-9]+)?)\\s*(B|KiB|MiB|GiB|TiB)?$/i);
+ const match=value.trim().match(/^([0-9]+(?:\.[0-9]+)?)\s*(B|KiB|MiB|GiB|TiB)?$/i);
  if(!match)return null;
  const unit=(match[2]??"B").toLowerCase();
  const multiplier=unit==="kib"?1024:unit==="mib"?1024**2:unit==="gib"?1024**3:unit==="tib"?1024**4:1;
@@ -73,12 +73,12 @@ export async function collectSystemMetrics(){
  let docker:{available:boolean;containers:Array<{name:string;cpuPercent:number|null;memoryUsedBytes:number|null;memoryLimitBytes:number|null;memoryPercent:number|null;pids:number|null}>;reason?:string};
  try{
   const result=await execFileAsync("docker",["stats","--no-stream","--format","{{json .}}"],{timeout:6000,maxBuffer:1024*1024});
-  const containers=result.stdout.split(/\\r?\\n/).filter(Boolean).flatMap(line=>{
+  const containers=result.stdout.split(/\r?\n/).filter(Boolean).flatMap(line=>{
    try{
     const row=JSON.parse(line) as Record<string,string>;
     const name=String(row.Name??row.name??"");
     if(!name.startsWith("leanna-"))return [];
-    const memory=String(row.MemUsage??row.MemUsage??"").split("/");
+    const memory=String(row.MemUsage??"").split("/");
     return [{
      name,
      cpuPercent:percent(String(row.CPUPerc??"")),
