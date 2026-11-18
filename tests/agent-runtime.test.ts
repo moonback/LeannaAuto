@@ -21,6 +21,10 @@ describe("agent runtime lease",()=>{
   expect(claimAgentRuntime(db,"agent-1","owner-b",new Date("2026-11-18T10:00:00.000Z"),90000)).toBe(true);
   expect((db.prepare("SELECT runtime_owner FROM agents WHERE id='agent-1'").get() as {runtime_owner:string}).runtime_owner).toBe("owner-b");
  });
+ it("reclaims malformed heartbeat timestamps as stale",()=>{
+  db.prepare("UPDATE agents SET status='running',runtime_owner='owner-a',heartbeat_at='invalid-date' WHERE id='agent-1'").run();
+  expect(claimAgentRuntime(db,"agent-1","owner-b",new Date("2026-11-18T10:00:00.000Z"),90000)).toBe(true);
+ });
  it("refreshes and releases only the current owner lease",()=>{
   claimAgentRuntime(db,"agent-1","owner-a",new Date("2026-11-18T10:00:00.000Z"),90000);
   expect(refreshAgentHeartbeat(db,"agent-1","owner-b",new Date())).toBe(false);
