@@ -5,6 +5,7 @@ import {db,log,emergencyStopActive} from "./storage.js";
 import {createIdentity,constitutionHash} from "./identity.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox} from "./executor.js";
+import {recoverStaleAgents} from "./supervisor.js";
 const program=new Command();
 program.name("automaton").description("LeannaAuto autonomous agents");
 program.command("init").requiredOption("--name <name>").requiredOption("--goal <goal>").option("--parent <id>").action((opts)=>{
@@ -64,18 +65,9 @@ program.command("supervise").description("Recover agents whose runtime heartbeat
  console.log("Supervisor active; Ctrl+C to stop.");
  while(true){
   if(emergencyStopActive()){await new Promise(r=>setTimeout(r,interval));continue;}
-  const agents=db.prepare("SELECT id,heartbeat_at FROM agents WHERE status='running'").all() as {id:string;heartbeat_at:string|null}[];
-  for(const a of agents){
-   if(active.has(a.id))continue;
-   const age=a.heartbeat_at?Date.now()-Date.parse(a.heartbeat_at):Infinity;
-   if(age<=stale)continue;
-   db.prepare("UPDATE agents SET restart_count=restart_count+1,last_error=? WHERE id=? AND status='running'").run("Supervisor reclaim: stale heartbeat",a.id);
-   log(a.id,"supervisor","Stale heartbeat detected; attempting atomic runtime recovery");
-   try{
-    const p=startAgent(a.id,{staleAfterMs:stale}).catch(e=>{log(a.id,"supervisor-error",String(e).slice(0,1000));}).finally(()=>active.delete(a.id));
-    active.set(a.id,p);
-   }catch(e){log(a.id,"supervisor-error",String(e).slice(0,1000));}
-  }
+  recoverStaleAgents(db,active,startAgent,stale,new Date(),(agentId,message)=>{
+   log(agentId,"supervisor",message);
+  });
   await new Promise(r=>setTimeout(r,interval));
  }
 });
