@@ -518,3 +518,20 @@ Le rapport utilisateur du 18 novembre 2026 montre que les tests Docker opt-in pa
 - [ ] Vérification fonctionnelle visuelle du Workspace dans le navigateur avec un agent contenant des fichiers.
 
 La validation confirme le build, la suite automatisée et le démarrage du serveur. La navigation réelle dans l'interface et l'aperçu d'un fichier restent à vérifier manuellement avant fusion.
+
+
+### Livraison en cours — gestion des agents et création en modale
+
+Branche : `feat/agents-management-ui`, créée depuis `main` après fusion de la PR #10 (`6389b1d332944beb96153dcb04f08e442d87c843`).
+
+- [x] Remplacer le formulaire permanent « Créer un agent » par une fenêtre modale accessible (dialogue, fermeture explicite, clic sur le fond et touche Échap).
+- [x] Garder l'ouverture de la création réservée au rôle administrateur ; la création reste protégée côté API.
+- [x] Clarifier les champs du formulaire, ajouter des aides contextuelles et des limites de saisie côté interface.
+- [x] Refaire « Agents existants » sous forme de cartes responsive avec nom, identifiant, mission, statut traduit, date de création, heartbeat, redémarrages, parent et dernière erreur.
+- [x] Ajouter des indicateurs total / en mission / arrêtés / en erreur.
+- [x] Ajouter recherche locale et filtre par statut sans modifier les données serveur.
+- [x] Conserver les actions Démarrer, Arrêter et Voir la fiche, avec échappement HTML des données dynamiques.
+- [x] Étendre le test HTTP de la coquille UI pour vérifier la présence de la modale, des filtres et des informations agents.
+- [ ] Validation Windows : `npm run build`, `npm test` et contrôle visuel de l'ouverture/fermeture de la modale, de la recherche, des filtres et des cartes agent.
+
+État de validation : modifications poussées sur la branche dédiée ; aucun build ni test n'a été exécuté dans l'environnement de modification. La validation locale Windows reste requise. La fusion de la PR #10 a été demandée explicitement et réalisée avant ce nouveau lot ; aucune modification supplémentaire n'est faite sur `main`.
