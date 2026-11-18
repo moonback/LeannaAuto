@@ -14,15 +14,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dependencies:
-    name: Dependency installation
+  checkout:
+    name: Source checkout
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Check out PR source
+      - name: Check out pull request source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  toolchain:
+    name: Node.js toolchain
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: Check out pull request source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Node.js and npm
+        run: node --version && npm --version
+
+  dependencies:
+    name: npm ci
+    runs-on: ubuntu-latest
+    needs: toolchain
+    timeout-minutes: 10
+    steps:
+      - name: Check out pull request source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -37,10 +63,10 @@ jobs:
     needs: dependencies
     timeout-minutes: 10
     steps:
-      - name: Check out PR source
+      - name: Check out pull request source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -57,10 +83,10 @@ jobs:
     needs: build
     timeout-minutes: 10
     steps:
-      - name: Check out PR source
+      - name: Check out pull request source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
