@@ -70,6 +70,10 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("Décisions des outils");
   expect(html).toContain("Ressources système");
   expect(html).toContain("resourceDocker");
+  expect(html).toContain("workspace-layout");
+  expect(html).toContain("workspace-breadcrumb");
+  expect(html).toContain("previewWorkspaceFile");
+  expect(html).toContain("256 Kio");
   expect(html).toContain('autocomplete="username"');
   expect(html).toContain("setInterval(()=>{if(sessionStorage.getItem");
   expect(html).toContain("data:image/svg+xml");
@@ -97,6 +101,16 @@ describe("dashboard HTTP security integration",()=>{
   const dashboard=await request("/api/dashboard");
   expect(dashboard.status).toBe(200);
   await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
+ });
+ it("rejects workspace path traversal before attempting Docker access",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"workspace-path-check",goal:"Verify workspace path guard"})});
+  expect(created.status).toBe(201);
+  const agent=await created.json() as {id:string};
+  const listing=await request("/api/agents/"+encodeURIComponent(agent.id)+"/workspace?path="+encodeURIComponent("../outside"));
+  expect(listing.status).toBe(400);
+  await expect(listing.json()).resolves.toMatchObject({error:"Chemin de workspace invalide"});
+  const preview=await request("/api/agents/"+encodeURIComponent(agent.id)+"/workspace/file?path="+encodeURIComponent("../../etc/passwd"));
+  expect(preview.status).toBe(400);
  });
  it("exposes host, runtime, disk and Docker resource snapshots",async()=>{
   const response=await request("/api/resources");
