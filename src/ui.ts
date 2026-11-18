@@ -389,7 +389,8 @@ const server=http.createServer(async(req,res)=>{
   const agent=db.prepare("SELECT id,status FROM agents WHERE id=?").get(id) as {id:string;status:string}|undefined;
   if(!agent)return send(404,{error:"Agent introuvable"});
   if(agent.status==="running")return send(409,{error:"Arrêtez l’agent avant de modifier sa mission"});
-  db.prepare("UPDATE agents SET goal=? WHERE id=? AND status<>'running'").run(goal,id);
+  const result=db.prepare("UPDATE agents SET goal=? WHERE id=? AND status<>'running'").run(goal,id);
+  if(!result.changes)return send(409,{error:"L’agent est devenu actif ; modification refusée"});
   audit("mission.update",id,"Mission modifiée depuis la console");
   log(id,"system","Agent mission updated");
   return send(200,{ok:true});
@@ -400,7 +401,8 @@ const server=http.createServer(async(req,res)=>{
   if(!agent)return send(404,{error:"Agent introuvable"});
   if(agent.status==="running")return send(409,{error:"Arrêtez l’agent avant de supprimer sa mission"});
   if(!agent.goal)return send(409,{error:"Cet agent n’a pas de mission à supprimer"});
-  db.prepare("UPDATE agents SET goal='' WHERE id=? AND status<>'running'").run(id);
+  const result=db.prepare("UPDATE agents SET goal='' WHERE id=? AND status<>'running'").run(id);
+  if(!result.changes)return send(409,{error:"L’agent est devenu actif ; suppression refusée"});
   audit("mission.delete",id,"Mission supprimée depuis la console ; agent conservé");
   log(id,"system","Agent mission cleared");
   return send(200,{ok:true});
