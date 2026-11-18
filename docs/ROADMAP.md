@@ -335,9 +335,27 @@ Les phases 2 et 3 doivent progresser ensemble : la fiabilité ne doit jamais con
 | 10 — Auto-évolution | À faire | Pipeline sandboxé, validation humaine et rollback. |
 | 11 — Exploitation | Partiel | Installation, sauvegarde et restauration reproductibles. |
 
+## 6.1. Avancement du lot dashboard — 18 novembre 2026
+
+Branche de travail : `feat/dashboard-finish`, créée depuis `feat/pro-dashboard-ui`.
+
+Modifications apportées :
+- [x] Afficher les tâches existantes dans la page « Toutes les tâches » (la zone était présente mais jamais alimentée).
+- [x] Échapper les valeurs dynamiques rendues dans les tableaux HTML afin de limiter l'injection de balisage via les données.
+- [x] Afficher le rôle authentifié dans l'en-tête du dashboard.
+- [ ] Vérifier l'ensemble des pages et actions dans un navigateur Windows.
+- [x] Exécuter build et tests sur Windows : `npm run build` réussi ; `npm test` : 5 tests réussis sur 5 (validation utilisateur).\n- [ ] Vérifier le statut CI de cette branche.
+- [ ] Tester les permissions admin/opérateur, l'arrêt d'urgence et le réarmement.
+
+Commits du lot :
+- `7ea7371` — rendu de la liste des tâches et échappement des tableaux.
+- `2a70270` — simplification/correction du helper d'échappement et affichage du rôle.
+
+Validation rapportée par l'utilisateur sous Windows : `npm install` terminé ; `npm run build` réussi ; `npm test` réussi (1 fichier, 5 tests). `npm run ui` démarre le serveur sur `http://127.0.0.1:3000`. Les pages, les permissions et les scénarios d'arrêt d'urgence restent à vérifier manuellement ; le lot n'est donc pas entièrement validé.\n\nSécurité dépendances : `npm install` a signalé 7 vulnérabilités (1 modérée, 4 élevées, 2 critiques). Aucun `npm audit fix` n'a été exécuté. Il faut examiner le rapport détaillé `npm audit` et les dépendances transitives avant de choisir des mises à jour, sans lancer `--force` à l'aveugle. 
+
 ## 7. Prochain lot concret
 
-**Lot recommandé : finaliser et valider la refonte du dashboard.**
+**Lot recommandé : terminer la validation fonctionnelle du dashboard et traiter les vulnérabilités npm, puis ouvrir le lot de tests API et de durcissement du superviseur.**
 
 1. Récupérer `feat/pro-dashboard-ui`.
 2. Exécuter `npm run build` et `npm test`.
