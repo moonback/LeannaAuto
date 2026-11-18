@@ -22,4 +22,16 @@ html.sidebar-collapsed .nav-group-label span{display:none}
  .nav-group.is-collapsed>button[onclick]{display:flex}
 }
 @media(max-width:420px){.page-breadcrumb{font-size:9px}.page-description{font-size:11px}}
+
+/* Audit explorer */
+.audit-toolbar{align-items:end;margin:12px 0 16px}
+.audit-toolbar>div{min-width:180px}
+.audit-toolbar>span{flex:0 0 auto;padding:0 4px 16px}
+.audit-table-wrap{max-width:100%;overflow:auto;border:1px solid var(--ui-border);border-radius:var(--radius-md)}
+.audit-table-wrap table{min-width:720px;margin:0}
+.audit-date{white-space:nowrap;color:var(--ui-muted);font-size:11px}
+.audit-details summary{color:var(--ui-accent);cursor:pointer;font-size:12px;font-weight:700}
+.audit-details p{max-width:440px;margin:8px 0 4px;color:var(--ui-muted);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.audit-pagination{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding-top:14px}
+@media(max-width:600px){.audit-toolbar{display:grid;grid-template-columns:1fr}.audit-toolbar>div{min-width:0}.audit-toolbar>span{padding:0}.audit-pagination{justify-content:space-between}}
 \n";
