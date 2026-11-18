@@ -7,6 +7,11 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('id="themeToggle"');
   expect(dashboardHtml).toContain('id="commandOverlay"');
   expect(dashboardHtml).toContain('id="universeCanvas"');
+  expect(dashboardHtml).toContain('id="tokenAdminControls"');
+  expect(dashboardHtml).toContain('id="rotateAdminToken"');
+  expect(dashboardHtml).toContain('id="rotateOperatorToken"');
+  expect(dashboardHtml).toContain('id="revokeOperatorToken"');
+  expect(dashboardHtml).toContain('id="inferenceQuotaForm"');
   expect(dashboardHtml).not.toContain("__LEANNAAUTO_");
  });
  it("keeps every navigation target connected to a page section",()=>{
