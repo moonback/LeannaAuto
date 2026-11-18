@@ -74,6 +74,164 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media(max-width:560px){.office-summary>div{padding:11px}.office-summary strong{font-size:22px}.office-toolbar{align-items:flex-start;flex-direction:column}.office-scene-top{align-items:flex-start;flex-direction:column}.office-desk{width:180px}.office-children{gap:8px}.office-forest{gap:10px}}
 @media(max-width:760px){main{width:100%;padding:18px 14px 38px}.top{position:relative;margin:-18px -4px 20px;padding:14px 4px}.top h2{font-size:21px}aside{box-shadow:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* LeannaAuto · Premium Operations UI refresh */
+:root{
+ --bg:#080d18;--panel:#111d30;--panel-raised:#17263d;--stroke:#2b405f;
+ --text:#f1f5ff;--muted:#91a2bd;--accent:#8da4ff;--accent-strong:#647ff0;
+ --success:#54d6a8;--warning:#f0bd73;--danger:#f17e91;
+}
+html{scroll-behavior:smooth}
+body{min-height:100vh;color:var(--text);background:
+ radial-gradient(ellipse at 80% -12%,rgba(73,108,177,.2),transparent 38%),
+ radial-gradient(ellipse at 0% 100%,rgba(38,65,112,.13),transparent 42%),var(--bg)}
+aside{
+ width:272px;padding:26px 18px 18px;background:rgba(9,16,29,.94);
+ border-right:1px solid rgba(125,151,195,.17);box-shadow:18px 0 55px #00000020;
+}
+aside h1{font-size:19px;padding:0 11px 22px;margin-bottom:18px;border-bottom:1px solid rgba(125,151,195,.16)}
+aside h1:before{content:"";display:inline-block;width:9px;height:9px;margin-right:9px;border-radius:3px;background:var(--accent);box-shadow:0 0 18px #829bff99;transform:rotate(45deg)}
+nav{gap:5px}
+nav button{
+ min-height:43px;padding:10px 13px;border-radius:10px;color:#aab9d0;
+ font-size:12px;font-weight:650;letter-spacing:.01em;
+}
+nav button:hover{background:#192942;color:#f4f7ff}
+nav button.active{
+ color:#f7f9ff;background:linear-gradient(100deg,rgba(90,119,211,.25),rgba(39,60,96,.52));
+ border-color:rgba(126,153,255,.24);box-shadow:inset 3px 0 var(--accent),0 6px 18px #00000016;
+}
+aside>p{line-height:1.8!important;color:#8295b2!important}
+main{width:calc(100% - 272px);margin-left:272px;padding:30px clamp(22px,3.2vw,58px) 64px}
+.top{
+ margin:-30px -12px 28px;padding:22px 12px 19px;
+ border-bottom:1px solid rgba(125,151,195,.16);
+ background:rgba(8,14,25,.86);backdrop-filter:blur(20px);
+}
+.top h2{font-size:26px;letter-spacing:-.8px;font-weight:760}
+.top>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card{
+ background:linear-gradient(145deg,rgba(22,36,58,.96),rgba(14,24,40,.98));
+ border:1px solid rgba(112,139,184,.23);border-radius:16px;
+ box-shadow:0 14px 38px #00000020, inset 0 1px #ffffff08;
+ transition:border-color .18s,transform .18s,box-shadow .18s;
+}
+.metric-card{min-height:138px;padding:20px}
+.metric{font-size:35px;letter-spacing:-1.2px;font-weight:760}
+.metric-label{font-size:11px;letter-spacing:.035em;text-transform:uppercase;color:#9aacc7}
+.metric-foot{font-size:11px;color:#8093b1}
+.control-columns{gap:16px}
+.control-card-head h3,.card>h3{font-size:15px;letter-spacing:-.2px}
+.status-strip{border-radius:12px;padding:13px 16px}
+.health-pill,.badge{letter-spacing:.02em}
+button.action{min-height:39px;border-radius:10px;padding:9px 15px;font-size:12px;font-weight:700}
+button.action:hover{box-shadow:0 8px 22px #3e5ab744;filter:brightness(1.08);transform:translateY(-1px)}
+button.action.secondary{background:#1b2b43;border-color:#3a5275;color:#d6e0f1}
+button.action.danger{background:linear-gradient(135deg,#b94d65,#87344c);border-color:#b85c70}
+input,textarea,select{border-radius:10px;background:#0a1424;border-color:#344967;color:#edf3ff}
+input::placeholder,textarea::placeholder{color:#687d9d}
+table{border-spacing:0}
+td,th{padding:13px 15px}
+th{background:#142238;color:#9aacc8}
+tr:hover td{background:#ffffff04}
+pre{border-color:#2a3e5c;background:#091321;border-radius:12px}
+.agent-card,.mission-card,.task-row{border-color:#304663;box-shadow:0 8px 22px #00000018}
+.agent-card:hover,.mission-card:hover{border-color:#526d9a;transform:translateY(-2px);box-shadow:0 15px 32px #0000002a}
+.agent-info,.workspace-files,.workspace-preview{border-color:#2b405f}
+.agent-modal-panel{border-color:#49658d;box-shadow:0 30px 100px #000b}
+.office-scene{border-color:#3a557a}
+.control-footer{padding-top:6px}
+button:disabled{cursor:not-allowed}
+@media(max-width:900px){
+ aside{width:230px}main{width:calc(100% - 230px);margin-left:230px}
+}
+@media(max-width:760px){
+ aside{position:sticky;top:0;z-index:8;width:100%;padding:10px 12px;background:rgba(8,14,25,.97);border-right:0;border-bottom:1px solid #2a3d59}
+ aside h1{padding:0 8px 10px;margin:0 0 8px;font-size:16px;border:0}
+ nav{display:flex;gap:5px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:thin}
+ nav button{flex:0 0 auto;min-height:36px;width:auto;padding:8px 11px;white-space:nowrap}
+ aside>p{display:none}
+ main{width:100%;margin:0;padding:18px 14px 38px}
+ .top{position:relative;top:auto;margin:-18px -4px 20px;padding:14px 4px}
+ .top h2{font-size:21px}
+}
+@media(max-width:560px){
+ .cards,.control-metrics,.agents-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .metric-card{min-height:116px;padding:14px}
+ .metric{font-size:28px}
+ .card{padding:15px}
+ .top>div{gap:6px}
+ .top .action{padding:7px 9px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+
+/* Page-specific refinement · second pass */
+.section.show{min-width:0}
+.section>.card:first-child,.section>.control-card-head:first-child{margin-top:2px}
+.section h3{letter-spacing:-.25px}
+.section .muted{line-height:1.55}
+.office-page-head{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:23px 25px;margin:0 0 16px;border:1px solid #2b4162;border-radius:17px;background:radial-gradient(ellipse at 88% 0%,#314c7933,transparent 45%),linear-gradient(120deg,#152641,#101b2e)}
+.office-kicker{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#9fb2ff}
+.office-page-head h3{font-size:22px;letter-spacing:-.7px;margin:6px 0}
+.office-page-head p{font-size:12px;margin:0;max-width:620px}
+.office-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.office-summary>div{padding:17px 18px;border-radius:13px;border:1px solid #2a3e5d;background:linear-gradient(145deg,#172943,#101b2d);min-width:0}
+.office-summary span{display:block;font-size:11px;color:#95a9c7}
+.office-summary strong{display:block;margin-top:5px;font-size:29px;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.office-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:14px 2px}
+.office-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#a9bad3}
+.office-legend span{display:flex;align-items:center;gap:6px}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#71839e}
+.legend-dot.running{background:#54d6a8;box-shadow:0 0 10px #54d6a866}
+.legend-dot.failed{background:#f17e91}.legend-dot.stopped{background:#71839e}
+.office-scene{border:1px solid #304765;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#20385a 0,transparent 62%),#0b1627}
+.office-scene-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #2a3f5c;background:#111f33}
+.office-scene-top b{font-size:12px}.office-scene-top span{font-size:11px;color:#91a5c3}
+.office-live{font-size:9px!important;letter-spacing:1px;font-weight:800;color:#6fe0b5!important}
+.office-live i{display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#54d6a8;box-shadow:0 0 9px #54d6a8}
+.office-tree{min-height:280px;padding:34px 20px 45px}
+.office-desk{border:1px solid #385477!important;background:linear-gradient(145deg,#213b5c,#12233b)!important;box-shadow:0 14px 28px #0004,inset 0 1px #ffffff13!important}
+.office-task{transition:border-color .16s,transform .16s;background:#0d1b2e}
+.office-task:hover{border-color:#6e8bca;transform:translateY(-2px)}
+.mission-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:13px}
+.mission-card{position:relative;overflow:hidden;padding:18px;background:linear-gradient(145deg,#14243a,#0d192b);box-shadow:0 10px 25px #0002}
+.mission-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:#607de0;opacity:.8}
+.mission-card h4{font-size:14px;letter-spacing:-.2px}
+.mission-card .mission-goal{font-size:12px;line-height:1.65;color:#d4def0}
+.mission-card .mission-meta span{border:1px solid #2b4263;background:#172943}
+.mission-card .mission-task{background:#101f34;border-left-color:#8da4ff;border-radius:0 8px 8px 0;padding:10px 12px}
+.mission-card .mission-actions{flex-wrap:wrap}
+.task-table{overflow-x:auto;border:1px solid #2b405f;border-radius:12px;background:#0d192a}
+.task-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:15px 17px;border:0;border-bottom:1px solid #263a55;border-radius:0;background:transparent}
+.task-row:last-child{border-bottom:0}
+.task-row:hover{background:#ffffff05}
+.task-row h4{font-size:13px;margin:0 0 4px;color:#edf3ff}
+.task-row p{font-size:11px;color:#9aacc6;margin:0;overflow-wrap:anywhere}
+.task-row-meta{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:9px;color:#8196b5;font-size:10px}
+.task-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.task-actions .action{font-size:10px;padding:7px 10px}
+#logOutput,#auditOutput,#lineageTree{max-height:65vh;min-height:220px;padding:18px;line-height:1.75;background:linear-gradient(145deg,#091422,#0c192b);border:1px solid #2b405f;color:#c6d5ec;font-size:11px;tab-size:2}
+#logOutput,#auditOutput{white-space:pre-wrap;overflow-wrap:anywhere}
+#settingsTable,#usageTable,#supervisorTable,#resourceRuntime,#resourceLimits,#resourceDocker{overflow-x:auto;border:1px solid #2b405f;border-radius:12px;background:#0d192a}
+#settingsTable table,#usageTable table,#supervisorTable table,#resourceRuntime table,#resourceLimits table,#resourceDocker table{width:100%;min-width:460px}
+#settingsTable tr:last-child td,#usageTable tr:last-child td{border-bottom:0}
+#settingsTable td:first-child,#usageTable td:first-child{color:#cbd8eb;font-weight:650}
+#resourceStatus{margin:12px 0 16px}
+#resourceSampledAt{font-size:11px;color:#8195b3}
+#resourceRuntime,#resourceLimits,#resourceDocker{padding:4px}
+#resourceRuntime td,#resourceLimits td,#resourceDocker td{font-size:11px}
+#usageTable td,#supervisorTable td{font-variant-numeric:tabular-nums}
+#taskEditModal .agent-modal-panel,#missionEditModal .agent-modal-panel{width:min(620px,100%)}
+.section form:not(.agent-create-form):not(#loginForm){max-width:100%}
+.section>.card form label{display:block;color:#bdcbe0;font-size:11px;font-weight:700;margin-top:8px}
+.section>.card form button.action{margin-top:5px}
+.section input[type=search]{margin-bottom:0}
+.mission-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.mission-filters input{flex:1;min-width:220px}.mission-filters select{min-width:150px}#missionVisibleCount{display:block;font-size:11px;margin:4px 0 10px}
+.task-filterbar{align-items:center;gap:9px;margin:14px 0}.task-filterbar input{flex:1;min-width:220px}.task-filterbar select{min-width:170px}#taskVisibleCount,#logVisibleCount{font-size:11px;margin:7px 0;color:var(--muted)}#logs input[type=search]{margin:8px 0 2px}@media(max-width:560px){.task-filterbar{align-items:stretch;flex-direction:column}.task-filterbar input,.task-filterbar select{width:100%;min-width:0}}
+@media(max-width:900px){.office-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.office-page-head{align-items:flex-start;flex-direction:column}.task-row{grid-template-columns:minmax(0,1fr)}.task-actions{justify-content:flex-start}}
+@media(max-width:560px){.office-page-head{padding:18px}.office-page-head h3{font-size:19px}.office-summary>div{padding:13px}.office-summary strong{font-size:24px}.office-toolbar{align-items:flex-start;flex-direction:column}.office-scene-top{align-items:flex-start;flex-direction:column}.task-row{padding:13px}.mission-grid{grid-template-columns:minmax(0,1fr)}#logOutput,#auditOutput,#lineageTree{font-size:10px;padding:12px}}
+
 </style></head><body><div id="authGate" style="position:fixed;inset:0;background:#080d19ee;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px"><form id="loginForm" class="card" style="width:min(420px,100%)"><h2>Authentification</h2><p class="muted">Saisissez votre jeton administrateur ou opérateur.</p><input type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><input id="authToken" name="password" type="password" autocomplete="current-password" required placeholder="Jeton administrateur"><button class="action" style="width:100%">Se connecter</button><p id="authError" class="muted"></p></form></div><aside><h1>◈ LeannaAuto <small style="display:block;color:#91a2bd;font-size:10px;letter-spacing:1.4px;margin-top:5px">AGENT OPERATIONS</small></h1><nav><button class="active" onclick="page('overview',this)">◫ &nbsp;Vue d'ensemble</button><button onclick="page('office',this)">▧ &nbsp;Bureau IA</button><button onclick="page('agents',this)">◉ &nbsp;Agents</button><button onclick="page('missions',this)">▣ &nbsp;Missions</button><button onclick="page('tasks',this)">☷ &nbsp;Tâches</button><button onclick="page('supervisor',this)">⌁ &nbsp;Supervision</button><button onclick="page('lineage',this)">⌘ &nbsp;Filiation</button><button onclick="page('logs',this)">≋ &nbsp;Logs système</button><button onclick="page('audit',this)">▤ &nbsp;Audit</button><button onclick="page('usage',this)">◌ &nbsp;Quota IA</button><button onclick="page('resources',this)">▥ &nbsp;Ressources</button><button onclick="page('workspace',this)">▣ &nbsp;Workspace</button><button onclick="page('settings',this)">⚙ &nbsp;Sécurité & paramètres</button></nav><p class="muted" style="margin-top:auto;padding:15px 10px;border-top:1px solid #263750;font-size:11px">● Console locale sécurisée<br>Accès par jeton · localhost</p></aside><main><div class="top"><h2 id="heading">Vue d'ensemble</h2><div><span id="roleLabel" class="muted"></span> <button class="action danger" id="emergencyButton" onclick="toggleEmergency()">Arrêt d’urgence</button> <span class="muted" id="refresh">Live · 5s</span></div></div>
 <section id="office" class="section"><div class="office-page-head"><div><span class="office-kicker">LEANNAAUTO · ESPACE DE TRAVAIL</span><h3>Le bureau des intelligences</h3><p class="muted">Chaque agent occupe son poste. Les liens représentent sa filiation et les cartes affichent ses tâches.</p></div><button class="action" onclick="page('agents',document.querySelector('nav button[onclick*=agents]'))">Gérer les agents</button></div><div class="office-summary"><div><span>Agents présents</span><strong id="officeAgentCount">0</strong></div><div><span>Au travail</span><strong id="officeRunningCount">0</strong></div><div><span>Tâches actives</span><strong id="officeActiveTasks">0</strong></div><div><span>En attente</span><strong id="officePendingTasks">0</strong></div></div><div class="office-toolbar"><div class="office-legend"><span><i class="legend-dot running"></i>En mission</span><span><i class="legend-dot stopped"></i>À l’arrêt</span><span><i class="legend-dot failed"></i>En erreur</span></div><span class="muted" id="officeUpdated">Synchronisation toutes les 5 secondes</span></div><div class="office-scene"><div class="office-scene-top"><div><b>Vue hiérarchique 3D</b><span> Sélectionnez un personnage pour ouvrir sa fiche.</span></div><span class="office-live"><i></i> EN DIRECT</span></div><div id="officeTree" class="office-tree" role="tree" aria-label="Arbre des agents"><div class="office-empty">Chargement du bureau…</div></div></div></section>
 <section id="overview" class="section show">
@@ -92,7 +250,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 <div class="card"><div class="control-card-head"><div><h3>Flux d'activité récent</h3><p class="muted">Derniers événements persistés par les agents.</p></div><button class="action" onclick="page('logs',document.querySelector('nav button[onclick*=logs]'))">Journal complet</button></div><div id="controlActivity" class="control-activity"></div></div>
 <div class="control-footer muted"><span id="controlUpdated">Dernière actualisation : —</span><span>Actualisation automatique · 5 secondes</span></div>
 </section>
-<section id="missions" class="section"><div id="missionEditModal" class="agent-modal" hidden><div class="agent-modal-backdrop" data-close-mission-modal></div><div class="agent-modal-panel" role="dialog" aria-modal="true" aria-labelledby="missionEditTitle"><div class="agent-modal-head"><div><span class="agent-modal-kicker">GESTION DES MISSIONS</span><h3 id="missionEditTitle">Modifier la mission</h3><p class="muted" id="missionEditAgent"></p></div><button type="button" class="agent-modal-close" data-close-mission-modal aria-label="Fermer">×</button></div><form id="missionEditForm" class="agent-create-form"><label for="missionEditGoal">Objectif de l’agent</label><textarea id="missionEditGoal" maxlength="4000" rows="7" required></textarea><p class="field-hint">Une mission ne peut être modifiée que lorsque l’agent est arrêté.</p><div id="missionEditError" class="agent-form-error" role="alert" hidden></div><div class="agent-modal-actions"><button type="button" class="action secondary" data-close-mission-modal>Annuler</button><button class="action" type="submit">Enregistrer la mission</button></div></form></div></div><div class="status-strip"><span>Suivi des missions en direct · actualisation toutes les 5 secondes</span></div><div class="cards"><div class="card metric-card"><div class="metric-label">Missions en cours</div><div class="metric" id="missionRunning">—</div><div class="metric-foot">Agents actuellement actifs</div></div><div class="card metric-card"><div class="metric-label">Tâches actives</div><div class="metric" id="missionTasksActive">—</div><div class="metric-foot">Tâches prises en charge</div></div><div class="card metric-card"><div class="metric-label">En attente</div><div class="metric" id="missionTasksPending">—</div><div class="metric-foot">Tâches à démarrer</div></div><div class="card metric-card"><div class="metric-label">Agents en erreur</div><div class="metric" id="missionFailed">—</div><div class="metric-foot">Agents à examiner</div></div></div><div class="card"><div class="row" style="align-items:center"><div><h3>Agents en mission</h3><p class="muted">Mission, tâche actuelle et dernière activité connue.</p></div><select id="missionFilter" style="max-width:190px"><option value="all">Tous les états</option><option value="running">En mission</option><option value="stopped">À l’arrêt</option><option value="failed">En erreur</option></select></div><div id="missionBoard" class="mission-grid"></div></div></section><section id="agents" class="section">
+<section id="missions" class="section"><div id="missionEditModal" class="agent-modal" hidden><div class="agent-modal-backdrop" data-close-mission-modal></div><div class="agent-modal-panel" role="dialog" aria-modal="true" aria-labelledby="missionEditTitle"><div class="agent-modal-head"><div><span class="agent-modal-kicker">GESTION DES MISSIONS</span><h3 id="missionEditTitle">Modifier la mission</h3><p class="muted" id="missionEditAgent"></p></div><button type="button" class="agent-modal-close" data-close-mission-modal aria-label="Fermer">×</button></div><form id="missionEditForm" class="agent-create-form"><label for="missionEditGoal">Objectif de l’agent</label><textarea id="missionEditGoal" maxlength="4000" rows="7" required></textarea><p class="field-hint">Une mission ne peut être modifiée que lorsque l’agent est arrêté.</p><div id="missionEditError" class="agent-form-error" role="alert" hidden></div><div class="agent-modal-actions"><button type="button" class="action secondary" data-close-mission-modal>Annuler</button><button class="action" type="submit">Enregistrer la mission</button></div></form></div></div><div class="status-strip"><span>Suivi des missions en direct · actualisation toutes les 5 secondes</span></div><div class="cards"><div class="card metric-card"><div class="metric-label">Missions en cours</div><div class="metric" id="missionRunning">—</div><div class="metric-foot">Agents actuellement actifs</div></div><div class="card metric-card"><div class="metric-label">Tâches actives</div><div class="metric" id="missionTasksActive">—</div><div class="metric-foot">Tâches prises en charge</div></div><div class="card metric-card"><div class="metric-label">En attente</div><div class="metric" id="missionTasksPending">—</div><div class="metric-foot">Tâches à démarrer</div></div><div class="card metric-card"><div class="metric-label">Agents en erreur</div><div class="metric" id="missionFailed">—</div><div class="metric-foot">Agents à examiner</div></div></div><div class="card"><div class="row" style="align-items:center"><div><h3>Agents en mission</h3><p class="muted">Mission, tâche actuelle et dernière activité connue.</p></div><div class="mission-filters"><input id="missionSearch" type="search" placeholder="Rechercher un agent, une mission ou une tâche…" aria-label="Rechercher dans les missions"><select id="missionFilter" style="max-width:190px"><option value="all">Tous les états</option><option value="running">En mission</option><option value="stopped">À l’arrêt</option><option value="failed">En erreur</option></select></div><span id="missionVisibleCount" class="muted" aria-live="polite"></span></div><div id="missionBoard" class="mission-grid"></div></div></section><section id="agents" class="section">
 <div class="control-card-head agents-page-head"><div><h3>Gestion des agents</h3><p class="muted">Créez, surveillez et pilotez les agents enregistrés dans cette instance.</p></div><button id="createAgentOpen" class="action" type="button">＋ Créer un agent</button></div>
 <div class="cards agents-metrics">
  <div class="card metric-card"><div class="metric-label">Total des agents</div><div class="metric" id="agentsCount">—</div><div class="metric-foot">Agents enregistrés</div></div>
@@ -120,8 +278,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  </div>
 </div>
 </section>
-<section id="tasks" class="section"><div class="card"><h3>Créer une tâche</h3><form id="createTask"><label>Agent</label><select id="taskAgent"></select><label>Titre</label><input id="taskTitle" required maxlength="200"><label>Description</label><textarea id="taskDesc" maxlength="4000"></textarea><button class="action">Ajouter</button></form></div><div class="card"><div class="control-card-head"><div><h3>Toutes les tâches</h3><p class="muted">Modifiez ou supprimez les tâches non actives. Les tâches en cours sont protégées.</p></div></div><div id="taskTable"></div></div><div id="taskEditModal" class="agent-modal" hidden><div class="agent-modal-backdrop" data-close-task-modal></div><div class="agent-modal-panel" role="dialog" aria-modal="true" aria-labelledby="taskEditTitle"><div class="agent-modal-head"><div><span class="agent-modal-kicker">GESTION DES TÂCHES</span><h3 id="taskEditTitle">Modifier la tâche</h3><p class="muted">L’agent assigné et le statut ne sont pas modifiables ici.</p></div><button type="button" class="agent-modal-close" data-close-task-modal aria-label="Fermer">×</button></div><form id="taskEditForm" class="agent-create-form"><label for="taskEditTitleInput">Titre</label><input id="taskEditTitleInput" maxlength="200" required><label for="taskEditDescription">Description</label><textarea id="taskEditDescription" maxlength="4000" rows="6"></textarea><div id="taskEditError" class="agent-form-error" role="alert" hidden></div><div class="agent-modal-actions"><button type="button" class="action secondary" data-close-task-modal>Annuler</button><button class="action" type="submit">Enregistrer</button></div></form></div></div></section>
-<section id="logs" class="section"><div class="card"><h3>Journal d’événements</h3><label>Filtrer par agent</label><select id="logFilter" onchange="refresh()"><option value="">Tous</option></select><label>Type d’événement</label><select id="eventTypeFilter" onchange="refresh()"><option value="">Tous</option><option value="log">Logs runtime</option><option value="audit">Audit opérateur</option><option value="task_transition">Transitions de tâches</option><option value="llm_call">Appels LLM</option><option value="llm_usage">Usage LLM</option><option value="tool_decision">Décisions des outils</option><option value="tool_execution">Exécution des outils</option></select><pre id="logOutput"></pre><p class="muted">Événements persistés · 100 plus récents · pagination API disponible.</p></div></section>
+<section id="tasks" class="section"><div class="card"><h3>Créer une tâche</h3><form id="createTask"><label>Agent</label><select id="taskAgent"></select><label>Titre</label><input id="taskTitle" required maxlength="200"><label>Description</label><textarea id="taskDesc" maxlength="4000"></textarea><button class="action">Ajouter</button></form></div><div class="card"><div class="row task-filterbar"><input id="taskSearch" type="search" placeholder="Rechercher une tâche ou un agent…" aria-label="Rechercher une tâche ou un agent"><select id="taskStatusFilter" aria-label="Filtrer les tâches par statut"><option value="all">Tous les statuts</option><option value="pending">En attente</option><option value="active">En cours</option><option value="completed">Terminées</option><option value="failed">En erreur</option></select><span id="taskVisibleCount" class="muted" aria-live="polite"></span></div><div id="taskTable"></div></div><div id="taskEditModal" class="agent-modal" hidden><div class="agent-modal-backdrop" data-close-task-modal></div><div class="agent-modal-panel" role="dialog" aria-modal="true" aria-labelledby="taskEditTitle"><div class="agent-modal-head"><div><span class="agent-modal-kicker">GESTION DES TÂCHES</span><h3 id="taskEditTitle">Modifier la tâche</h3><p class="muted">L’agent assigné et le statut ne sont pas modifiables ici.</p></div><button type="button" class="agent-modal-close" data-close-task-modal aria-label="Fermer">×</button></div><form id="taskEditForm" class="agent-create-form"><label for="taskEditTitleInput">Titre</label><input id="taskEditTitleInput" maxlength="200" required><label for="taskEditDescription">Description</label><textarea id="taskEditDescription" maxlength="4000" rows="6"></textarea><div id="taskEditError" class="agent-form-error" role="alert" hidden></div><div class="agent-modal-actions"><button type="button" class="action secondary" data-close-task-modal>Annuler</button><button class="action" type="submit">Enregistrer</button></div></form></div></div></section>
+<section id="logs" class="section"><div class="card"><h3>Journal d’événements</h3><label>Filtrer par agent</label><select id="logFilter" onchange="refresh()"><option value="">Tous</option></select><label>Type d’événement</label><select id="eventTypeFilter" onchange="refresh()"><option value="">Tous</option><option value="log">Logs runtime</option><option value="audit">Audit opérateur</option><option value="task_transition">Transitions de tâches</option><option value="llm_call">Appels LLM</option><option value="llm_usage">Usage LLM</option><option value="tool_decision">Décisions des outils</option><option value="tool_execution">Exécution des outils</option></select><label for="logSearch">Recherche dans les événements chargés</label><input id="logSearch" type="search" placeholder="Rechercher un message, un type ou un agent…"><p id="logVisibleCount" class="muted" aria-live="polite"></p><pre id="logOutput"></pre><p class="muted">Événements persistés · 100 plus récents · pagination API disponible.</p></div></section>
 <section id="supervisor" class="section"><div class="cards"><div class="card">Agents actifs<div class="metric" id="supTotal">—</div></div><div class="card">Redémarrages<div class="metric" id="supRestarts">—</div></div><div class="card">Erreurs<div class="metric" id="supErrors">—</div></div></div><div class="card"><h3>État du watchdog</h3><div id="supervisorTable"></div><p class="muted">Watchdog actuel : surveillance de boucle, sans récupération de processus indépendante.</p></div></section><section id="lineage" class="section"><div class="card"><h3>Filiation</h3><pre id="lineageTree"></pre></div></section><section id="settings" class="section"><div class="card"><h3>Paramètres et sécurité</h3><div id="settingsTable"></div><p>Interface locale · Docker socket sensible · constitution heuristique.</p></div></section><section id="detail" class="section"><div class="card"><h3>Fiche agent</h3><div id="agentDetail"></div></div></section><section id="workspace" class="section">
 <div class="card">
  <div class="control-card-head"><div><h3>Workspace sécurisé · lecture seule</h3><p class="muted">Explorez les fichiers persistants de la sandbox sans ouvrir de terminal ni autoriser d’écriture.</p></div><button class="action" onclick="loadWorkspace()">Actualiser</button></div>
@@ -158,7 +316,7 @@ function formatDuration(seconds){if(!Number.isFinite(Number(seconds)))return 'In
 async function loadResources(){const status=document.getElementById('resourceStatus');status.textContent='Collecte des mesures…';try{const d=await api('/resources'),h=d.host,r=d.runtime,mem=h.memory,disk=h.disk;document.getElementById('resourceCpu').textContent=h.cpuPercent===null?'—':h.cpuPercent.toFixed(1)+' %';document.getElementById('resourceCpuMeta').textContent=h.cpuPercent===null?'Mesure disponible au prochain échantillon':h.cpuCores+' cœurs logiques';document.getElementById('resourceMemory').textContent=mem.usedPercent===null?'—':mem.usedPercent.toFixed(1)+' %';document.getElementById('resourceMemoryMeta').textContent=formatBytes(mem.usedBytes)+' utilisés / '+formatBytes(mem.totalBytes);document.getElementById('resourceDisk').textContent=disk.available?disk.usedPercent.toFixed(1)+' %':'—';document.getElementById('resourceDiskMeta').textContent=disk.available?formatBytes(disk.freeBytes)+' libres / '+formatBytes(disk.totalBytes):'Mesure indisponible';document.getElementById('resourceUptime').textContent=formatDuration(h.uptimeSeconds);document.getElementById('resourcePlatform').textContent=h.platform;document.getElementById('resourceRuntime').innerHTML=table([{pid:r.pid,uptime:formatDuration(r.uptimeSeconds),RSS:formatBytes(r.memory.rssBytes),'Heap utilisé':formatBytes(r.memory.heapUsedBytes),'Heap total':formatBytes(r.memory.heapTotalBytes),Externe:formatBytes(r.memory.externalBytes)}]);document.getElementById('resourceLimits').innerHTML=table([{CPU:d.configuredLimits.cpuCores+' cœur(s)',RAM:d.configuredLimits.memory,PIDs:d.configuredLimits.pids,'Timeout exécution':d.configuredLimits.executionTimeoutMs+' ms'}]);document.getElementById('resourceDocker').innerHTML=d.docker.available?table(d.docker.containers.map(x=>({conteneur:x.name,CPU:x.cpuPercent===null?'—':x.cpuPercent.toFixed(1)+' %',RAM:formatBytes(x.memoryUsedBytes)+' / '+formatBytes(x.memoryLimitBytes),mémoire:x.memoryPercent===null?'—':x.memoryPercent.toFixed(1)+' %',PIDs:x.pids??'—'}))):'<p class="muted">'+escapeHtml(d.docker.reason||'Docker indisponible')+'</p>';status.className='status-strip'+(d.docker.available?'':' warning');status.textContent='Mesures hôte disponibles · Docker '+(d.docker.available?'accessible':'indisponible');document.getElementById('resourceSampledAt').textContent='Échantillon : '+new Date(h.sampledAt).toLocaleString('fr-FR')+' · CPU calculé entre deux requêtes';}catch(e){status.className='status-strip danger';status.textContent='Erreur de collecte : '+e.message}}
 
 function escapeHtml(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}function table(rows){if(!rows.length)return '<p class="muted">Aucune donnée</p>';return '<table><thead><tr>'+Object.keys(rows[0]).map(k=>'<th>'+escapeHtml(k)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+escapeHtml(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
-async function refresh(){try{const d=await api('/dashboard');const agents=d.agents;window.__leannaAgents=agents;window.__leannaRole=d.role;window.__leannaTasks=d.tasks;document.getElementById('roleLabel').textContent='Rôle : '+(d.role==='admin'?'Administrateur':'Opérateur');document.getElementById('nAgents').textContent=agents.length;renderControlRoom(d);document.getElementById('emergencyButton').hidden=d.role!=='admin';document.getElementById('createAgentOpen').hidden=d.role!=='admin';const emergency=document.getElementById('emergencyButton');emergency.dataset.active=d.emergencyStop?'1':'0';emergency.textContent=d.emergencyStop?'Verrouillage actif · Réarmer':'Arrêt d’urgence';document.getElementById('refresh').textContent=d.emergencyStop?'ARRÊT GLOBAL ACTIF · Live · 5s':'Live · 5s';document.getElementById('nRunning').textContent=agents.filter(a=>a.status==='running').length;document.getElementById('auditOutput').textContent=(d.audit||[]).map(a=>'['+a.at+'] '+a.action+' · '+(a.target||'—')+' · '+a.details).join('\\n');renderAgentDirectory(agents);const select=agents.map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.name)+' · '+escapeHtml(a.id)+'</option>').join('');document.getElementById('taskAgent').innerHTML=select;const wsAgent=document.getElementById('wsAgent'),previousWsAgent=wsAgent.value;wsAgent.innerHTML=select;if(agents.some(a=>a.id===previousWsAgent))wsAgent.value=previousWsAgent;renderTasks(d.tasks,agents);renderMissions(agents,d.tasks,d.logs);renderOfficeTree(agents,d.tasks);const logFilter=document.getElementById('logFilter'),previousAgent=logFilter.value;logFilter.innerHTML='<option value="">Tous</option>'+select;if(agents.some(a=>a.id===previousAgent))logFilter.value=previousAgent;const eventQuery=new URLSearchParams({limit:'100'}),selectedAgent=logFilter.value,selectedType=document.getElementById('eventTypeFilter').value;if(selectedAgent)eventQuery.set('agentId',selectedAgent);if(selectedType)eventQuery.set('type',selectedType);const eventPage=await api('/events?'+eventQuery.toString());document.getElementById('logOutput').textContent=eventPage.events.map(e=>'['+e.at+'] '+(e.agentId||'système')+' · '+e.type+' · '+e.level+' · '+e.summary).join('\n');document.getElementById('usageTotal').textContent=fmt(d.usage.total);document.getElementById('usageQuota').textContent=fmt(d.usage.quota);document.getElementById('usageRemaining').textContent=fmt(d.usage.remaining);document.getElementById('usageTable').innerHTML=table(d.usage.byAgent.map(a=>({agent:a.agent_id,tokens:fmt(a.tokens)})));document.getElementById('supTotal').textContent=agents.filter(a=>a.status==='running').length;document.getElementById('supRestarts').textContent=agents.reduce((n,a)=>n+Number(a.restart_count||0),0);document.getElementById('supErrors').textContent=agents.filter(a=>a.last_error).length;document.getElementById('supervisorTable').innerHTML=table(agents.map(a=>({agent:a.id,status:a.status,heartbeat:a.heartbeat_at||'—',restarts:a.restart_count||0,error:a.last_error||'—'})));document.getElementById('lineageTree').textContent=buildTree(agents);document.getElementById('settingsTable').innerHTML=table([{key:'Adresse',value:'127.0.0.1'},{key:'Port',value:'+port+'},{key:'Quota tokens',value:fmt(d.usage.quota)},{key:'Sandbox',value:'Docker · réseau désactivé · limites CPU/mémoire'},{key:'Secrets',value:'Masqués'}]);}catch(e){document.getElementById('refresh').textContent='Erreur: '+e.message}}
+async function refresh(){try{const d=await api('/dashboard');const agents=d.agents;window.__leannaAgents=agents;window.__leannaRole=d.role;window.__leannaTasks=d.tasks;window.__leannaLogs=d.logs||[];document.getElementById('roleLabel').textContent='Rôle : '+(d.role==='admin'?'Administrateur':'Opérateur');document.getElementById('nAgents').textContent=agents.length;renderControlRoom(d);document.getElementById('emergencyButton').hidden=d.role!=='admin';document.getElementById('createAgentOpen').hidden=d.role!=='admin';const emergency=document.getElementById('emergencyButton');emergency.dataset.active=d.emergencyStop?'1':'0';emergency.textContent=d.emergencyStop?'Verrouillage actif · Réarmer':'Arrêt d’urgence';document.getElementById('refresh').textContent=d.emergencyStop?'ARRÊT GLOBAL ACTIF · Live · 5s':'Live · 5s';document.getElementById('nRunning').textContent=agents.filter(a=>a.status==='running').length;document.getElementById('auditOutput').textContent=(d.audit||[]).map(a=>'['+a.at+'] '+a.action+' · '+(a.target||'—')+' · '+a.details).join('\\n');renderAgentDirectory(agents);const select=agents.map(a=>'<option value="'+escapeHtml(a.id)+'">'+escapeHtml(a.name)+' · '+escapeHtml(a.id)+'</option>').join('');document.getElementById('taskAgent').innerHTML=select;const wsAgent=document.getElementById('wsAgent'),previousWsAgent=wsAgent.value;wsAgent.innerHTML=select;if(agents.some(a=>a.id===previousWsAgent))wsAgent.value=previousWsAgent;renderTasks(d.tasks,agents);renderMissions(agents,d.tasks,d.logs);renderOfficeTree(agents,d.tasks);const logFilter=document.getElementById('logFilter'),previousAgent=logFilter.value;logFilter.innerHTML='<option value="">Tous</option>'+select;if(agents.some(a=>a.id===previousAgent))logFilter.value=previousAgent;const eventQuery=new URLSearchParams({limit:'100'}),selectedAgent=logFilter.value,selectedType=document.getElementById('eventTypeFilter').value;if(selectedAgent)eventQuery.set('agentId',selectedAgent);if(selectedType)eventQuery.set('type',selectedType);const eventPage=await api('/events?'+eventQuery.toString());window.__leannaEventLines=eventPage.events.map(e=>'['+e.at+'] '+(e.agentId||'système')+' · '+e.type+' · '+e.level+' · '+e.summary);renderLogOutput();document.getElementById('usageTotal').textContent=fmt(d.usage.total);document.getElementById('usageQuota').textContent=fmt(d.usage.quota);document.getElementById('usageRemaining').textContent=fmt(d.usage.remaining);document.getElementById('usageTable').innerHTML=table(d.usage.byAgent.map(a=>({agent:a.agent_id,tokens:fmt(a.tokens)})));document.getElementById('supTotal').textContent=agents.filter(a=>a.status==='running').length;document.getElementById('supRestarts').textContent=agents.reduce((n,a)=>n+Number(a.restart_count||0),0);document.getElementById('supErrors').textContent=agents.filter(a=>a.last_error).length;document.getElementById('supervisorTable').innerHTML=table(agents.map(a=>({agent:a.id,status:a.status,heartbeat:a.heartbeat_at||'—',restarts:a.restart_count||0,error:a.last_error||'—'})));document.getElementById('lineageTree').textContent=buildTree(agents);document.getElementById('settingsTable').innerHTML=table([{key:'Adresse',value:'127.0.0.1'},{key:'Port',value:'+port+'},{key:'Quota tokens',value:fmt(d.usage.quota)},{key:'Sandbox',value:'Docker · réseau désactivé · limites CPU/mémoire'},{key:'Secrets',value:'Masqués'}]);}catch(e){document.getElementById('refresh').textContent='Erreur: '+e.message}}
 const agentStatusLabel=status=>status==='running'?'En mission':status==='failed'?'En erreur':status==='stopped'?'À l’arrêt':status||'Inconnu';
 function renderAgentDirectory(agents){
  const running=agents.filter(a=>a.status==='running').length,failed=agents.filter(a=>a.status==='failed'||a.last_error).length,stopped=agents.filter(a=>a.status==='stopped').length;
@@ -181,6 +339,9 @@ function renderAgentDirectory(agents){
 }
 document.getElementById('agentSearch').addEventListener('input',()=>{const cached=window.__leannaAgents||[];renderAgentDirectory(cached)});
 document.getElementById('agentStatusFilter').addEventListener('change',()=>{const cached=window.__leannaAgents||[];renderAgentDirectory(cached)});
+document.getElementById('taskSearch').addEventListener('input',()=>renderTasks(window.__leannaTasks||[],window.__leannaAgents||[]));
+document.getElementById('taskStatusFilter').addEventListener('change',()=>renderTasks(window.__leannaTasks||[],window.__leannaAgents||[]));
+document.getElementById('logSearch').addEventListener('input',renderLogOutput);
 function renderControlRoom(d){
  const agents=d.agents||[],tasks=d.tasks||[],logs=d.logs||[];
  const now=Date.now(),staleMs=90000;
@@ -257,15 +418,25 @@ function renderOfficeTree(agents,tasks){
 function renderTasks(tasks,agents){
  const host=document.getElementById('taskTable');if(!host)return;
  const names=new Map(agents.map(a=>[a.id,a.name]));
- if(!tasks.length){host.innerHTML='<div class="mission-empty">Aucune tâche enregistrée.</div>';return;}
+ const query=(document.getElementById('taskSearch')?.value||'').trim().toLocaleLowerCase();
+ const statusFilter=document.getElementById('taskStatusFilter')?.value||'all';
+ const visible=tasks.filter(t=>(statusFilter==='all'||t.status===statusFilter)&&[t.title,t.description,t.agent_id,names.get(t.agent_id)].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
+ const counter=document.getElementById('taskVisibleCount');if(counter)counter.textContent=visible.length+' / '+tasks.length+' tâche(s)';
+ if(!visible.length){host.innerHTML='<div class="mission-empty">'+(tasks.length?'Aucune tâche ne correspond aux filtres.':'Aucune tâche enregistrée.')+'</div>';return;}
  const admin=window.__leannaRole==='admin';
- host.innerHTML='<div class="task-table">'+tasks.map(t=>{
+ host.innerHTML='<div class="task-table">'+visible.map(t=>{
   const active=t.status==='active';
   const status=t.status==='pending'?'En attente':t.status==='active'?'En cours':t.status==='completed'?'Terminée':t.status==='failed'?'En erreur':t.status;
   return '<article class="task-row"><div><h4>'+escapeHtml(t.title)+'</h4><p>'+escapeHtml(t.description||'Aucune description')+'</p><div class="task-row-meta"><span>'+escapeHtml(names.get(t.agent_id)||t.agent_id)+'</span><span>'+escapeHtml(status)+'</span><span>'+escapeHtml(t.updated_at||t.created_at||'')+'</span></div></div><div class="task-actions">'+(admin?'<button class="action secondary" data-task-edit="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être modifiée"':'')+'>Modifier</button><button class="action danger" data-task-delete="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être supprimée"':'')+'>Supprimer</button>':'')+'</div></article>';
  }).join('')+'</div>';
  host.querySelectorAll('[data-task-edit]').forEach(b=>b.addEventListener('click',()=>openTaskEdit(b.dataset.taskEdit)));
  host.querySelectorAll('[data-task-delete]').forEach(b=>b.addEventListener('click',()=>deleteTask(b.dataset.taskDelete)));
+}
+function renderLogOutput(){
+ const lines=window.__leannaEventLines||[],query=(document.getElementById('logSearch')?.value||'').trim().toLocaleLowerCase();
+ const visible=query?lines.filter(line=>line.toLocaleLowerCase().includes(query)):lines;
+ const counter=document.getElementById('logVisibleCount');if(counter)counter.textContent=visible.length+' / '+lines.length+' événement(s) · recherche sur les 100 chargés';
+ document.getElementById('logOutput').textContent=visible.join('\n');
 }
 let editingTaskId=null,editingMissionAgentId=null;
 const taskEditModal=document.getElementById('taskEditModal'),missionEditModal=document.getElementById('missionEditModal');
@@ -314,15 +485,16 @@ document.getElementById('missionEditForm').onsubmit=async e=>{
  finally{submit.disabled=false}
 };
 function renderMissions(agents,tasks,logs){
- const filter=document.getElementById('missionFilter')?.value||'all';
+ const filter=document.getElementById('missionFilter')?.value||'all',query=(document.getElementById('missionSearch')?.value||'').trim().toLocaleLowerCase();
  const activeTasks=tasks.filter(t=>t.status==='active'),pendingTasks=tasks.filter(t=>t.status==='pending');
  document.getElementById('missionRunning').textContent=agents.filter(a=>a.status==='running').length;
  document.getElementById('missionTasksActive').textContent=activeTasks.length;
  document.getElementById('missionTasksPending').textContent=pendingTasks.length;
  document.getElementById('missionFailed').textContent=agents.filter(a=>a.status==='failed'||a.last_error).length;
- const visible=agents.filter(a=>filter==='all'||a.status===filter);
+ const visible=agents.filter(a=>(filter==='all'||a.status===filter)&&[a.name,a.id,a.goal,...tasks.filter(t=>t.agent_id===a.id).flatMap(t=>[t.title,t.description])].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
  const board=document.getElementById('missionBoard');
- if(!visible.length){board.innerHTML='<div class="mission-empty">Aucun agent dans cet état.</div>';return;}
+ const count=document.getElementById('missionVisibleCount');if(count)count.textContent=visible.length+' / '+agents.length+' agent(s)';
+ if(!visible.length){board.innerHTML='<div class="mission-empty">'+(agents.length?'Aucun agent ne correspond aux filtres.':'Aucun agent enregistré.')+'</div>';return;}
  board.innerHTML=visible.map(a=>{
   const agentTasks=tasks.filter(t=>t.agent_id===a.id);
   const task=agentTasks.find(t=>t.status==='active')||agentTasks.find(t=>t.status==='pending');
@@ -337,6 +509,7 @@ function renderMissions(agents,tasks,logs){
  board.querySelectorAll('[data-mission-delete]').forEach(b=>b.addEventListener('click',()=>deleteMission(b.dataset.missionDelete)));
 }
 document.getElementById('missionFilter').addEventListener('change',()=>refresh());
+document.getElementById('missionSearch').addEventListener('input',()=>renderMissions(window.__leannaAgents||[],window.__leannaTasks||[],window.__leannaLogs||[]));
 function buildTree(agents){const roots=agents.filter(a=>!a.parent_id||!agents.some(p=>p.id===a.parent_id));const out=[];function walk(a,n){out.push('  '.repeat(n)+'- '+escapeHtml(a.name)+' ['+escapeHtml(a.status)+'] '+a.id);agents.filter(c=>c.parent_id===a.id).forEach(c=>walk(c,n+1))}roots.forEach(a=>walk(a,0));return out.join('\\n')||'Aucun agent'}function showDetail(id){api('/agents/'+encodeURIComponent(id)).then(d=>{page('detail');document.getElementById('agentDetail').innerHTML='<h2>'+escapeHtml(d.agent.name)+'</h2><p>'+escapeHtml(d.agent.goal)+'</p>'+table([{id:d.agent.id,status:d.agent.status,heartbeat:d.agent.heartbeat_at||'—',restarts:d.agent.restart_count||0,parent:d.agent.parent_id||'—',error:d.agent.last_error||'—'}])+'<h3>Logs</h3><pre>'+d.logs.map(l=>escapeHtml('['+l.at+'] '+l.level+' '+l.message)).join('\\n')+'</pre><h3>Tâches</h3>'+table(d.tasks.map(t=>({title:t.title,status:t.status,updated:t.updated_at})));}).catch(e=>alert(e.message))}let workspacePath='';
 let workspaceEntries=[];
 function workspaceStatus(message,kind='unknown'){const el=document.getElementById('wsStatus');el.className='status-strip '+kind;el.textContent=message}
