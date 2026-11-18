@@ -451,3 +451,16 @@ Commit de livraison du code : `11a3fb75394a412447048bf8b7c3e2a2567df665`.
 - [x] Validation utilisateur Windows, 18 novembre 2026 : `npm run build` réussi ; `npm test` : 13 fichiers et 50 tests réussis sur 50 ; les tests Docker opt-in réels étaient actifs ; `npm run ui` démarre sur `http://127.0.0.1:3000`.
 
 Limites connues : les mesures sont collectées à la demande et ne sont pas encore historisées. La première mesure CPU peut être indisponible car elle nécessite deux échantillons. Le disque mesuré est celui du volume hébergeant le répertoire de travail du serveur UI, pas une ventilation des workspaces. Les statistiques Docker ne couvrent que les conteneurs `leanna-*` en cours d'exécution. Les mesures CPU/RAM par agent, les courbes temporelles et les alertes restent à construire.
+
+
+### Correctif — démarrage du dashboard sans authentification
+Branche : `feat/mission-control-ui`.
+
+- [x] Ne plus lancer de requêtes dashboard périodiques tant qu'aucun jeton n'est présent dans la session.
+- [x] Effacer un jeton de session refusé par l'API et réafficher le formulaire de connexion.
+- [x] Ajouter un champ utilisateur masqué associé au champ mot de passe/jeton pour les heuristiques d'accessibilité du navigateur.
+- [x] Fournir une favicon SVG intégrée pour éviter une requête `/favicon.ico` sans ressource.
+- [x] Ajouter des assertions au test HTTP de la coquille UI.
+- [ ] Validation Windows après ce correctif : build, tests et vérification console après chargement avant connexion puis après connexion.
+
+Les avertissements `contentscript.js` / `ObjectMultiplex` sont externes au code servi par LeannaAuto et doivent être comparés avec les extensions du navigateur désactivées si nécessaire. Le nombre de tests attendu passe de 50 à 50 (assertions supplémentaires dans un test existant).
