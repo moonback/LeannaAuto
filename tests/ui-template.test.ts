@@ -40,6 +40,8 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain("leanna-audit.csv");
   expect(dashboardHtml).not.toContain('id="auditOutput"');
   expect(dashboardHtml).toContain('id="eventLevelFilter"');
+  expect(dashboardHtml).toContain('id="usageProgress"');
+  expect(dashboardHtml).toContain("usagePercent=d.usage.quota>0");
   expect(dashboardHtml).toContain('role="log"');
   expect(dashboardHtml).toContain("event-details-toggle");
   expect(dashboardHtml).toContain("data-copy-event");
