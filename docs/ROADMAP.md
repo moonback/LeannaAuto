@@ -633,4 +633,16 @@ Premier retour Windows : build réussi ; 40 tests réussis sur 41. Le nouveau se
 
 Correction commit `5bc8f95` : créer une base SQLite mémoire et son schéma avant chaque test, puis fermer uniquement cette instance après le test. Le scénario concurrent libère également son appel modèle bloquant dans un bloc `finally`, afin d'éviter de laisser la boucle d'agent suspendue si une assertion échoue.
 
-Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel. Build et tests après cette correction : en attente du retour Windows.
+Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel.
+
+### Test d'intégration Docker réel — ajouté, opt-in
+
+Branche dédiée : `test/docker-runtime-reconciliation`, créée depuis `test/agent-start-concurrency`.
+
+- [x] Ajouter un test opt-in utilisant le vrai exécutable Docker et `ensureSandboxWith`.
+- [x] Couvrir création, arrêt/redémarrage, suppression/recréation du conteneur et conservation d'un fichier dans le volume workspace.
+- [x] Vérifier dans le conteneur les paramètres effectifs : réseau `none`, filesystem racine read-only, mémoire 1 Gio, CPU 1 et limite PIDs 64.
+- [ ] Exécuter le test sur une machine avec Docker Desktop/Engine actif.
+- [ ] Vérifier le nettoyage du conteneur et du volume de test après succès et échec.
+
+Le test est volontairement ignoré par défaut pour ne pas exiger Docker dans la suite standard et ne supprimer que des ressources portant un identifiant aléatoire propre au test. Pour l'activer sous PowerShell : `$env:LEANNAAUTO_DOCKER_INTEGRATION="1"; npm test -- tests/executor-docker.integration.test.ts`. Le test peut télécharger `node:22-bookworm-slim` si l'image n'est pas présente localement. Ne pas exécuter sur un daemon partagé sans comprendre que le test crée puis supprime son propre conteneur et son propre volume. Build et tests après cette correction : en attente du retour Windows.
