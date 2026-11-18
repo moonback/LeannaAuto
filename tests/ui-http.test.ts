@@ -68,6 +68,8 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("eventTypeFilter");
   expect(html).toContain("Transitions de tâches");
   expect(html).toContain("Décisions des outils");
+  expect(html).toContain("Ressources système");
+  expect(html).toContain("resourceDocker");
  });
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
@@ -98,7 +100,7 @@ describe("dashboard HTTP security integration",()=>{
   expect(data.host.cpuCores).toBeGreaterThan(0);
   expect(data.host.uptimeSeconds).toBeGreaterThan(0);
   expect(data.host.disk).toHaveProperty("available");
-  expect(data.runtime.pid).toBe(process.pid===data.runtime.pid?process.pid:data.runtime.pid);
+  expect(data.runtime.pid).toBeGreaterThan(0);
   expect(data.runtime.memory.rssBytes).toBeGreaterThan(0);
   expect(data.configuredLimits).toMatchObject({cpuCores:1,memory:"1g",pids:64});
   expect(data.docker).toHaveProperty("available");
