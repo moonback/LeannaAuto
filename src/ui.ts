@@ -356,12 +356,12 @@ function page(id,b){document.querySelectorAll('.section').forEach(x=>x.classList
 
 const commandOverlay=document.getElementById('commandOverlay'),commandSearch=document.getElementById('commandSearch'),commandResults=document.getElementById('commandResults');
 let commandItems=[],commandActiveIndex=0;
-function collectCommandItems(){commandItems=[...document.querySelectorAll('nav button[onclick]')].map(button=>{const match=button.getAttribute('onclick')?.match(/page\('([^']+)'/);return match?{id:match[1],label:button.textContent.replace(/\s+/g,' ').trim(),button}:null}).filter(Boolean)}
+function collectCommandItems(){const navigation=[...document.querySelectorAll('nav button[onclick]')].map(button=>{const match=button.getAttribute('onclick')?.match(/page\('([^']+)'/);return match?{kind:'page',id:match[1],label:button.textContent.replace(/\s+/g,' ').trim(),button}:null}).filter(Boolean);const agents=(window.__leannaAgents||[]).map(agent=>({kind:'agent',id:agent.id,label:agent.name||agent.id,meta:agent.goal||'Agent'}));const tasks=(window.__leannaTasks||[]).map(task=>({kind:'task',id:task.id,label:task.title||task.id,meta:'Tâche · '+task.status}));commandItems=[...navigation,...agents,...tasks]}
 function renderCommandResults(){
  const query=commandSearch.value.trim().toLocaleLowerCase('fr');
- const results=commandItems.filter(item=>(item.label+' '+item.id).toLocaleLowerCase('fr').includes(query));
+ const results=commandItems.filter(item=>(item.label+' '+item.id+' '+(item.meta||'')+' '+item.kind).toLocaleLowerCase('fr').includes(query));
  commandActiveIndex=Math.max(0,Math.min(commandActiveIndex,results.length-1));
- commandResults.innerHTML=results.length?results.map((item,index)=>'<button type="button" class="command-result" role="option" aria-selected="'+(index===commandActiveIndex?'true':'false')+'" data-command-index="'+index+'"><span class="command-result-icon">⌘</span><span>'+escapeHtml(item.label)+'<small>'+escapeHtml(item.id)+'</small></span></button>').join(''):'<div class="command-empty">Aucune page ne correspond à cette recherche.</div>';
+ commandResults.innerHTML=results.length?results.map((item,index)=>'<button type="button" class="command-result" role="option" aria-selected="'+(index===commandActiveIndex?'true':'false')+'" data-command-index="'+index+'"><span class="command-result-icon">'+(item.kind==='agent'?'◉':item.kind==='task'?'☷':'⌘')+'</span><span>'+escapeHtml(item.label)+'<small>'+escapeHtml(item.meta||item.id)+'</small></span></button>').join(''):'<div class="command-empty">Aucune page ne correspond à cette recherche.</div>';
  commandResults.querySelectorAll('[data-command-index]').forEach(button=>button.addEventListener('click',()=>runCommand(Number(button.dataset.commandIndex))));
 }
 function openCommandPalette(){
@@ -369,8 +369,9 @@ function openCommandPalette(){
 }
 function closeCommandPalette(){if(!commandOverlay||commandOverlay.hidden)return;commandOverlay.hidden=true;document.body.style.overflow='';document.getElementById('commandOpen')?.focus()}
 function runCommand(index){
- const query=commandSearch.value.trim().toLocaleLowerCase('fr'),results=commandItems.filter(item=>(item.label+' '+item.id).toLocaleLowerCase('fr').includes(query)),item=results[index];if(!item)return;
- page(item.id,item.button);
+ const query=commandSearch.value.trim().toLocaleLowerCase('fr'),results=commandItems.filter(item=>(item.label+' '+item.id+' '+(item.meta||'')+' '+item.kind).toLocaleLowerCase('fr').includes(query)),item=results[index];if(!item)return;
+ if(item.kind==='page'){page(item.id,item.button);return}
+ const target=item.id;page(item.kind==='agent'?'agents':'tasks',document.querySelector('nav button[onclick*=\"'+(item.kind==='agent'?'agents':'tasks')+'\"]'));if(item.kind==='agent')showDetail(target);else showTaskActivity(target);
 }
 document.getElementById('commandOpen').addEventListener('click',openCommandPalette);
 commandSearch.addEventListener('input',()=>{commandActiveIndex=0;renderCommandResults()});
