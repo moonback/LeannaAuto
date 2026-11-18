@@ -60,3 +60,16 @@ Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default end
 npm run dev -- supervise --interval 10 --stale 90
 ```
 The watchdog starts loops for database agents marked `running`, records heartbeat timestamps, and logs stale heartbeat detections. For production process-level recovery, run it under systemd, Docker restart policy, or another external process manager; a hung loop is not yet force-killed/replaced by this MVP.
+
+
+## Dashboard authentication
+The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login accepts `LEANNAAUTO_UI_TOKEN` (admin) or the optional `LEANNAAUTO_UI_OPERATOR_TOKEN` (restricted operator). Admins can use every dashboard action. Operators can view agents, tasks, logs, quota and audit history, start/stop agents, and create tasks; agent creation and other privileged actions are admin-only. The browser keeps the token in session storage for the current tab session. Use two different long random secrets. Do not expose the dashboard port publicly or reuse these tokens elsewhere.
+
+Generate a token with Node.js:
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+
+## Global emergency stop
+The dashboard administrator can activate a persistent global emergency stop. It marks every running agent as stopped, asks its Docker sandbox to stop, and prevents new agent loops from starting through both the dashboard and CLI while the lock is active. Resetting the lock only permits future starts; it does not restart agents automatically. The emergency-stop state is stored in SQLite and survives dashboard restarts.
