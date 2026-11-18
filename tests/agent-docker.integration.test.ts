@@ -41,7 +41,7 @@ describe.skipIf(!enabled)("real agent loop with a real Docker sandbox (opt-in)",
   const startAgent=createAgentStarter({
    db:testDb,
    getAgent:(id:string)=>testDb.prepare("SELECT * FROM agents WHERE id=?").get(id) as any,
-   log:(id,level,message)=>db!.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(id,new Date().toISOString(),level,message),
+   log:(id,level,message)=>testDb.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(id,new Date().toISOString(),level,message),
    emergencyStopActive:()=>false,
    chat:async()=>'TOOL shell '+JSON.stringify({command:"printf '%s' '"+marker+"' > /workspace/agent-e2e.txt"}),
    ensureSandbox:async(id)=>ensureSandboxWith(id,docker),
@@ -50,7 +50,7 @@ describe.skipIf(!enabled)("real agent loop with a real Docker sandbox (opt-in)",
     if(name!=="shell"||typeof args.command!=="string")throw new Error("Unexpected tool request");
     const result=await shell(id,args.command);
     if(result.startsWith("Command failed:"))throw new Error(result);
-    db!.prepare("UPDATE agents SET status='stopped' WHERE id=?").run(id);
+    testDb.prepare("UPDATE agents SET status='stopped' WHERE id=?").run(id);
     return result||"Command completed";
    },
    toolHelp:"shell(command)",
