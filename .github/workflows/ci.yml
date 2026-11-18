@@ -26,28 +26,37 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Compile TypeScript and capture diagnostics
-        id: compile
+      - name: Install and compile with diagnostics
+        id: build
         shell: bash
         run: |
           set +e
-          npm run build > typescript-build.log 2>&1
-          result=$?
+          npm ci > npm-install.log 2>&1
+          install_result=$?
+          cat npm-install.log
+          if [ "$install_result" -eq 0 ]; then
+            npm run build > typescript-build.log 2>&1
+            build_result=$?
+          else
+            echo "Build skipped because npm ci failed." > typescript-build.log
+            build_result=1
+          fi
           cat typescript-build.log
-          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          echo "install_exit_code=$install_result" >> "$GITHUB_OUTPUT"
+          echo "build_exit_code=$build_result" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload TypeScript diagnostics
+      - name: Upload build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: typescript-build-diagnostics
-          path: typescript-build.log
-          if-no-files-found: warn
+          path: |
+            npm-install.log
+            typescript-build.log
+          if-no-files-found: error
           retention-days: 3
       - name: Mark build result
-        if: steps.compile.outputs.exit_code != '0'
+        if: steps.build.outputs.install_exit_code != '0' || steps.build.outputs.build_exit_code != '0'
         run: exit 1
 
   test:
@@ -63,26 +72,35 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Run unit tests and capture diagnostics
+      - name: Install and test with diagnostics
         id: tests
         shell: bash
         run: |
           set +e
-          npm test -- --reporter=verbose > vitest.log 2>&1
-          result=$?
+          npm ci > npm-install.log 2>&1
+          install_result=$?
+          cat npm-install.log
+          if [ "$install_result" -eq 0 ]; then
+            npm test -- --reporter=verbose > vitest.log 2>&1
+            test_result=$?
+          else
+            echo "Tests skipped because npm ci failed." > vitest.log
+            test_result=1
+          fi
           cat vitest.log
-          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          echo "install_exit_code=$install_result" >> "$GITHUB_OUTPUT"
+          echo "test_exit_code=$test_result" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload Vitest diagnostics
+      - name: Upload test diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vitest-diagnostics
-          path: vitest.log
-          if-no-files-found: warn
+          path: |
+            npm-install.log
+            vitest.log
+          if-no-files-found: error
           retention-days: 3
       - name: Mark test result
-        if: steps.tests.outputs.exit_code != '0'
+        if: steps.tests.outputs.install_exit_code != '0' || steps.tests.outputs.test_exit_code != '0'
         run: exit 1
