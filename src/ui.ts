@@ -10,6 +10,7 @@ import {collectSystemMetrics} from "./observability.js";
 import {listWorkspace,readWorkspaceFile,WorkspaceError} from "./workspace.js";
 import {dashboardHtml as html} from "./ui/template.js";
 
+// The HTTP server consumes a composed frontend template; browser assets live under src/ui/.
 const port=Number(process.env.UI_PORT??3000);
 
 const adminToken=process.env.LEANNAAUTO_UI_TOKEN??"";
