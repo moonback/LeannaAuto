@@ -19,7 +19,6 @@ describe("dashboard API authorization",()=>{
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1/workspace")).toBe(true);
   expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1/workspace/file")).toBe(true);
-  expect(isAllowedUiRequest("operator","GET","/api/agents/agent-1/workspace/file")).toBe(true);
  });
  it("allows operators only the intended operational writes",()=>{
   expect(isAllowedUiRequest("operator","POST","/api/tasks")).toBe(true);
