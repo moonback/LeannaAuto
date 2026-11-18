@@ -10,7 +10,8 @@
     "build": "tsc",
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "ui": "tsx src/ui.ts"
+    "ui": "tsx src/ui.ts",
+    "capture:screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",
