@@ -1,4 +1,5 @@
 import {spawn, type ChildProcess} from "node:child_process";
+import {request as httpRequest} from "node:http";
 import {createServer} from "node:net";
 import {mkdtemp, rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
@@ -74,8 +75,16 @@ describe("dashboard HTTP security integration",()=>{
   expect(response.status).toBe(415);
  });
  it("rejects untrusted Host and Origin headers",async()=>{
-  const hostResponse=await fetch(baseUrl+"/api/dashboard",{headers:{Host:"evil.example:3000",Authorization:"Bearer "+operatorToken}});
-  expect(hostResponse.status).toBe(400);
+  const address=new URL(baseUrl);
+  const hostStatus=await new Promise<number>((resolve,reject)=>{
+   const req=httpRequest({hostname:address.hostname,port:Number(address.port),path:"/api/dashboard",method:"GET",headers:{Host:"evil.example:3000",Authorization:"Bearer "+operatorToken}},res=>{
+    res.resume();
+    res.on("end",()=>resolve(res.statusCode??0));
+   });
+   req.on("error",reject);
+   req.end();
+  });
+  expect(hostStatus).toBe(400);
   const originResponse=await fetch(baseUrl+"/api/dashboard",{headers:{Origin:"https://evil.example",Authorization:"Bearer "+operatorToken}});
   expect(originResponse.status).toBe(403);
  });
