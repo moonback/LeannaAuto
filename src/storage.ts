@@ -24,6 +24,7 @@ function migrateColumn(table:string,column:string,definition:string){
 migrateColumn("agents","heartbeat_at","TEXT");
 migrateColumn("agents","restart_count","INTEGER NOT NULL DEFAULT 0");
 migrateColumn("agents","last_error","TEXT");
+migrateColumn("agents","runtime_owner","TEXT");
 export function log(agentId:string,level:string,message:string){db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(agentId,new Date().toISOString(),level,message);}
 
 export function audit(action:string,target:string|null,details:string){db.prepare("INSERT INTO audit(at,action,target,details) VALUES(?,?,?,?)").run(new Date().toISOString(),action,target,details);}
