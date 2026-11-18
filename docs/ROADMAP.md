@@ -567,3 +567,26 @@ Le premier retour Windows du 18 novembre 2026 confirmait le build et le démarra
 
 
 Résultat de validation confirmé par l'utilisateur sous Windows le 18 novembre 2026 : `npm run build` passe ; `npm test` passe avec 14 fichiers et 56 tests réussis sur 56. Les tests Docker opt-in sont actifs et réussis, dont la récupération après crash, la sérialisation de `docker exec` orphelin et la réconciliation du sandbox. `npm ci` avait également indiqué 0 vulnérabilité sur cette branche. Le contrôle visuel des actions Modifier/Supprimer reste à effectuer.
+
+
+### Refonte UI/UX — bureau immersif des agents
+
+Branche : `feat/immersive-agent-office-ui`.
+
+- [x] Ajouter une navigation dédiée « Bureau IA » dans la console.
+- [x] Créer une scène isométrique en CSS 3D, sans dépendance WebGL ni nouvelle dépendance npm.
+- [x] Représenter chaque agent par un petit personnage à son poste, avec nom, statut, mission et tâche associée.
+- [x] Reconstituer l'arbre hiérarchique à partir de `parent_id`, avec gestion des agents orphelins et prévention des cycles d'affichage.
+- [x] Rendre les personnages interactifs : clic pour ouvrir la fiche agent.
+- [x] Synchroniser les compteurs et les tâches depuis les données du tableau de bord toutes les cinq secondes.
+- [x] Renforcer le système visuel global : arrière-plans, surfaces, navigation, actions, focus clavier et adaptation mobile.
+- [x] Étendre le test HTTP de présence de l'interface et de son rendu.
+- [ ] Validation utilisateur Windows : `npm ci`, `npm run build`, `npm test`, puis contrôle visuel du Bureau IA sur plusieurs agents avec liens parent/enfant et tâches.
+- [ ] Vérifier le rendu sur écran mobile et la navigation clavier.
+
+Le rendu 3D est volontairement réalisé avec CSS (perspective, profondeur, ombres et avatars composés en éléments HTML) afin de rester léger et compatible avec la console locale existante. Aucune donnée agent n'est simulée : la scène utilise les agents et tâches renvoyés par `/api/dashboard`.
+
+### Fusion — cycle de vie des agents
+
+- [x] PR #12 fusionnée dans `main` le 18 novembre 2026.
+- [x] Commit de fusion : `886d27239908f5a87633c1096220320aa38dea2d`.
