@@ -2,7 +2,7 @@ import "dotenv/config";
 import http from "node:http";
 import {randomUUID} from "node:crypto";
 import {createUiToken,hashUiToken,storedTokenRole,isAllowedUiRequest,isAllowedUiHost,isAllowedUiOrigin,readJsonBody} from "./ui-security.js";
-import {db,log,audit,emergencyStopActive,setEmergencyStop} from "./storage.js";
+import {db,log,audit,emergencyStopActive,setEmergencyStop,getInferenceQuota,setInferenceQuota} from "./storage.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox,deleteSandbox} from "./executor.js";
 import {createIdentity,constitutionHash} from "./identity.js";
@@ -21,11 +21,7 @@ function resolveUiRole(value:string){
  const operator=db.prepare("SELECT token_hash,revoked FROM ui_credentials WHERE role='operator'").get() as {token_hash:string;revoked:number}|undefined;
  return storedTokenRole(value,admin,operator,adminToken,operatorToken);
 }
-function configuredInferenceQuota(){
- const stored=db.prepare("SELECT value FROM system_state WHERE key='inference_quota'").get() as {value:string}|undefined;
- const value=Number(stored?.value??process.env.INFERENCE_QUOTA??100000);
- return Number.isSafeInteger(value)&&value>=0?value:100000;
-}
+
 function credentialStatus(role:"admin"|"operator",environmentToken:string){
  const row=db.prepare("SELECT revoked,rotated_at FROM ui_credentials WHERE role=?").get(role) as {revoked:number;rotated_at:string}|undefined;
  return {configured:row?row.revoked===0:Boolean(environmentToken),source:row?(row.revoked?"révoqué":"stockage local · empreinte dérivée"):environmentToken?"variable d’environnement":"non configuré",rotatedAt:row?.rotated_at??null};
@@ -47,7 +43,7 @@ const server=http.createServer(async(req,res)=>{
  const authHeader=String(req.headers.authorization??"");const suppliedToken=authHeader.startsWith("Bearer ")?authHeader.slice(7):"";const role=resolveUiRole(suppliedToken);if(!role)return send(401,{error:"Authentification requise"});
  if(!isAllowedUiRequest(role,req.method??"GET",pathname))return send(403,{error:"Action non autorisée pour ce rôle"});
  if(pathname==="/api/security"&&req.method==="GET"){
-  const quota=configuredInferenceQuota(),total=(db.prepare("SELECT COALESCE(SUM(tokens),0) AS total FROM usage").get() as {total:number}).total;
+  const quota=getInferenceQuota(),total=(db.prepare("SELECT COALESCE(SUM(tokens),0) AS total FROM usage").get() as {total:number}).total;
   return send(200,{credentials:{admin:credentialStatus("admin",adminToken),operator:credentialStatus("operator",operatorToken)},usage:{total,quota,remaining:Math.max(0,quota-total)},network:{host:"127.0.0.1",port,localOnly:true},session:{role}});
  }
  if(pathname==="/api/security/tokens"&&req.method==="POST"){
@@ -69,7 +65,7 @@ const server=http.createServer(async(req,res)=>{
   const quota=Number(body.inferenceQuota);
   if(!Number.isSafeInteger(quota)||quota<1||quota>1000000000)return send(400,{error:"Le quota doit être un entier compris entre 1 et 1 000 000 000"});
   const now=new Date().toISOString();
-  db.prepare("INSERT INTO system_state(key,value,updated_at) VALUES('inference_quota',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").run(String(quota),now);
+  setInferenceQuota(quota);
   audit("settings.inference_quota",null,"Quota global mis à jour : "+quota+" tokens");
   return send(200,{ok:true,inferenceQuota:quota,updatedAt:now});
  }
@@ -119,7 +115,7 @@ const server=http.createServer(async(req,res)=>{
   const nextBefore=events.length===limitValue?(events[events.length-1] as {id:number}).id:null;
   return send(200,{events,page:{limit:limitValue,nextBefore}});
  }
- if(pathname==="/api/dashboard"){const agents=db.prepare("SELECT id,name,goal,parent_id,status,created_at,heartbeat_at,restart_count,last_error FROM agents ORDER BY created_at DESC").all() as any[];const tasks=db.prepare("SELECT * FROM tasks ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,created_at DESC LIMIT 200").all();const taskCounts=db.prepare("SELECT status,COUNT(*) AS count FROM tasks GROUP BY status").all() as {status:string;count:number}[];const taskSummary={active:taskCounts.find(x=>x.status==="active")?.count??0,pending:taskCounts.find(x=>x.status==="pending")?.count??0,failed:taskCounts.find(x=>x.status==="failed")?.count??0,completed:taskCounts.find(x=>x.status==="completed")?.count??0,total:taskCounts.reduce((n,x)=>n+x.count,0)};const logs=db.prepare("SELECT agent_id,at,level,message FROM logs ORDER BY id DESC LIMIT 100").all() as any[];const recentEvents=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events ORDER BY id DESC LIMIT 250").all() as any[];const events=recentEvents.map(e=>({...e,details:JSON.parse(e.detailsJson)}));const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) total FROM usage").get() as any).total;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();const quota=configuredInferenceQuota();const auditRows=db.prepare("SELECT at,action,target,details FROM audit ORDER BY id DESC LIMIT 100").all();return send(200,{agents,tasks,taskCounts:taskSummary,logs,events,audit:auditRows,emergencyStop:emergencyStopActive(),role,usage:{total,quota,remaining:Math.max(0,quota-total),byAgent}});}
+ if(pathname==="/api/dashboard"){const agents=db.prepare("SELECT id,name,goal,parent_id,status,created_at,heartbeat_at,restart_count,last_error FROM agents ORDER BY created_at DESC").all() as any[];const tasks=db.prepare("SELECT * FROM tasks ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,created_at DESC LIMIT 200").all();const taskCounts=db.prepare("SELECT status,COUNT(*) AS count FROM tasks GROUP BY status").all() as {status:string;count:number}[];const taskSummary={active:taskCounts.find(x=>x.status==="active")?.count??0,pending:taskCounts.find(x=>x.status==="pending")?.count??0,failed:taskCounts.find(x=>x.status==="failed")?.count??0,completed:taskCounts.find(x=>x.status==="completed")?.count??0,total:taskCounts.reduce((n,x)=>n+x.count,0)};const logs=db.prepare("SELECT agent_id,at,level,message FROM logs ORDER BY id DESC LIMIT 100").all() as any[];const recentEvents=db.prepare("SELECT id,at,agent_id AS agentId,task_id AS taskId,type,level,source,summary,details_json AS detailsJson,correlation_id AS correlationId FROM events ORDER BY id DESC LIMIT 250").all() as any[];const events=recentEvents.map(e=>({...e,details:JSON.parse(e.detailsJson)}));const total=(db.prepare("SELECT COALESCE(SUM(tokens),0) total FROM usage").get() as any).total;const byAgent=db.prepare("SELECT agent_id,SUM(tokens) tokens FROM usage GROUP BY agent_id ORDER BY tokens DESC").all();const quota=getInferenceQuota();const auditRows=db.prepare("SELECT at,action,target,details FROM audit ORDER BY id DESC LIMIT 100").all();return send(200,{agents,tasks,taskCounts:taskSummary,logs,events,audit:auditRows,emergencyStop:emergencyStopActive(),role,usage:{total,quota,remaining:Math.max(0,quota-total),byAgent}});}
  if(pathname==="/api/agents"&&req.method==="POST"){const name=String(body.name||"").trim(),goal=String(body.goal||"").trim();if(!name||!goal)return send(400,{error:"Nom et objectif requis"});const id=name.toLowerCase().replace(/[^a-z0-9-]/g,"-")+"-"+randomUUID().slice(0,8),created=new Date().toISOString(),identity=createIdentity();db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,name,goal,null,"stopped",created,identity,constitutionHash(),"0.1.0");log(id,"genesis","Mission: "+goal);audit("agent.create",id,"Agent créé depuis la console");return send(201,{id});}
  const startMatch=pathname.match(/^\/api\/agents\/([^/]+)\/start$/);if(startMatch&&req.method==="POST"){const id=decodeURIComponent(startMatch[1]);if(emergencyStopActive())return send(423,{error:"Arrêt d’urgence actif. Réarmez le système avant de démarrer un agent."});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});audit("agent.start",id,"Démarrage demandé depuis la console");try{const runtime=startAgent(id);runtime.catch(e=>{log(id,"ui-error",String(e).slice(0,1000));});return send(202,{ok:true});}catch(e){return send(409,{error:e instanceof Error?e.message:"Démarrage refusé"});}}
  const stopMatch=pathname.match(/^\/api\/agents\/([^/]+)\/stop$/);if(stopMatch&&req.method==="POST"){const id=decodeURIComponent(stopMatch[1]);db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped via dashboard");audit("agent.stop",id,"Arrêt demandé depuis la console");return send(200,{ok:true});}
