@@ -20,6 +20,12 @@ describe("dashboard UI composition",()=>{
   expect(dashboardHtml).toContain('html[data-theme="light"]');
   expect(dashboardHtml).toContain("prefers-reduced-motion:reduce");
   expect(dashboardHtml).toContain("focus-visible");
+  expect(dashboardHtml).toContain('id="confirmOverlay"');
+  expect(dashboardHtml).toContain('role="alertdialog"');
+  expect(dashboardHtml).toContain('id="toastRegion"');
+  expect(dashboardHtml).toContain("function confirmDialog(message)");
+  expect(dashboardHtml).not.toContain("confirm(");
+  expect(dashboardHtml).not.toContain("alert(");
   expect(dashboardHtml).toContain("92dvh");
  });
  it("keeps every navigation target connected to a page section",()=>{
