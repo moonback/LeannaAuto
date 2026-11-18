@@ -425,12 +425,13 @@ function renderTasks(tasks,agents){
  if(!visible.length){host.innerHTML='<div class="mission-empty">'+(tasks.length?'Aucune tâche ne correspond aux filtres.':'Aucune tâche enregistrée.')+'</div>';return;}
  const admin=window.__leannaRole==='admin';
  host.innerHTML='<div class="task-table">'+visible.map(t=>{
-  const active=t.status==='active';
-  const status=t.status==='pending'?'En attente':t.status==='active'?'En cours':t.status==='completed'?'Terminée':t.status==='failed'?'En erreur':t.status;
-  return '<article class="task-row"><div><h4>'+escapeHtml(t.title)+'</h4><p>'+escapeHtml(t.description||'Aucune description')+'</p><div class="task-row-meta"><span>'+escapeHtml(names.get(t.agent_id)||t.agent_id)+'</span><span>'+escapeHtml(status)+'</span><span>'+escapeHtml(t.updated_at||t.created_at||'')+'</span></div></div><div class="task-actions">'+(admin?'<button class="action secondary" data-task-edit="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être modifiée"':'')+'>Modifier</button><button class="action danger" data-task-delete="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être supprimée"':'')+'>Supprimer</button>':'')+'</div></article>';
+  const active=t.status==='active',cancellable=admin&&(active||t.status==='pending');
+  const status=t.status==='pending'?'En attente':t.status==='active'?'En cours':t.status==='completed'?'Terminée':t.status==='failed'?'En erreur':t.status==='cancelled'?'Annulée':t.status;
+  return '<article class="task-row"><div><h4>'+escapeHtml(t.title)+'</h4><p>'+escapeHtml(t.description||'Aucune description')+'</p><div class="task-row-meta"><span>'+escapeHtml(names.get(t.agent_id)||t.agent_id)+'</span><span>'+escapeHtml(status)+'</span><span>'+escapeHtml(t.updated_at||t.created_at||'')+'</span></div></div><div class="task-actions">'+(admin?(cancellable?'<button class="action danger" data-task-cancel="'+escapeHtml(t.id)+'">Annuler</button>':'')+'<button class="action secondary" data-task-edit="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être modifiée"':'')+'>Modifier</button><button class="action danger" data-task-delete="'+escapeHtml(t.id)+'" '+(active?'disabled title="Une tâche active ne peut pas être supprimée"':'')+'>Supprimer</button>':'')+'</div></article>';
  }).join('')+'</div>';
  host.querySelectorAll('[data-task-edit]').forEach(b=>b.addEventListener('click',()=>openTaskEdit(b.dataset.taskEdit)));
  host.querySelectorAll('[data-task-delete]').forEach(b=>b.addEventListener('click',()=>deleteTask(b.dataset.taskDelete)));
+ host.querySelectorAll('[data-task-cancel]').forEach(b=>b.addEventListener('click',()=>cancelTask(b.dataset.taskCancel)));
 }
 function renderLogOutput(){
  const lines=window.__leannaEventLines||[],query=(document.getElementById('logSearch')?.value||'').trim().toLocaleLowerCase();
@@ -453,6 +454,11 @@ async function deleteTask(id){
  if(!confirm('Supprimer la tâche « '+task.title+' » ? Cette action est définitive.'))return;
  try{await api('/tasks/'+encodeURIComponent(id),{method:'DELETE',body:JSON.stringify({})});await refresh()}catch(error){alert(error.message)}
 }
+async function cancelTask(id){
+ const task=(window.__leannaTasks||[]).find(t=>t.id===id);if(!task||!['active','pending'].includes(task.status))return;
+ if(!confirm('Annuler la tâche « '+task.title+' » ?'+(task.status==='active'?' L’agent sera également arrêté.':'')+' La tâche ne sera pas relancée.'))return;
+ try{await api('/tasks/'+encodeURIComponent(id)+'/cancel',{method:'POST',body:JSON.stringify({})});await refresh()}catch(error){alert(error.message)}
+}
 taskEditModal.querySelectorAll('[data-close-task-modal]').forEach(b=>b.addEventListener('click',closeTaskEdit));
 document.getElementById('taskEditForm').onsubmit=async e=>{
  e.preventDefault();if(!editingTaskId)return;
@@ -474,6 +480,11 @@ async function deleteMission(id){
  const agent=(window.__leannaAgents||[]).find(a=>a.id===id);if(!agent||agent.status==='running')return;
  if(!confirm('Supprimer la mission de « '+agent.name+' » ? L’agent sera conservé, mais son objectif sera effacé.'))return;
  try{await api('/agents/'+encodeURIComponent(id)+'/mission',{method:'DELETE',body:JSON.stringify({})});await refresh()}catch(error){alert(error.message)}
+}
+async function cancelMission(id){
+ const agent=(window.__leannaAgents||[]).find(a=>a.id===id);if(!agent||agent.status!=='running'||!agent.goal)return;
+ if(!confirm('Annuler la mission de « '+agent.name+' » ? L’agent sera arrêté, sa mission effacée et ses tâches en attente/en cours annulées.'))return;
+ try{await api('/agents/'+encodeURIComponent(id)+'/mission/cancel',{method:'POST',body:JSON.stringify({})});await refresh()}catch(error){alert(error.message)}
 }
 missionEditModal.querySelectorAll('[data-close-mission-modal]').forEach(b=>b.addEventListener('click',closeMissionEdit));
 document.getElementById('missionEditForm').onsubmit=async e=>{
@@ -502,11 +513,12 @@ function renderMissions(agents,tasks,logs){
   const state=a.status==='running'?'En mission':a.status==='failed'?'En erreur':a.status==='stopped'?'À l’arrêt':a.status;
   const heartbeat=a.heartbeat_at?new Date(a.heartbeat_at).toLocaleString('fr-FR'):'Aucun heartbeat';
   const taskLabel=task?(task.status==='active'?'Tâche active':'Prochaine tâche'):'Aucune tâche assignée';
-  return '<article class="mission-card"><div class="mission-head"><h4>'+escapeHtml(a.name)+'</h4> <span class="badge">'+escapeHtml(state)+'</span></div><p class="mission-goal">'+escapeHtml(a.goal)+'</p><div class="mission-meta"><span>'+escapeHtml(a.id)+'</span><span>'+escapeHtml(heartbeat)+'</span><span>'+agentTasks.length+' tâche(s)</span></div><div class="mission-task"><small class="muted">'+taskLabel+'</small><div><b>'+escapeHtml(task?.title||'En attente d’une tâche')+'</b></div><p>'+escapeHtml(task?.description||'Cet agent ne possède pas de tâche active ou en attente.')+'</p></div><p><small class="muted">Dernière activité</small><br>'+escapeHtml(last?(last.level+' · '+last.message+' · '+last.at):'Aucune activité enregistrée')+'</p>'+(a.last_error?'<p style="color:#ef6478">Erreur : '+escapeHtml(a.last_error)+'</p>':'')+'<div class="mission-actions"><button class="action" data-mission-action="details" data-agent-id="'+escapeHtml(a.id)+'">Ouvrir</button>'+(a.status==='running'?'<button class="action danger" data-mission-action="stop" data-agent-id="'+escapeHtml(a.id)+'">Arrêter</button>':'<button class="action" data-mission-action="start" data-agent-id="'+escapeHtml(a.id)+'">Démarrer</button>')+(window.__leannaRole==='admin'?'<button class="action secondary" data-mission-edit="'+escapeHtml(a.id)+'" '+(a.status==='running'?'disabled title="Arrêtez l’agent pour modifier sa mission"':'')+'>'+(a.goal?'Modifier la mission':'Définir une mission')+'</button>'+(a.goal?'<button class="action danger" data-mission-delete="'+escapeHtml(a.id)+'" '+(a.status==='running'?'disabled title="Arrêtez l’agent pour supprimer sa mission"':'')+'>Supprimer la mission</button>':''):'')+'</div></article>';
+  return '<article class="mission-card"><div class="mission-head"><h4>'+escapeHtml(a.name)+'</h4> <span class="badge">'+escapeHtml(state)+'</span></div><p class="mission-goal">'+escapeHtml(a.goal)+'</p><div class="mission-meta"><span>'+escapeHtml(a.id)+'</span><span>'+escapeHtml(heartbeat)+'</span><span>'+agentTasks.length+' tâche(s)</span></div><div class="mission-task"><small class="muted">'+taskLabel+'</small><div><b>'+escapeHtml(task?.title||'En attente d’une tâche')+'</b></div><p>'+escapeHtml(task?.description||'Cet agent ne possède pas de tâche active ou en attente.')+'</p></div><p><small class="muted">Dernière activité</small><br>'+escapeHtml(last?(last.level+' · '+last.message+' · '+last.at):'Aucune activité enregistrée')+'</p>'+(a.last_error?'<p style="color:#ef6478">Erreur : '+escapeHtml(a.last_error)+'</p>':'')+'<div class="mission-actions"><button class="action" data-mission-action="details" data-agent-id="'+escapeHtml(a.id)+'">Ouvrir</button>'+(a.status==='running'?'<button class="action danger" data-mission-action="stop" data-agent-id="'+escapeHtml(a.id)+'">Arrêter</button>':'<button class="action" data-mission-action="start" data-agent-id="'+escapeHtml(a.id)+'">Démarrer</button>')+(window.__leannaRole==='admin'?(a.goal&&a.status==='running'?'<button class="action danger" data-mission-cancel="'+escapeHtml(a.id)+'">Annuler la mission</button>':'')+'<button class="action secondary" data-mission-edit="'+escapeHtml(a.id)+'" '+(a.status==='running'?'disabled title="Arrêtez l’agent pour modifier sa mission"':'')+'>'+(a.goal?'Modifier la mission':'Définir une mission')+'</button>'+(a.goal?'<button class="action danger" data-mission-delete="'+escapeHtml(a.id)+'" '+(a.status==='running'?'disabled title="Arrêtez l’agent pour supprimer sa mission"':'')+'>Supprimer la mission</button>':''):'')+'</div></article>';
  }).join('');
  board.querySelectorAll('button[data-mission-action]').forEach(button=>button.addEventListener('click',()=>{const action=button.dataset.missionAction,id=button.dataset.agentId;if(action==='details')showDetail(id);else act(action,id);}));
  board.querySelectorAll('[data-mission-edit]').forEach(b=>b.addEventListener('click',()=>openMissionEdit(b.dataset.missionEdit)));
  board.querySelectorAll('[data-mission-delete]').forEach(b=>b.addEventListener('click',()=>deleteMission(b.dataset.missionDelete)));
+ board.querySelectorAll('[data-mission-cancel]').forEach(b=>b.addEventListener('click',()=>cancelMission(b.dataset.missionCancel)));
 }
 document.getElementById('missionFilter').addEventListener('change',()=>refresh());
 document.getElementById('missionSearch').addEventListener('input',()=>renderMissions(window.__leannaAgents||[],window.__leannaTasks||[],window.__leannaLogs||[]));
@@ -601,6 +613,48 @@ const server=http.createServer(async(req,res)=>{
  if(pathname==="/api/agents"&&req.method==="POST"){const name=String(body.name||"").trim(),goal=String(body.goal||"").trim();if(!name||!goal)return send(400,{error:"Nom et objectif requis"});const id=name.toLowerCase().replace(/[^a-z0-9-]/g,"-")+"-"+randomUUID().slice(0,8),created=new Date().toISOString(),identity=createIdentity();db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,name,goal,null,"stopped",created,identity,constitutionHash(),"0.1.0");log(id,"genesis","Mission: "+goal);audit("agent.create",id,"Agent créé depuis la console");return send(201,{id});}
  const startMatch=pathname.match(/^\/api\/agents\/([^/]+)\/start$/);if(startMatch&&req.method==="POST"){const id=decodeURIComponent(startMatch[1]);if(emergencyStopActive())return send(423,{error:"Arrêt d’urgence actif. Réarmez le système avant de démarrer un agent."});if(!db.prepare("SELECT id FROM agents WHERE id=?").get(id))return send(404,{error:"Agent introuvable"});audit("agent.start",id,"Démarrage demandé depuis la console");try{const runtime=startAgent(id);runtime.catch(e=>{log(id,"ui-error",String(e).slice(0,1000));});return send(202,{ok:true});}catch(e){return send(409,{error:e instanceof Error?e.message:"Démarrage refusé"});}}
  const stopMatch=pathname.match(/^\/api\/agents\/([^/]+)\/stop$/);if(stopMatch&&req.method==="POST"){const id=decodeURIComponent(stopMatch[1]);db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped via dashboard");audit("agent.stop",id,"Arrêt demandé depuis la console");return send(200,{ok:true});}
+ const taskCancelMatch=pathname.match(/^\/api\/tasks\/([^/]+)\/cancel$/);
+ if(taskCancelMatch&&req.method==="POST"){
+  const id=decodeURIComponent(taskCancelMatch[1]);
+  const task=db.prepare("SELECT id,agent_id,status,title FROM tasks WHERE id=?").get(id) as {id:string;agent_id:string;status:string;title:string}|undefined;
+  if(!task)return send(404,{error:"Tâche introuvable"});
+  if(!["pending","active"].includes(task.status))return send(409,{error:"Seules les tâches en attente ou en cours peuvent être annulées"});
+  const now=new Date().toISOString();
+  const cancel= db.transaction(()=>{
+   const agent=db.prepare("SELECT status FROM agents WHERE id=?").get(task.agent_id) as {status:string}|undefined;
+   if(task.status==="active"&&agent?.status==="running")db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=? AND status='running'").run(task.agent_id);
+   const result=db.prepare("UPDATE tasks SET status='cancelled',updated_at=? WHERE id=? AND status IN ('pending','active')").run(now,id);
+   return {changed:result.changes,stop:task.status==="active"&&agent?.status==="running"};
+  })();
+  if(!cancel.changed)return send(409,{error:"La tâche a changé d’état ; annulation refusée"});
+  if(cancel.stop)await stopSandbox(task.agent_id);
+  audit("task.cancel",id,"Tâche annulée · "+task.title);
+  log(task.agent_id,"task","Task cancelled "+id,{taskId:id,eventType:"task.cancel"});
+  if(cancel.stop)log(task.agent_id,"system","Agent stopped because its active task was cancelled");
+  return send(200,{ok:true,agentStopped:cancel.stop});
+ }
+ const missionCancelMatch=pathname.match(/^\/api\/agents\/([^/]+)\/mission\/cancel$/);
+ if(missionCancelMatch&&req.method==="POST"){
+  const id=decodeURIComponent(missionCancelMatch[1]);
+  const agent=db.prepare("SELECT id,status,goal FROM agents WHERE id=?").get(id) as {id:string;status:string;goal:string}|undefined;
+  if(!agent)return send(404,{error:"Agent introuvable"});
+  if(!agent.goal)return send(409,{error:"Cet agent n’a pas de mission à annuler"});
+  const now=new Date().toISOString();
+  const result=db.transaction(()=>{
+   const current=db.prepare("SELECT status FROM agents WHERE id=?").get(id) as {status:string}|undefined;
+   if(!current)return {changed:0,stop:false};
+   const stop=current.status==="running";
+   if(stop)db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=? AND status='running'").run(id);
+   db.prepare("UPDATE tasks SET status='cancelled',updated_at=? WHERE agent_id=? AND status IN ('pending','active')").run(now,id);
+   const cleared=db.prepare("UPDATE agents SET goal='' WHERE id=? AND goal<>''").run(id);
+   return {changed:cleared.changes,stop};
+  })();
+  if(!result.changed)return send(409,{error:"La mission a changé d’état ; annulation refusée"});
+  if(result.stop)await stopSandbox(id);
+  audit("mission.cancel",id,"Mission annulée ; tâches en attente/en cours annulées, agent conservé");
+  log(id,"system","Mission cancelled; pending and active tasks cancelled");
+  return send(200,{ok:true,agentStopped:result.stop});
+ }
 
  const taskMatch=pathname.match(/^\/api\/tasks\/([^/]+)$/);
  if(taskMatch&&req.method==="PATCH"){
