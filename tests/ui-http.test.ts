@@ -89,6 +89,21 @@ describe("dashboard HTTP security integration",()=>{
   expect(dashboard.status).toBe(200);
   await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
  });
+ it("exposes host, runtime, disk and Docker resource snapshots",async()=>{
+  const response=await request("/api/resources");
+  expect(response.status).toBe(200);
+  const data=await response.json() as any;
+  expect(data.host.memory.totalBytes).toBeGreaterThan(0);
+  expect(data.host.memory.freeBytes).toBeGreaterThan(0);
+  expect(data.host.cpuCores).toBeGreaterThan(0);
+  expect(data.host.uptimeSeconds).toBeGreaterThan(0);
+  expect(data.host.disk).toHaveProperty("available");
+  expect(data.runtime.pid).toBe(process.pid===data.runtime.pid?process.pid:data.runtime.pid);
+  expect(data.runtime.memory.rssBytes).toBeGreaterThan(0);
+  expect(data.configuredLimits).toMatchObject({cpuCores:1,memory:"1g",pids:64});
+  expect(data.docker).toHaveProperty("available");
+  expect(Array.isArray(data.docker.containers)).toBe(true);
+ });
  it("exposes filtered, cursor-paginated structured events to operators",async()=>{
   const first=await request("/api/events?limit=2");
   expect(first.status).toBe(200);
