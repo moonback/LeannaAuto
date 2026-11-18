@@ -1,20 +1,23 @@
 import Database from "better-sqlite3";
-import {afterEach,describe,it,expect,vi} from "vitest";
+import {afterEach,beforeEach,describe,it,expect,vi} from "vitest";
 import {createAgentStarter} from "../src/agent.js";
 import {recoverStaleAgents} from "../src/supervisor.js";
 
 describe("supervisor recovery with the real agent loop",()=>{
- const db=new Database(":memory:");
- db.exec(`
-  CREATE TABLE agents(id TEXT PRIMARY KEY,name TEXT,goal TEXT,parent_id TEXT,status TEXT,created_at TEXT,identity TEXT,constitution_hash TEXT,version TEXT,runtime_owner TEXT,heartbeat_at TEXT,last_error TEXT,restart_count INTEGER NOT NULL DEFAULT 0);
-  CREATE TABLE system_state(key TEXT PRIMARY KEY,value TEXT,updated_at TEXT);
-  CREATE TABLE tasks(id TEXT PRIMARY KEY,agent_id TEXT,title TEXT,description TEXT,status TEXT,created_at TEXT,updated_at TEXT);
-  CREATE TABLE logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,level TEXT,message TEXT);
-  INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
-  INSERT INTO agents(id,name,goal,status,runtime_owner,heartbeat_at,restart_count) VALUES('agent-restart','Test agent','Complete its task','running','dead-owner','2026-11-18T00:00:00.000Z',0);
-  INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Do not reset this task','active','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
- `);
- afterEach(()=>{db.close();});
+ let db:Database;
+ beforeEach(()=>{
+  db=new Database(":memory:");
+  db.exec(`
+   CREATE TABLE agents(id TEXT PRIMARY KEY,name TEXT,goal TEXT,parent_id TEXT,status TEXT,created_at TEXT,identity TEXT,constitution_hash TEXT,version TEXT,runtime_owner TEXT,heartbeat_at TEXT,last_error TEXT,restart_count INTEGER NOT NULL DEFAULT 0);
+   CREATE TABLE system_state(key TEXT PRIMARY KEY,value TEXT,updated_at TEXT);
+   CREATE TABLE tasks(id TEXT PRIMARY KEY,agent_id TEXT,title TEXT,description TEXT,status TEXT,created_at TEXT,updated_at TEXT);
+   CREATE TABLE logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,level TEXT,message TEXT);
+   INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
+   INSERT INTO agents(id,name,goal,status,runtime_owner,heartbeat_at,restart_count) VALUES('agent-restart','Test agent','Complete its task','running','dead-owner','2026-11-18T00:00:00.000Z',0);
+   INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES('task-restart','agent-restart','Persist task','Do not reset this task','active','2026-11-18T00:00:00.000Z','2026-11-18T00:00:00.000Z');
+  `);
+ });
+ afterEach(()=>{if(db?.open)db.close();});
 
  it("reclaims a crashed lease and runs the real agent loop without Docker or a live LLM",async()=>{
   const log=vi.fn((id:string,level:string,message:string)=>{
@@ -70,12 +73,14 @@ describe("supervisor recovery with the real agent loop",()=>{
   });
 
   const firstRun=startAgent("agent-restart");
-  await enteredChat;
-  expect(()=>startAgent("agent-restart")).toThrow("Agent already has an active runtime lease.");
-  expect(chat).toHaveBeenCalledOnce();
-
-  unblockChat();
-  await firstRun;
+  try{
+   await enteredChat;
+   expect(()=>startAgent("agent-restart")).toThrow("Agent already has an active runtime lease.");
+   expect(chat).toHaveBeenCalledOnce();
+  }finally{
+   unblockChat();
+   await firstRun;
+  }
   expect(db.prepare("SELECT runtime_owner,heartbeat_at,status FROM agents WHERE id='agent-restart'").get()).toMatchObject({
    runtime_owner:null,heartbeat_at:null,status:"stopped"
   });
