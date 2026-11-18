@@ -186,6 +186,7 @@ Branche : `feat/mission-control-ui`.
 - [x] Exposer `GET /api/events` avec authentification, filtres agent/tâche/type/niveau/période et pagination par curseur.
 - [x] Connecter la page Journal système à l'API d'événements structurés, avec filtres agent et type.
 - [x] Ajouter un test HTTP de lecture opérateur, filtrage par type et navigation entre pages.
+- [x] Validation utilisateur Windows du lot initial : build réussi, 49/49 tests réussis et serveur UI démarré.
 - [ ] Validation utilisateur Windows de ce lot : build, suite complète et vérification de l'API.
 
 Limites : les événements hérités des logs et audits ne contiennent pas encore systématiquement un identifiant de tâche ou de corrélation. Les événements structurés dédiés couvrent maintenant les transitions de tâches, les appels LLM et l'exécution des outils sur la boucle d'agent. La rédaction actuelle est défensive et fondée sur des motifs, pas une garantie de détection de tous les secrets.
