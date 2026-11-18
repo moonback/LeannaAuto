@@ -3,13 +3,13 @@ import {ensureSandboxWith} from "../src/executor.js";
 
 describe("sandbox reconciliation",()=>{
  it("leaves an existing running container untouched",async()=>{
-  const runner=vi.fn(async()=> "running");
+  const runner=vi.fn(async(_args:string[],_timeout?:number)=> "running");
   await expect(ensureSandboxWith("agent-1",runner)).resolves.toBe("already-running");
   expect(runner).toHaveBeenCalledTimes(1);
   expect(runner.mock.calls[0][0]).toEqual(["inspect","-f","{{.State.Status}}","leanna-agent-1"]);
  });
  it("starts an existing stopped container instead of recreating it",async()=>{
-  const runner=vi.fn()
+  const runner=vi.fn(async(_args:string[],_timeout?:number)=>"")
    .mockResolvedValueOnce("exited")
    .mockResolvedValueOnce("");
   await expect(ensureSandboxWith("agent-1",runner)).resolves.toBe("started");
@@ -18,7 +18,7 @@ describe("sandbox reconciliation",()=>{
  });
  it("recreates only a container confirmed missing and keeps its workspace volume",async()=>{
   const missing=Object.assign(new Error("docker inspect failed"),{stderr:"Error: No such object: leanna-agent-1"});
-  const runner=vi.fn()
+  const runner=vi.fn(async(_args:string[],_timeout?:number)=>"")
    .mockRejectedValueOnce(missing)
    .mockResolvedValueOnce("container-id");
   await expect(ensureSandboxWith("agent-1",runner,"test-image")).resolves.toBe("created");
@@ -29,7 +29,7 @@ describe("sandbox reconciliation",()=>{
  });
  it("does not mistake an unavailable Docker daemon for a missing container",async()=>{
   const unavailable=Object.assign(new Error("Docker daemon unavailable"),{stderr:"Cannot connect to the Docker daemon"});
-  const runner=vi.fn().mockRejectedValue(unavailable);
+  const runner=vi.fn(async(_args:string[],_timeout?:number)=>"").mockRejectedValue(unavailable);
   await expect(ensureSandboxWith("agent-1",runner)).rejects.toThrow("Docker daemon unavailable");
   expect(runner).toHaveBeenCalledTimes(1);
  });
