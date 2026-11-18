@@ -135,7 +135,7 @@ describe("dashboard HTTP security integration",()=>{
   expect(operatorDelete.status).toBe(403);
   const task=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Keep agent"})});
   expect(task.status).toBe(201);
-  const blocked=await request("/api/agents/"+encodeURIComponent(agent.id),adminToken,{method:"DELETE"});
+  const blocked=await request("/api/agents/"+encodeURIComponent(agent.id),adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
   expect(blocked.status).toBe(409);
   const stillThere=await request("/api/agents/"+encodeURIComponent(agent.id));
   expect(stillThere.status).toBe(200);
