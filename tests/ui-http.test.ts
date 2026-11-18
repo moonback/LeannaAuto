@@ -85,6 +85,22 @@ describe("dashboard HTTP security integration",()=>{
   expect(dashboard.status).toBe(200);
   await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
  });
+ it("exposes filtered, cursor-paginated structured events to operators",async()=>{
+  const first=await request("/api/events?limit=2");
+  expect(first.status).toBe(200);
+  const page=await first.json() as {events:Array<{id:number;type:string;summary:string}>;page:{nextBefore:number|null}};
+  expect(page.events.length).toBe(2);
+  expect(page.events.some(event=>event.type==="audit"||event.type==="log")).toBe(true);
+  expect(page.page.nextBefore).toBeTypeOf("number");
+  const next=await request("/api/events?limit=2&before="+page.page.nextBefore);
+  expect(next.status).toBe(200);
+  const nextPage=await next.json() as {events:Array<{id:number}>};
+  expect(nextPage.events.every(event=>event.id<page.page.nextBefore!)).toBe(true);
+  const filtered=await request("/api/events?type=audit&limit=20");
+  const filteredPage=await filtered.json() as {events:Array<{type:string}>};
+  expect(filteredPage.events.length).toBeGreaterThan(0);
+  expect(filteredPage.events.every(event=>event.type==="audit")).toBe(true);
+ });
  it("rejects non-JSON write requests",async()=>{
   const response=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"text/plain"},body:"not-json"});
   expect(response.status).toBe(415);
