@@ -165,6 +165,71 @@ button:disabled{cursor:not-allowed}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
+
+/* Page-specific refinement · second pass */
+.section.show{min-width:0}
+.section>.card:first-child,.section>.control-card-head:first-child{margin-top:2px}
+.section h3{letter-spacing:-.25px}
+.section .muted{line-height:1.55}
+.office-page-head{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:23px 25px;margin:0 0 16px;border:1px solid #2b4162;border-radius:17px;background:radial-gradient(ellipse at 88% 0%,#314c7933,transparent 45%),linear-gradient(120deg,#152641,#101b2e)}
+.office-kicker{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#9fb2ff}
+.office-page-head h3{font-size:22px;letter-spacing:-.7px;margin:6px 0}
+.office-page-head p{font-size:12px;margin:0;max-width:620px}
+.office-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.office-summary>div{padding:17px 18px;border-radius:13px;border:1px solid #2a3e5d;background:linear-gradient(145deg,#172943,#101b2d);min-width:0}
+.office-summary span{display:block;font-size:11px;color:#95a9c7}
+.office-summary strong{display:block;margin-top:5px;font-size:29px;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.office-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:14px 2px}
+.office-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#a9bad3}
+.office-legend span{display:flex;align-items:center;gap:6px}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#71839e}
+.legend-dot.running{background:#54d6a8;box-shadow:0 0 10px #54d6a866}
+.legend-dot.failed{background:#f17e91}.legend-dot.stopped{background:#71839e}
+.office-scene{border:1px solid #304765;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#20385a 0,transparent 62%),#0b1627}
+.office-scene-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #2a3f5c;background:#111f33}
+.office-scene-top b{font-size:12px}.office-scene-top span{font-size:11px;color:#91a5c3}
+.office-live{font-size:9px!important;letter-spacing:1px;font-weight:800;color:#6fe0b5!important}
+.office-live i{display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#54d6a8;box-shadow:0 0 9px #54d6a8}
+.office-tree{min-height:280px;padding:34px 20px 45px}
+.office-desk{border:1px solid #385477!important;background:linear-gradient(145deg,#213b5c,#12233b)!important;box-shadow:0 14px 28px #0004,inset 0 1px #ffffff13!important}
+.office-task{transition:border-color .16s,transform .16s;background:#0d1b2e}
+.office-task:hover{border-color:#6e8bca;transform:translateY(-2px)}
+.mission-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:13px}
+.mission-card{position:relative;overflow:hidden;padding:18px;background:linear-gradient(145deg,#14243a,#0d192b);box-shadow:0 10px 25px #0002}
+.mission-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:#607de0;opacity:.8}
+.mission-card h4{font-size:14px;letter-spacing:-.2px}
+.mission-card .mission-goal{font-size:12px;line-height:1.65;color:#d4def0}
+.mission-card .mission-meta span{border:1px solid #2b4263;background:#172943}
+.mission-card .mission-task{background:#101f34;border-left-color:#8da4ff;border-radius:0 8px 8px 0;padding:10px 12px}
+.mission-card .mission-actions{flex-wrap:wrap}
+.task-table{overflow-x:auto;border:1px solid #2b405f;border-radius:12px;background:#0d192a}
+.task-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:15px 17px;border:0;border-bottom:1px solid #263a55;border-radius:0;background:transparent}
+.task-row:last-child{border-bottom:0}
+.task-row:hover{background:#ffffff05}
+.task-row h4{font-size:13px;margin:0 0 4px;color:#edf3ff}
+.task-row p{font-size:11px;color:#9aacc6;margin:0;overflow-wrap:anywhere}
+.task-row-meta{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:9px;color:#8196b5;font-size:10px}
+.task-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.task-actions .action{font-size:10px;padding:7px 10px}
+#logOutput,#auditOutput,#lineageTree{max-height:65vh;min-height:220px;padding:18px;line-height:1.75;background:linear-gradient(145deg,#091422,#0c192b);border:1px solid #2b405f;color:#c6d5ec;font-size:11px;tab-size:2}
+#logOutput,#auditOutput{white-space:pre-wrap;overflow-wrap:anywhere}
+#settingsTable,#usageTable,#supervisorTable,#resourceRuntime,#resourceLimits,#resourceDocker{overflow-x:auto;border:1px solid #2b405f;border-radius:12px;background:#0d192a}
+#settingsTable table,#usageTable table,#supervisorTable table,#resourceRuntime table,#resourceLimits table,#resourceDocker table{width:100%;min-width:460px}
+#settingsTable tr:last-child td,#usageTable tr:last-child td{border-bottom:0}
+#settingsTable td:first-child,#usageTable td:first-child{color:#cbd8eb;font-weight:650}
+#resourceStatus{margin:12px 0 16px}
+#resourceSampledAt{font-size:11px;color:#8195b3}
+#resourceRuntime,#resourceLimits,#resourceDocker{padding:4px}
+#resourceRuntime td,#resourceLimits td,#resourceDocker td{font-size:11px}
+#usageTable td,#supervisorTable td{font-variant-numeric:tabular-nums}
+#taskEditModal .agent-modal-panel,#missionEditModal .agent-modal-panel{width:min(620px,100%)}
+.section form:not(.agent-create-form):not(#loginForm){max-width:100%}
+.section>.card form label{display:block;color:#bdcbe0;font-size:11px;font-weight:700;margin-top:8px}
+.section>.card form button.action{margin-top:5px}
+.section input[type=search]{margin-bottom:0}
+@media(max-width:900px){.office-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.office-page-head{align-items:flex-start;flex-direction:column}.task-row{grid-template-columns:minmax(0,1fr)}.task-actions{justify-content:flex-start}}
+@media(max-width:560px){.office-page-head{padding:18px}.office-page-head h3{font-size:19px}.office-summary>div{padding:13px}.office-summary strong{font-size:24px}.office-toolbar{align-items:flex-start;flex-direction:column}.office-scene-top{align-items:flex-start;flex-direction:column}.task-row{padding:13px}.mission-grid{grid-template-columns:minmax(0,1fr)}#logOutput,#auditOutput,#lineageTree{font-size:10px;padding:12px}}
+
 </style></head><body><div id="authGate" style="position:fixed;inset:0;background:#080d19ee;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px"><form id="loginForm" class="card" style="width:min(420px,100%)"><h2>Authentification</h2><p class="muted">Saisissez votre jeton administrateur ou opérateur.</p><input type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><input id="authToken" name="password" type="password" autocomplete="current-password" required placeholder="Jeton administrateur"><button class="action" style="width:100%">Se connecter</button><p id="authError" class="muted"></p></form></div><aside><h1>◈ LeannaAuto <small style="display:block;color:#91a2bd;font-size:10px;letter-spacing:1.4px;margin-top:5px">AGENT OPERATIONS</small></h1><nav><button class="active" onclick="page('overview',this)">◫ &nbsp;Vue d'ensemble</button><button onclick="page('office',this)">▧ &nbsp;Bureau IA</button><button onclick="page('agents',this)">◉ &nbsp;Agents</button><button onclick="page('missions',this)">▣ &nbsp;Missions</button><button onclick="page('tasks',this)">☷ &nbsp;Tâches</button><button onclick="page('supervisor',this)">⌁ &nbsp;Supervision</button><button onclick="page('lineage',this)">⌘ &nbsp;Filiation</button><button onclick="page('logs',this)">≋ &nbsp;Logs système</button><button onclick="page('audit',this)">▤ &nbsp;Audit</button><button onclick="page('usage',this)">◌ &nbsp;Quota IA</button><button onclick="page('resources',this)">▥ &nbsp;Ressources</button><button onclick="page('workspace',this)">▣ &nbsp;Workspace</button><button onclick="page('settings',this)">⚙ &nbsp;Sécurité & paramètres</button></nav><p class="muted" style="margin-top:auto;padding:15px 10px;border-top:1px solid #263750;font-size:11px">● Console locale sécurisée<br>Accès par jeton · localhost</p></aside><main><div class="top"><h2 id="heading">Vue d'ensemble</h2><div><span id="roleLabel" class="muted"></span> <button class="action danger" id="emergencyButton" onclick="toggleEmergency()">Arrêt d’urgence</button> <span class="muted" id="refresh">Live · 5s</span></div></div>
 <section id="office" class="section"><div class="office-page-head"><div><span class="office-kicker">LEANNAAUTO · ESPACE DE TRAVAIL</span><h3>Le bureau des intelligences</h3><p class="muted">Chaque agent occupe son poste. Les liens représentent sa filiation et les cartes affichent ses tâches.</p></div><button class="action" onclick="page('agents',document.querySelector('nav button[onclick*=agents]'))">Gérer les agents</button></div><div class="office-summary"><div><span>Agents présents</span><strong id="officeAgentCount">0</strong></div><div><span>Au travail</span><strong id="officeRunningCount">0</strong></div><div><span>Tâches actives</span><strong id="officeActiveTasks">0</strong></div><div><span>En attente</span><strong id="officePendingTasks">0</strong></div></div><div class="office-toolbar"><div class="office-legend"><span><i class="legend-dot running"></i>En mission</span><span><i class="legend-dot stopped"></i>À l’arrêt</span><span><i class="legend-dot failed"></i>En erreur</span></div><span class="muted" id="officeUpdated">Synchronisation toutes les 5 secondes</span></div><div class="office-scene"><div class="office-scene-top"><div><b>Vue hiérarchique 3D</b><span> Sélectionnez un personnage pour ouvrir sa fiche.</span></div><span class="office-live"><i></i> EN DIRECT</span></div><div id="officeTree" class="office-tree" role="tree" aria-label="Arbre des agents"><div class="office-empty">Chargement du bureau…</div></div></div></section>
 <section id="overview" class="section show">
