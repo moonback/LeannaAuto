@@ -634,3 +634,15 @@ Branche : `fix/overview-interventions-actions`.
 - [x] Ajouter le réarmement de l'arrêt d'urgence directement depuis l'alerte, réservé à l'administrateur et confirmé.
 - [x] Actualiser les filtres et les listes à partir des données déjà chargées, sans exposer de nouvelle route API.
 - [ ] Validation Windows : build, tests et vérification des boutons depuis la Vue d'ensemble.
+
+
+### Attribution manuelle des tâches à un agent
+
+Branche : `feat/task-agent-assignment`.
+
+- [x] Ajouter un bouton « Attribuer un agent » sur les tâches en attente dans la liste des tâches.
+- [x] Ajouter une modale de sélection parmi les agents qui ne sont pas en erreur.
+- [x] Ajouter une route admin dédiée qui réattribue atomiquement une tâche en attente et journalise l’ancien et le nouvel agent.
+- [x] Refuser la réattribution d’une tâche active, terminée, annulée ou en erreur.
+- [x] Ajouter les tests HTTP de permission, de réattribution et de garde sur tâche active.
+- [ ] Validation Windows : `npm ci`, `npm run build`, `npm test`, puis vérifier l’attribution depuis l’interface.
