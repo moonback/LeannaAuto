@@ -7,7 +7,7 @@ import {resourceMode} from "./resources.js";
 import type {Agent} from "./types.js";
 const get=(id:string)=>db.prepare("SELECT * FROM agents WHERE id=?").get(id) as Agent|undefined;
 export async function startAgent(id:string){
- const agent=get(id); if(!agent)throw new Error("Agent not found");
+ const agent=get(id); if(!agent)throw new Error("Agent not found");\n if(emergencyStopActive())throw new Error("Global emergency stop is active; reset it before starting agents.");
  db.prepare("UPDATE agents SET status='running' WHERE id=?").run(id);
  await ensureSandbox(id); log(id,"system","Agent started");
  let history:string[]=[];
