@@ -13,23 +13,31 @@ cp .env.example .env
 # Set LLM_BASE_URL, LLM_API_KEY and LLM_MODEL
 npm install
 npm run dev -- init --name Researcher --goal "Build a useful open-source tool"
-npm run dev -- start researcher
-npm run dev -- status researcher
-npm run dev -- logs researcher --follow
+npm run dev -- start researcher-XXXXXXXX # replace with generated id
+npm run dev -- status researcher-XXXXXXXX
+npm run dev -- logs researcher-XXXXXXXX --follow
 ```
 
-`init` writes the genesis mission. `start` runs a foreground loop. Stop with Ctrl+C.
-The Docker executor creates isolated containers and limits CPU/memory/PIDs. The constitution blocks a small set of risky commands and tool access; this is a prototype policy, not a guarantee of safety. Never expose it to untrusted users without further hardening.
+`init` writes the genesis mission. `start` runs a foreground loop. Stop with Ctrl+C or the stop command.
+The Docker executor creates isolated containers with CPU, memory and PID limits and disables networking by default. The constitution has a simple command gate; it is not a safety guarantee. The MVP is not production-ready.
 
 ## CLI
 - `init --name NAME --goal GOAL`
 - `start ID`
-- `stop ID` (records stopped status; does not signal another foreground process yet)
+- `stop ID`
 - `status ID`
 - `resources ID`
 - `logs ID --follow`
 - `identity ID`
 - `spawn ID --goal GOAL` (creates a child manifest; child must be separately started)
 
-## Safety
-Use a dedicated host, Docker isolation, restricted outbound networking and provider-side API limits. Agents cannot modify constitution, host supervisor or resource policy. This project is an early MVP.
+## Limitations
+- The agent runs in the foreground; no service manager or restart daemon yet.
+- Tool calling uses a simple text protocol, not structured native tool calls.
+- Identity currently exposes a fingerprint; private key signing and key custody are not implemented.
+- Replication creates a child record only; resource budgeting/automatic spawning is not implemented.
+- Self-modification is not yet implemented.
+- Network access is disabled inside the sandbox; no web/API tools yet.
+- Constitution checks are basic heuristics. This is a prototype and should not be run on a machine with sensitive data.
+- Docker socket access, if used for host orchestration, is effectively a powerful host permission. Keep the host dedicated and never expose the socket to the agent container.
+

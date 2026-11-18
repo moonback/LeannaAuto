@@ -17,7 +17,7 @@ export async function ensureSandbox(agentId:string){
   if(stdout.trim()!=="running")await execFileAsync("docker",["start",name]);
   return;
  }catch{
-  await execFileAsync("docker",["run","-d","--name",name,"--cpus","1","--memory","1g","--pids-limit","64","--network","bridge","--workdir","/workspace","--mount","type=volume,source="+name+"-workspace,target=/workspace",image,"sh","-lc","mkdir -p /workspace && chmod 777 /workspace && sleep infinity"],{timeout:30000});
+  await execFileAsync("docker",["run","-d","--name",name,"--cpus","1","--memory","1g","--pids-limit","64","--network","none","--workdir","/workspace","--mount","type=volume,source="+name+"-workspace,target=/workspace",image,"sh","-lc","mkdir -p /workspace && chmod 777 /workspace && sleep infinity"],{timeout:30000});
  }
 }
 export async function stopSandbox(agentId:string){try{await execFileAsync("docker",["stop",containerName(agentId)],{timeout:15000});}catch{}}
