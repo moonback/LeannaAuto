@@ -32,7 +32,7 @@ The Docker executor creates isolated containers with CPU, memory and PID limits 
 - `spawn ID --goal GOAL` (creates a child manifest; child must be separately started)
 
 ## Limitations
-- Agent loops run in the foreground. `supervise` is a foreground watchdog for agents marked running; it can start loops and log heartbeat staleness, but is not yet a process-level kill/recovery mechanism.
+- Agent loops run in the foreground. `supervise` is a foreground watchdog that uses SQLite runtime leases and heartbeats to avoid duplicate starts and reclaim stale agent loops. It is not a replacement for an external process manager or Docker daemon recovery.
 - Tool calling uses a simple text protocol, not structured native tool calls.
 - Identity currently exposes a fingerprint; private key signing and key custody are not implemented.
 - Replication creates a child record only; resource budgeting/automatic spawning is not implemented.
@@ -53,7 +53,7 @@ npm run dev -- task set TASK_ID completed
 Task state is stored in SQLite (pending, active, completed, failed). This CLI tracking is not yet automatically consumed by the agent planner.
 
 ## OpenRouter
-Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default endpoint is `https://openrouter.ai/api/v1`. Optional attribution headers are configured with `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME`.
+Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default endpoint is `https://openrouter.ai/api/v1`. Optional attribution headers are configured with `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME`. `LLM_TIMEOUT_MS` bounds each inference HTTP request (default: 120000 ms).
 
 ## Inference budget\n\n`INFERENCE_QUOTA` is a global token ceiling. OpenRouter-reported `usage.total_tokens` is persisted to SQLite per agent. Calls are blocked when the recorded total reaches the ceiling. Use `npm run dev -- usage` for global totals or append an agent ID for per-agent usage. Models/providers that omit usage fields may be undercounted.\n\n## Supervisor
 ```bash
@@ -63,7 +63,7 @@ The watchdog starts loops for database agents marked `running`, records heartbea
 
 
 ## Dashboard authentication
-The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login accepts `LEANNAAUTO_UI_TOKEN` (admin) or the optional `LEANNAAUTO_UI_OPERATOR_TOKEN` (restricted operator). Admins can use every dashboard action. Operators can view agents, tasks, logs, quota and audit history, start/stop agents, and create tasks; agent creation and other privileged actions are admin-only. The browser keeps the token in session storage for the current tab session. Use two different long random secrets. Do not expose the dashboard port publicly or reuse these tokens elsewhere.
+The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login accepts `LEANNAAUTO_UI_TOKEN` (admin) or the optional `LEANNAAUTO_UI_OPERATOR_TOKEN` (restricted operator). Admins can use every dashboard action. Operators can view agents, tasks, logs, quota and audit history, start/stop agents, and create tasks; agent creation and other privileged actions are admin-only. The browser keeps the token in session storage for the current tab session. The API uses explicit per-route role allowlists, accepts only loopback Host/Origin values, caps JSON request bodies at 1 MiB, and applies request/header timeouts. Use two different long random secrets. Do not expose the dashboard port publicly or reuse these tokens elsewhere.
 
 Generate a token with Node.js:
 ```bash
