@@ -32,10 +32,14 @@ describe("dashboard API authorization",()=>{
   expect(isAllowedUiRequest("admin","POST","/api/emergency-stop")).toBe(true);
   expect(isAllowedUiRequest("admin","POST","/api/emergency-stop/reset")).toBe(true);
  });
- it("denies unlisted routes and methods by default",()=>{
-  expect(isAllowedUiRequest("admin","DELETE","/api/agents/agent-1")).toBe(false);
+ it("allows agent lifecycle writes only to administrators and denies unlisted routes by default",()=>{
+  expect(isAllowedUiRequest("admin","PATCH","/api/agents/agent-1")).toBe(true);
+  expect(isAllowedUiRequest("admin","DELETE","/api/agents/agent-1")).toBe(true);
+  expect(isAllowedUiRequest("operator","PATCH","/api/agents/agent-1")).toBe(false);
+  expect(isAllowedUiRequest("operator","DELETE","/api/agents/agent-1")).toBe(false);
   expect(isAllowedUiRequest("operator","POST","/api/unknown")).toBe(false);
   expect(isAllowedUiRequest("operator","GET","/api/audit")).toBe(false);
+  expect(isAllowedUiRequest("admin","POST","/api/unknown")).toBe(false);
  });
 });
 
