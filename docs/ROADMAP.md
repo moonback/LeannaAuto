@@ -593,3 +593,19 @@ Validation utilisateur Windows, 18 novembre 2026 :
 - [x] Le test `agent-runtime-process.test.ts` passe : un processus détenteur du bail est tué, puis un second processus exécute le cycle superviseur et reprend le bail sans réinitialiser la tâche active.
 - [ ] Le redémarrage avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée reste à couvrir.
 - [ ] Le test avec un daemon Docker réel reste à effectuer.
+
+
+## 6.5. Intégration du superviseur avec la boucle réelle d'agent — en cours
+
+Branche dédiée : `test/agent-restart-integration`, créée depuis `test/supervisor-process-crash-recovery`.
+
+Objectif : vérifier que le superviseur ne se contente pas de reprendre le bail SQLite, mais peut relancer la boucle réelle d'agent sans dépendre d'un service LLM ni d'un daemon Docker pendant les tests.
+
+- [x] Extraire une fabrique `createAgentStarter` utilisée par l'entrée de production `startAgent`, avec dépendances externes injectables.
+- [x] Ajouter un test qui combine `recoverStaleAgents`, la prise du bail réelle, la boucle d'agent réelle et une sandbox/modèle simulés.
+- [x] Vérifier que la tâche active reste active, que l'outil simulé est appelé et que le bail est libéré à l'arrêt.
+- [ ] Exécuter build et tests sous Windows.
+- [ ] Ajouter un test de concurrence prouvant qu'un second démarrage ne peut pas prendre le bail pendant que la boucle réelle tourne.
+- [ ] Tester séparément le démarrage avec un daemon Docker réel.
+
+Limite de ce lot : le test exécute la vraie boucle d'agent et le vrai mécanisme de bail, mais remplace le transport LLM, l'exécuteur Docker et l'action shell par des doubles déterministes. Il ne constitue pas un test de daemon Docker réel ni un appel réseau OpenRouter.
