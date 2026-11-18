@@ -1,5 +1,7 @@
+import {Readable} from "node:stream";
+import type {IncomingMessage} from "node:http";
 import {describe,it,expect} from "vitest";
-import {isAllowedUiHost,isAllowedUiOrigin,isAllowedUiRequest,tokenRole} from "../src/ui-security.js";
+import {isAllowedUiHost,isAllowedUiOrigin,isAllowedUiRequest,readJsonBody,tokenRole} from "../src/ui-security.js";
 
 describe("dashboard authentication",()=>{
  it("matches configured tokens without accepting empty secrets",()=>{
@@ -46,5 +48,20 @@ describe("dashboard local origin restrictions",()=>{
   expect(isAllowedUiOrigin("http://localhost:3000",3000)).toBe(true);
   expect(isAllowedUiOrigin("http://127.0.0.1:3000",3000)).toBe(true);
   expect(isAllowedUiOrigin("https://evil.example",3000)).toBe(false);
+ });
+});
+
+describe("dashboard JSON body limits",()=>{
+ it("parses JSON objects",async()=>{
+  const req=Readable.from(['{"ok":true}']) as unknown as IncomingMessage;
+  await expect(readJsonBody(req,100)).resolves.toEqual({ok:true});
+ });
+ it("rejects oversized request bodies",async()=>{
+  const req=Readable.from(['{"payload":"too large"}']) as unknown as IncomingMessage;
+  await expect(readJsonBody(req,8)).rejects.toThrow("BODY_TOO_LARGE");
+ });
+ it("rejects arrays and primitive JSON payloads",async()=>{
+  const req=Readable.from(['[1,2,3]']) as unknown as IncomingMessage;
+  await expect(readJsonBody(req,100)).rejects.toThrow("JSON_OBJECT_REQUIRED");
  });
 });
