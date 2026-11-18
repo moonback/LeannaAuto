@@ -497,6 +497,26 @@ Résultat du premier passage des tests HTTP sous Windows :
 - [x] Validation utilisateur après le correctif `9dfe895` : `npm run build` réussi ; `npm test` réussi, 5 fichiers et 31 tests sur 31.
 - [x] Le test Host personnalisé via `node:http` et le test Origin malveillante passent tous les deux.
 
+### Réconciliation des sandboxes Docker — en cours
+
+Objectif : rendre la reprise d'un agent déterministe et éviter qu'une panne du daemon Docker soit confondue avec la disparition d'un conteneur.
+
+- [x] Extraire la réconciliation Docker dans une fonction testable avec un exécuteur injectable.
+- [x] Laisser intact un conteneur déjà en cours d'exécution.
+- [x] Redémarrer un conteneur existant mais arrêté au lieu d'en créer un second.
+- [x] Recréer un conteneur uniquement lorsque Docker confirme explicitement qu'il n'existe plus.
+- [x] Réutiliser le volume persistant `leanna-<agent>-workspace` lors de la recréation.
+- [x] Propager les erreurs de daemon indisponible et les échecs de démarrage au lieu de les masquer.
+- [x] Ajouter 5 tests unitaires ciblant ces états Docker.
+- [ ] Faire valider build et suite complète sur Windows.
+- [ ] Effectuer un test manuel avec Docker : arrêter un conteneur, relancer l'agent et vérifier qu'il est redémarré ; supprimer ensuite le conteneur (sans supprimer son volume) et vérifier sa recréation.
+- [ ] Tester une vraie interruption brutale du processus superviseur et confirmer qu'un seul runtime reprend le bail.
+
+Commits :
+- `e968810` — extraction de la réconciliation et distinction conteneur absent / daemon indisponible.
+- `e8ad2ee` — ajout des tests de réconciliation Docker.
+- `4716989`, `3dd6315`, `6390b73` — typage des doubles de test et correction du séparateur de sortie shell.
+
 ### Prochaine validation utilisateur
 
 Build et tests automatisés validés sous Windows le 18 novembre 2026. La prochaine étape porte sur les scénarios manuels API et la reprise réelle du runtime après crash.
