@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,agent_id TEXT NOT NULL,titl
 CREATE INDEX IF NOT EXISTS tasks_agent_status ON tasks(agent_id,status);
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT,at TEXT NOT NULL,action TEXT NOT NULL,target TEXT,details TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS audit_at ON audit(at);
+CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY,value TEXT NOT NULL,updated_at TEXT NOT NULL);
+INSERT OR IGNORE INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
 `);
 function migrateColumn(table:string,column:string,definition:string){
  const columns=db.prepare("PRAGMA table_info("+table+")").all() as {name:string}[];
@@ -25,3 +27,6 @@ migrateColumn("agents","last_error","TEXT");
 export function log(agentId:string,level:string,message:string){db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(agentId,new Date().toISOString(),level,message);}
 
 export function audit(action:string,target:string|null,details:string){db.prepare("INSERT INTO audit(at,action,target,details) VALUES(?,?,?,?)").run(new Date().toISOString(),action,target,details);}
+
+export function emergencyStopActive(){const row=db.prepare("SELECT value FROM system_state WHERE key='emergency_stop'").get() as {value:string}|undefined;return row?.value==="1";}
+export function setEmergencyStop(active:boolean){db.prepare("INSERT INTO system_state(key,value,updated_at) VALUES('emergency_stop',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").run(active?"1":"0",new Date().toISOString());}
