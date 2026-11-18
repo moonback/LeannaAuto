@@ -453,7 +453,7 @@ Pull request existante : #6, vers `main` ; aucune fusion effectuée.
 ### Tests et validation
 - [x] Ajouter 10 tests unitaires sur les rôles, les routes, les hôtes/origines locales et les limites JSON.
 - [x] Ajouter 6 tests unitaires sur les baux runtime, les heartbeats périmés, les propriétaires et l'arrêt d'urgence.
-- [ ] Build TypeScript et suite complète à exécuter sur Windows ; aucune validation locale de ce lot n'est revendiquée à ce stade.
+- [x] Build TypeScript et suite complète validés sous Windows après les tests HTTP : `npm run build` réussi ; `npm test` : 5 fichiers, 31 tests réussis (retour utilisateur).
 - [x] Workflow CI basculé sur `npm ci` pour installer exactement le lockfile.
 - [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale. Les exécutions du 18 novembre (dont le run `44345121441`) échouent immédiatement avec `steps: null` et aucun runner assigné ; logs indisponibles.
 
@@ -482,8 +482,8 @@ Validation utilisateur Windows après correction `082bf0c`, 18 novembre 2026 :
 
 - [x] Ajouter `tests/ui-http.test.ts` qui démarre le vrai serveur UI avec une base SQLite temporaire et des jetons de test.
 - [x] Couvrir la lecture dashboard par opérateur, le refus d'une création d'agent par opérateur, la création par administrateur, le rejet d'un Content-Type non JSON et le rejet de Host/Origin non fiables.
-- [ ] Exécuter ces tests sur Windows ; le nouveau fichier est livré mais aucune exécution n'est encore revendiquée.
-- [ ] Vérifier la stabilité du démarrage/arrêt du processus de test sur Windows et dans la CI.
+- [x] Exécuter les tests HTTP sur Windows : les 5 scénarios passent, y compris le rejet Host/Origin non fiables.
+- [x] Vérifier le démarrage et l'arrêt du processus de test sur Windows : le fichier d'intégration termine normalement.
 - [ ] Ajouter ensuite les scénarios runtime de reprise après arrêt brutal et de conteneur Docker absent.
 
 Commit tests : `2545a5f`.
@@ -494,9 +494,12 @@ Résultat du premier passage des tests HTTP sous Windows :
 - [x] Les quatre scénarios HTTP d'authentification, rôles et Content-Type passent.
 - [x] Le scénario Host/Origin a exposé une limite du test : Node `fetch` n'a pas envoyé le Host personnalisé attendu.
 - [x] Test corrigé pour envoyer Host via `node:http` et vérifier séparément le rejet Origin. Commit correctif : `9dfe895`.
-- [ ] Rejouer build et tests après ce correctif ; aucun résultat post-correction n'est encore confirmé.
+- [x] Validation utilisateur après le correctif `9dfe895` : `npm run build` réussi ; `npm test` réussi, 5 fichiers et 31 tests sur 31.
+- [x] Le test Host personnalisé via `node:http` et le test Origin malveillante passent tous les deux.
 
 ### Prochaine validation utilisateur
+
+Build et tests automatisés validés sous Windows le 18 novembre 2026. La prochaine étape porte sur les scénarios manuels API et la reprise réelle du runtime après crash.
 
 Depuis PowerShell :
 
