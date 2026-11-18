@@ -396,3 +396,18 @@ Mise à jour après confirmation de l'environnement utilisateur :
 - [ ] Picomatch reste signalé : l'avis GHSA-fc5q-39xc-vjpf couvre jusqu'à 4.0.7 sans version corrigée publiée. Vite 7 utilise encore Picomatch ; ne pas ajouter un override arbitraire. Le risque est limité à l'outillage de développement dans la configuration actuelle, mais doit rester suivi.
 - [ ] Ne pas annoncer l'audit nettoyé tant que `npm audit` n'a pas été relancé après régénération du lockfile.
 
+
+
+Résultats après régénération du lockfile — validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm install` terminé ; 91 paquets audités.
+- [x] `npm ci` terminé ; installation reproductible depuis le lockfile, 91 paquets audités.
+- [x] `npm run build` réussi (TypeScript).
+- [x] `npm test` réussi : 1 fichier, 5 tests sur 5 avec Vitest 4.1.12.
+- [x] Les avis concernant `@vitest/mocker` et `tinypool` ne figurent plus dans le rapport après mise à jour.
+- [ ] `npm audit` n'est pas propre : 5 vulnérabilités high restantes dans `picomatch`, transitivement via `fdir`, `tinyglobby`, Vite et Vitest.
+- [ ] Ne pas exécuter `npm audit fix --force` : npm propose une rétrogradation majeure vers Vitest 3.1.4, non retenue.
+- [ ] Vérifier avec `npm audit --omit=dev` que les dépendances runtime de production ne présentent pas d'avis, et avec `npm ls picomatch --all` la chaîne exacte.
+- [ ] Surveiller la publication d'une version corrigée de Picomatch et réévaluer la mise à jour de Vite/Vitest à ce moment.
+
+Conclusion du lot dépendances : installation verrouillée, build et tests validés par l'utilisateur ; réduction de 7 avis (dont 2 moderate/critical groupes initiaux) à 5 avis high liés à Picomatch. Le risque transitif restant n'est pas résolu et l'audit global ne doit pas être qualifié de propre. Le périmètre runtime doit être confirmé séparément par `npm audit --omit=dev`.
+
