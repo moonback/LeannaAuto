@@ -86,8 +86,7 @@ Objectif : faire de l'interface le poste de pilotage quotidien. L'utilisateur do
 - [x] Première vue Missions : cartes d'agents, objectif, tâche active/prochaine tâche, dernière activité, heartbeat, état et actions démarrer/arrêter.
 - [ ] Faire valider la première vue Missions visuellement sous Windows et corriger les problèmes de navigation, responsive et lisibilité.
 - [ ] Transformer la grille en tableau/kanban filtrable : En attente, En cours, Bloqué, Terminé, Échec, Arrêté.
-- [ ] Distinguer explicitement mission de l'agent, tâche courante, prochaine tâche et dernier résultat ; ne jamais présenter une tâche pending comme une tâche en cours.
-- [x] Ajouter une table SQLite `events` avec horodatage, agent, tâche, type, niveau, source, résumé, détails JSON et corrélation.
+- [ ] Distinguer explicitement mission de l'agent, tâche courante, prochaine tâche et dernier résultat ; ne jamais présenter une tâche pending comme une tâche en cours.- [x] Ajouter une table SQLite `events` avec horodatage, agent, tâche, type, niveau, source, résumé, détails JSON et corrélation.
 - [x] Indexer les événements par date, agent, tâche et type ; empêcher les modifications et suppressions SQL pour préserver le caractère append-only.
 - [x] Alimenter automatiquement le journal structuré depuis les logs runtime et les entrées d'audit existantes.
 - [x] Appliquer une rédaction de motifs courants de secrets dans le résumé et les détails des événements ; cette protection complémentaire ne remplace pas la rédaction à la source.
@@ -177,8 +176,7 @@ Objectif : réduire les risques liés à l'API, aux conteneurs, aux secrets et a
 
 Travaux :
 - [ ] Réaliser un audit de toutes les routes et permissions : refus par défaut, validation des entrées et contrôle serveur.
-- [ ] Vérifier la protection contre les accès directs aux routes d'administration avec un jeton opérateur.
-- [ ] Ajouter expiration/rotation des jetons et une stratégie de révocation.
+- [ ] Vérifier la protection contre les accès directs aux routes d'administration avec un jeton opérateur.- [ ] Ajouter expiration/rotation des jetons et une stratégie de révocation.
 - [ ] Éviter de conserver les jetons en clair dans le navigateur ; étudier des cookies HttpOnly, Secure et SameSite adaptés au mode local.
 - [ ] Ajouter une protection CSRF si l'authentification repose sur des cookies.
 - [ ] Restreindre les origines CORS et valider l'en-tête Host ; ne jamais exposer l'UI sans configuration explicite.
@@ -296,8 +294,7 @@ Critères de sortie :
 Objectif : permettre la création d'agents spécialisés sans propagation incontrôlée.
 
 Travaux :
-- [ ] Définir un protocole de messages signé entre agents.
-- [ ] Ajouter une file de messages persistante avec accusés de réception et expiration.
+- [ ] Définir un protocole de messages signé entre agents.- [ ] Ajouter une file de messages persistante avec accusés de réception et expiration.
 - [ ] Définir les relations parent/enfant et les limites de délégation.
 - [ ] Exiger un manifeste de mission, capacités, quotas et durée pour chaque agent enfant.
 - [ ] Ajouter une approbation selon le niveau de risque avant création ou réplication.
@@ -425,6 +422,20 @@ Validation rapportée par l'utilisateur sous Windows : `npm install` terminé ; 
 3. Lancer `npm run ui` et vérifier toutes les entrées de navigation.
 4. Tester les rôles admin et opérateur.
 5. Tester l'arrêt d'urgence, le réarmement et le blocage des démarrages.
+
+### Livraison — première page de mesures système : validation Windows
+Branche : `feat/mission-control-ui`.
+Commit de livraison du code : `11a3fb75394a412447048bf8b7c3e2a2567df665`.
+
+- [x] Ajouter la collecte à la demande des métriques CPU et mémoire de l'hôte, uptime, plateforme et nombre de cœurs.
+- [x] Mesurer le processus UI : PID, uptime, RSS, heap et mémoire externe.
+- [x] Mesurer l'espace disque du volume hébergeant le répertoire de travail du serveur UI, avec état indisponible explicite en cas d'erreur.
+- [x] Lire les statistiques des conteneurs Docker `leanna-*` en cours d'exécution et exposer CPU, mémoire et PIDs ; signaler explicitement l'indisponibilité de Docker.
+- [x] Exposer les limites configurées du runtime et protéger `GET /api/resources` par authentification et autorisation opérateur/admin.
+- [x] Ajouter la page Ressources et les tests HTTP et de contrôle d'accès.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm run build` réussi ; `npm test` : 13 fichiers et 50 tests réussis sur 50 ; les tests Docker opt-in réels étaient actifs ; `npm run ui` démarre sur `http://127.0.0.1:3000`.
+
+Limites connues : les mesures sont collectées à la demande et ne sont pas encore historisées. La première mesure CPU peut être indisponible car elle nécessite deux échantillons. Le disque mesuré est celui du volume hébergeant le répertoire de travail du serveur UI, pas une ventilation des workspaces. Les statistiques Docker ne couvrent que les conteneurs `leanna-*` en cours d'exécution. Les mesures CPU/RAM par agent, les courbes temporelles et les alertes restent à construire.
 
 ### Livraison — première page de mesures système : validation Windows
 
