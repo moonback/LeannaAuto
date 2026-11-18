@@ -7,52 +7,47 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  dependencies:
-    name: Dependency installation
+  checkout:
+    name: Checkout probe
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Check out PR branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install dependencies and publish diagnostic
-        id: install
-        shell: bash
-        run: |
-          set +e
-          npm ci > npm-install.log 2>&1
-          result=$?
-          cat npm-install.log
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f npm-install.log
-          git commit -m "ci: capture npm install diagnostics [skip ci]" || true
-          git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
-          exit "$result"
+      - uses: actions/checkout@v4
 
-  build:
-    name: TypeScript compilation
+  node:
+    name: Node.js setup probe
     runs-on: ubuntu-latest
-    needs: dependencies
+    needs: checkout
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
+
+  install:
+    name: npm ci probe
+    runs-on: ubuntu-latest
+    needs: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+  build:
+    name: TypeScript compilation
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
       - run: npm run build
 
   test:
@@ -64,5 +59,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - run: npm test -- --reporter=verbose
