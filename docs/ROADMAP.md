@@ -488,6 +488,14 @@ Validation utilisateur Windows après correction `082bf0c`, 18 novembre 2026 :
 
 Commit tests : `2545a5f`.
 
+Résultat du premier passage des tests HTTP sous Windows :
+- [x] `npm run build` réussi.
+- [x] 30 tests réussis sur 31 ; les quatre autres fichiers passent.
+- [x] Les quatre scénarios HTTP d'authentification, rôles et Content-Type passent.
+- [x] Le scénario Host/Origin a exposé une limite du test : Node `fetch` n'a pas envoyé le Host personnalisé attendu.
+- [x] Test corrigé pour envoyer Host via `node:http` et vérifier séparément le rejet Origin. Commit correctif : `9dfe895`.
+- [ ] Rejouer build et tests après ce correctif ; aucun résultat post-correction n'est encore confirmé.
+
 ### Prochaine validation utilisateur
 
 Depuis PowerShell :
