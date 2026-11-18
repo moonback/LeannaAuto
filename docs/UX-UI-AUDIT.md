@@ -88,9 +88,9 @@ La politique effective est centralisée dans `isAllowedUiRequest` de `src/ui-sec
 ## Limites et travaux restants
 
 - Cet audit documente le périmètre et les invariants ; il ne constitue pas encore une revue exhaustive ligne par ligne de chaque fonction UI et de chaque test métier.
-- Les vues agents, missions, tâches, supervision, filiation, workspace et ressources nécessitent encore une passe de cohérence visuelle et d'interactions.
+- Les vues missions, supervision, filiation, workspace et ressources nécessitent encore une passe de cohérence visuelle et d'interactions. La vue agents et la vue tâches restent à tester dans un navigateur sur des données représentatives.
 - Les filtres/tri avancés agents et les inspections plus complètes restent à évaluer à partir des fonctions déjà disponibles. La vue Kanban tâches est maintenant implémentée à partir des mêmes tâches réelles et conserve les règles d'actions du tableau.
 - Les captures desktop/mobile avant/après ne sont pas encore produites.
 - La validation statique de composition effectuée dans cette session confirme : client JavaScript analysable, shell recomposé, 15 sections, 14 cibles de navigation résolues, aucun ID HTML dupliqué et absence d'appels natifs `confirm()` / `alert()`.
-- Le build TypeScript et Vitest ne sont pas déclarés réussis. Le dernier workflow observé échoue au job `Node.js toolchain` sans étapes rapportées ; l'API de logs répond 404. `npm ci`, build et tests sont donc ignorés et non exécutés.
+- Le build TypeScript et Vitest ne sont pas déclarés réussis. Le dernier workflow observé (`44399440923`) échoue au job `Node.js toolchain` sans étapes rapportées (`steps=null`) ; l'API de logs répond 404. `npm ci`, build et tests sont donc ignorés et non exécutés.
 - La branche a été synchronisée avec `main` par un commit de merge non destructif ; elle est actuellement en avance de 38 commits et en retard de 0.
