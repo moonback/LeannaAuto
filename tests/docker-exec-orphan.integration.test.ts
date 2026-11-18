@@ -44,6 +44,7 @@ describe.skipIf(!enabled)("Docker exec orphan characterization (opt-in)",()=>{
   container="leanna-"+agentId.replace(/[^a-zA-Z0-9_.-]/g,"").slice(0,40);
   volume=container+"-workspace";
   await expect(ensureSandboxWith(agentId,docker)).resolves.toBe("created");
+  await expect(docker(["exec",container,"sh","-lc","command -v flock"])).resolves.toContain("flock");
 
   const events="/workspace/orphan-events-"+randomUUID()+".txt";
   const command="echo started >> "+events+"; sleep 4; echo completed >> "+events;
@@ -62,21 +63,11 @@ describe.skipIf(!enabled)("Docker exec orphan characterization (opt-in)",()=>{
    // Retry immediately while the original command may still be running in Docker.
    const retryResult=await shell(agentId,command);
    expect(retryResult).not.toMatch(/^Command failed:/);
-   await new Promise(resolve=>setTimeout(resolve,1000));
    const rawLines=await docker(["exec",container,"cat",events]);
    const lines=rawLines.split(/\r?\n/).filter(Boolean);
-   expect(lines).toContain("started");
-   expect(lines).toContain("completed");
-   console.log("Docker exec orphan characterization:",JSON.stringify({beforeCrash,lines}));
-   const starts=lines.filter(line=>line==="started").length;
-   const completions=lines.filter(line=>line==="completed").length;
-
-   // One execution means the original was cancelled; two means it survived and
-   // overlapped with the retry. Both are valid characterization outcomes.
-   expect(starts).toBeGreaterThanOrEqual(1);
-   expect(completions).toBeGreaterThanOrEqual(1);
-   expect(starts).toBeLessThanOrEqual(2);
-   expect(completions).toBeLessThanOrEqual(2);
+   console.log("Docker exec orphan serialization:",JSON.stringify({beforeCrash,lines}));
+   // The orphan must finish before the retry begins: no overlapping side effects.
+   expect(lines).toEqual(["started","completed","started","completed"]);
   }finally{
    if(owner.exitCode===null&&owner.signalCode===null)owner.kill("SIGKILL");
   }
