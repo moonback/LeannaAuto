@@ -101,6 +101,14 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain('id="missionEditModal"');
   expect(html).toContain("function renderTasks(tasks,agents)");
   expect(html).toContain("function openTaskEdit(id)");
+  expect(html).toContain("function renderTimeline(events");
+  expect(html).toContain("function currentActivity(events,task)");
+  expect(html).toContain("function loadAgentDetail(id)");
+  expect(html).toContain("function loadTaskActivity(id)");
+  expect(html).toContain("data-task-journal");
+  expect(html).toContain("Activité actuelle");
+  expect(html).toContain("Journal chronologique");
+  expect(html).toContain("Actualisation automatique · 5 s");
   expect(html).toContain("function deleteTask(id)");
   expect(html).toContain("function openMissionEdit(id)");
   expect(html).toContain("function deleteMission(id)");
