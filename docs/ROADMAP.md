@@ -661,10 +661,11 @@ Branche `test/docker-runtime-reconciliation` :
 - [x] Paramètres effectifs vérifiés : réseau désactivé, racine read-only, 1 Gio RAM, 1 CPU et 64 PIDs.
 - [x] Correction du nom de conteneur du test confirmée par l'exécution réelle.
 
-Branche suivante : `test/agent-docker-end-to-end`, créée depuis `test/docker-runtime-reconciliation`.
+Branche dédiée : `test/agent-docker-end-to-end`, créée depuis `test/docker-runtime-reconciliation`.
 - [x] Ajouter un test opt-in qui exécute la vraie boucle `createAgentStarter`, la vraie réconciliation Docker et la vraie commande `shell` dans le conteneur.
 - [x] Simuler uniquement la réponse du modèle ; vérifier l'écriture d'un marqueur dans le volume, les limites Docker et la libération du bail SQLite.
-- [ ] Valider sous Windows : build, suite standard et test opt-in `tests/agent-docker.integration.test.ts`.
-- [ ] Confirmer le nettoyage du conteneur et du volume après succès et échec.
+- [x] Valider sous Windows le build TypeScript et la suite complète : `npm run build` réussi ; `npm test` : 11 fichiers, 43 tests réussis (retour utilisateur, 18 novembre 2026).
+- [x] Exécuter séparément `tests/agent-docker.integration.test.ts` avec `LEANNAAUTO_DOCKER_INTEGRATION=1` : 1 test réussi sur vrai Docker.
+- [x] La suite complète a également exécuté les deux tests Docker réels : test agent end-to-end et test de réconciliation/persistance du workspace.
 
 Le test de bout en bout reste opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1`. Il crée et supprime un conteneur ainsi qu'un volume portant un identifiant aléatoire propre au test. Il ne contacte pas OpenRouter. La validation réelle de l'agent avec un fournisseur LLM et le scénario de crash du processus pendant une exécution Docker restent distincts.
