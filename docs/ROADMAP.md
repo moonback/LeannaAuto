@@ -553,3 +553,13 @@ Branche : `feat/agent-lifecycle-actions`.
 - [ ] Validation utilisateur Windows : build, tests complets, puis vérification visuelle des actions Modifier et Supprimer.
 
 Les journaux et événements historiques sont conservés après suppression. Les tâches et les agents enfants doivent être traités explicitement avant de pouvoir supprimer leur agent parent.
+
+### Correctif de test — autorisations du cycle de vie des agents
+
+Branche : `feat/agent-lifecycle-actions`.
+
+- [x] Aligner le test de sécurité avec la nouvelle politique : PATCH et DELETE sur un agent sont autorisés à l'administrateur et refusés à l'opérateur.
+- [x] Ajouter une assertion confirmant que même l'administrateur ne peut pas appeler une route POST inconnue.
+- [ ] Validation utilisateur Windows après correctif : `npm run build` et `npm test`.
+
+Le premier retour Windows du 18 novembre 2026 confirmait le build et le démarrage UI, mais signalait 55/56 tests réussis. L'échec provenait d'une ancienne assertion qui attendait à tort le refus de DELETE pour l'administrateur, alors que cette permission est désormais nécessaire à la suppression d'agents. Le test a été corrigé ; la suite doit être relancée.
