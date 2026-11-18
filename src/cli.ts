@@ -34,4 +34,19 @@ program.command("spawn").argument("<parent>").requiredOption("--goal <goal>").ac
  db.prepare("INSERT INTO agents(id,name,goal,parent_id,status,created_at,identity,constitution_hash,version) VALUES(?,?,?,?,?,?,?,?,?)").run(id,"Child of "+p.name,opts.goal,parent,"stopped",new Date().toISOString(),createIdentity(),constitutionHash(),"0.1.0");
  log(parent,"lineage","Created child "+id+" (stopped; start separately)");log(id,"genesis","Parent "+parent+"; mission: "+opts.goal);console.log("Created "+id);
 });
+const tasks=program.command("task").description("Manage persistent mission tasks");
+tasks.command("add").argument("<agent>").requiredOption("--title <title>").option("--description <description>","").action((agent,opts)=>{
+ if(!db.prepare("SELECT id FROM agents WHERE id=?").get(agent))throw new Error("Agent not found");
+ const id=randomUUID(),now=new Date().toISOString();
+ db.prepare("INSERT INTO tasks(id,agent_id,title,description,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(id,agent,opts.title,opts.description,"pending",now,now);
+ log(agent,"task","Added task "+id+": "+opts.title);console.log(id);
+});
+tasks.command("list").argument("<agent>").action(agent=>{
+ const rows=db.prepare("SELECT id,title,description,status,created_at,updated_at FROM tasks WHERE agent_id=? ORDER BY created_at").all(agent);console.log(JSON.stringify(rows,null,2));
+});
+tasks.command("set").argument("<taskId>").argument("<status>").action((id,status)=>{
+ if(!["pending","active","completed","failed"].includes(status))throw new Error("Status must be pending, active, completed, or failed");
+ const t=db.prepare("SELECT agent_id FROM tasks WHERE id=?").get(id) as any;if(!t)throw new Error("Task not found");
+ db.prepare("UPDATE tasks SET status=?,updated_at=? WHERE id=?").run(status,new Date().toISOString(),id);log(t.agent_id,"task",id+" => "+status);
+});
 program.parseAsync(process.argv);
