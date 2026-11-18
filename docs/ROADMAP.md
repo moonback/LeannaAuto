@@ -650,3 +650,21 @@ Premier retour utilisateur sous Windows : build réussi ; suite standard 9 fichi
 Correction commit `13d17fc` : le test applique la même normalisation et troncature que `src/executor.ts` pour le conteneur et son volume. Cette correction du test n’est pas encore validée ; relancer le build, la suite standard et le test Docker opt-in.
 
 Le test est volontairement ignoré par défaut pour ne pas exiger Docker dans la suite standard et ne supprimer que des ressources portant un identifiant aléatoire propre au test. Pour l'activer sous PowerShell : `$env:LEANNAAUTO_DOCKER_INTEGRATION="1"; npm test -- tests/executor-docker.integration.test.ts`. Le test peut télécharger `node:22-bookworm-slim` si l'image n'est pas présente localement. Ne pas exécuter sur un daemon partagé sans comprendre que le test crée puis supprime son propre conteneur et son propre volume. Build et tests après cette correction : en attente du retour Windows.
+
+
+### Validation Docker réel et intégration agent — 18 novembre 2026
+
+Branche `test/docker-runtime-reconciliation` :
+- [x] L'utilisateur a validé `npm run build` sous Windows.
+- [x] Suite standard : 10 fichiers, 42 tests réussis.
+- [x] Test Docker opt-in : création, redémarrage, recréation et persistance du workspace validés sur un vrai daemon Docker.
+- [x] Paramètres effectifs vérifiés : réseau désactivé, racine read-only, 1 Gio RAM, 1 CPU et 64 PIDs.
+- [x] Correction du nom de conteneur du test confirmée par l'exécution réelle.
+
+Branche suivante : `test/agent-docker-end-to-end`, créée depuis `test/docker-runtime-reconciliation`.
+- [x] Ajouter un test opt-in qui exécute la vraie boucle `createAgentStarter`, la vraie réconciliation Docker et la vraie commande `shell` dans le conteneur.
+- [x] Simuler uniquement la réponse du modèle ; vérifier l'écriture d'un marqueur dans le volume, les limites Docker et la libération du bail SQLite.
+- [ ] Valider sous Windows : build, suite standard et test opt-in `tests/agent-docker.integration.test.ts`.
+- [ ] Confirmer le nettoyage du conteneur et du volume après succès et échec.
+
+Le test de bout en bout reste opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1`. Il crée et supprime un conteneur ainsi qu'un volume portant un identifiant aléatoire propre au test. Il ne contacte pas OpenRouter. La validation réelle de l'agent avec un fournisseur LLM et le scénario de crash du processus pendant une exécution Docker restent distincts.
