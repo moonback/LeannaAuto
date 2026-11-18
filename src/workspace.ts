@@ -30,7 +30,7 @@ async function dockerExec(agentId:string,script:string,relativePath:string,maxBu
   throw new WorkspaceError("Docker est indisponible : impossible d'accéder au workspace",503);
  }
  try{
-  const {stdout}=await execFileAsync("docker",["exec",name,"sh","-lc",script,"leanna-workspace",relativePath],{timeout:8000,maxBuffer});
+  const {stdout}=await execFileAsync("docker",["exec","--user","1000:1000",name,"sh","-lc",script,"leanna-workspace",relativePath],{timeout:8000,maxBuffer});
   return stdout;
  }catch(error){
   const code=(error as {code?:number|string}).code;
@@ -46,9 +46,7 @@ async function dockerExec(agentId:string,script:string,relativePath:string,maxBu
 
 export type WorkspaceEntry={name:string;path:string;type:"directory"|"file"|"symlink"|"other";sizeBytes:number;modifiedAt:string};
 const listScript=String.raw`set -eu
-target=$(realpath -e -- "$1" 2>/dev/null) || exit 40
-case "$target" in /workspace|/workspace/*) ;; *) exit 40 ;; esac
-[ -d "$target" ] || exit 41
+undefined
 find "$target" -mindepth 1 -maxdepth 1 ! -name '.leanna-shell.lock' -printf '%f\0%y\0%s\0%T@\0'
 `;
 
