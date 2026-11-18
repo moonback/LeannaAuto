@@ -131,7 +131,7 @@ describe("dashboard HTTP security integration",()=>{
  it("restricts agent deletion to stopped leaf agents without tasks",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"deletable-agent",goal:"Deletion guard test"})});
   const agent=await created.json() as {id:string};
-  const operatorDelete=await request("/api/agents/"+encodeURIComponent(agent.id),operatorToken,{method:"DELETE"});
+  const operatorDelete=await request("/api/agents/"+encodeURIComponent(agent.id),operatorToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
   expect(operatorDelete.status).toBe(403);
   const task=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Keep agent"})});
   expect(task.status).toBe(201);
@@ -140,7 +140,8 @@ describe("dashboard HTTP security integration",()=>{
   const stillThere=await request("/api/agents/"+encodeURIComponent(agent.id));
   expect(stillThere.status).toBe(200);
  });
-\n it("rejects workspace path traversal before attempting Docker access",async()=>{
+
+ it("rejects workspace path traversal before attempting Docker access",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"workspace-path-check",goal:"Verify workspace path guard"})});
   expect(created.status).toBe(201);
   const agent=await created.json() as {id:string};
