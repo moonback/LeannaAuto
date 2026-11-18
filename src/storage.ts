@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS logs(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TE
 CREATE TABLE IF NOT EXISTS usage(id INTEGER PRIMARY KEY AUTOINCREMENT,agent_id TEXT,at TEXT,cpu_seconds REAL,mem_mb REAL,tokens INTEGER);
 CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,agent_id TEXT NOT NULL,title TEXT NOT NULL,description TEXT,status TEXT NOT NULL DEFAULT 'pending',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,FOREIGN KEY(agent_id) REFERENCES agents(id));
 CREATE INDEX IF NOT EXISTS tasks_agent_status ON tasks(agent_id,status);
+CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT,at TEXT NOT NULL,action TEXT NOT NULL,target TEXT,details TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS audit_at ON audit(at);
 `);
 function migrateColumn(table:string,column:string,definition:string){
  const columns=db.prepare("PRAGMA table_info("+table+")").all() as {name:string}[];
@@ -21,3 +23,5 @@ migrateColumn("agents","heartbeat_at","TEXT");
 migrateColumn("agents","restart_count","INTEGER NOT NULL DEFAULT 0");
 migrateColumn("agents","last_error","TEXT");
 export function log(agentId:string,level:string,message:string){db.prepare("INSERT INTO logs(agent_id,at,level,message) VALUES(?,?,?,?)").run(agentId,new Date().toISOString(),level,message);}
+
+export function audit(action:string,target:string|null,details:string){db.prepare("INSERT INTO audit(at,action,target,details) VALUES(?,?,?,?)").run(new Date().toISOString(),action,target,details);}
