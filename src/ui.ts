@@ -47,7 +47,7 @@ const server=http.createServer(async(req,res)=>{
   const token=String(body.token??"");
   const role=token.length<=512?resolveUiRole(token):null;
   if(!role){
-   const fresh=!attempt||now-attempt.windowStart>60000,current=fresh?{count:0,windowStart:now,blockedUntil:0}:attempt;
+   const current=attempt&&now-attempt.windowStart<=60000?attempt:{count:0,windowStart:now,blockedUntil:0};
    current.count++;if(current.count>=8)current.blockedUntil=now+60000;
    authFailures.set(address,current);
    if(authFailures.size>1024){for(const [key,value] of authFailures)if(value.blockedUntil<now&&now-value.windowStart>60000)authFailures.delete(key);if(authFailures.size>1024)authFailures.delete(authFailures.keys().next().value!);}
