@@ -74,4 +74,17 @@ html.sidebar-collapsed .nav-group-label span{display:none}
 .task-kanban-card .task-actions button{font-size:10px;padding:5px 7px}
 .task-kanban-empty{padding:18px 5px;color:var(--ui-muted);font-size:11px;text-align:center}
 @media(max-width:760px){.task-filterbar{align-items:stretch}.task-view-toggle{width:100%}.task-view-toggle button{flex:1}.task-kanban{grid-template-columns:repeat(5,minmax(240px,82vw))}}
+
+/* Agent directory view modes */
+.agent-view-toggle{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.agent-view-toggle .action{min-height:38px}
+.agent-view-toggle .action.active{background:var(--ui-accent-soft);border-color:var(--ui-accent);color:var(--ui-text)}
+.agent-table-wrap{max-width:100%;overflow:auto;border:1px solid var(--ui-border);border-radius:var(--radius-md)}
+.agent-table-wrap table{min-width:980px;margin:0}
+.agent-table-id{display:block;margin-top:3px;color:var(--ui-muted);font-size:10px}
+.agent-table-goal,.agent-table-error{max-width:260px;white-space:normal;overflow-wrap:anywhere}
+.agent-table-error{color:var(--ui-danger);font-size:11px}
+.agent-table-wrap .agent-card-actions{min-width:230px}
+@media(max-width:760px){.agents-filters{display:grid;grid-template-columns:1fr 1fr}.agent-view-toggle{grid-column:1/-1}.agent-view-toggle button{flex:1}}
+@media(max-width:460px){.agents-filters{grid-template-columns:1fr}}
 \n";
