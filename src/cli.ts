@@ -1,10 +1,11 @@
 import "dotenv/config";
 import {Command} from "commander";
 import {randomUUID} from "node:crypto";
-import {db,log} from "./storage.js";
+import {db,log,emergencyStopActive} from "./storage.js";
 import {createIdentity,constitutionHash} from "./identity.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox} from "./executor.js";
+import {recoverStaleAgents} from "./supervisor.js";
 const program=new Command();
 program.name("automaton").description("LeannaAuto autonomous agents");
 program.command("init").requiredOption("--name <name>").requiredOption("--goal <goal>").option("--parent <id>").action((opts)=>{
@@ -32,7 +33,7 @@ program.command("logs").argument("<id>").option("--tail <n>","number of rows","5
  show();if(opts.follow){while(true){await new Promise(r=>setTimeout(r,3000));show();}}
 });
 program.command("stop").argument("<id>").action(async(id)=>{
- db.prepare("UPDATE agents SET status='stopped' WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped by CLI");console.log("Stopped "+id);
+ db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped by CLI");console.log("Stopped "+id);
 });
 program.command("identity").argument("<id>").action((id)=>{const a=db.prepare("SELECT id,name,identity,constitution_hash,parent_id,version FROM agents WHERE id=?").get(id);console.log(JSON.stringify(a??{},null,2));});
 program.command("spawn").argument("<parent>").requiredOption("--goal <goal>").action((parent,opts)=>{
@@ -58,19 +59,15 @@ tasks.command("set").argument("<taskId>").argument("<status>").action((id,status
  const t=db.prepare("SELECT agent_id FROM tasks WHERE id=?").get(id) as any;if(!t)throw new Error("Task not found");
  db.prepare("UPDATE tasks SET status=?,updated_at=? WHERE id=?").run(status,new Date().toISOString(),id);log(t.agent_id,"task",id+" => "+status);
 });
-program.command("supervise").description("Watch and restart agents marked running").option("--interval <seconds>","poll interval","10").option("--stale <seconds>","heartbeat timeout","90").action(async(opts)=>{
+program.command("supervise").description("Recover agents whose runtime heartbeat is stale").option("--interval <seconds>","poll interval","10").option("--stale <seconds>","heartbeat timeout","90").action(async(opts)=>{
  const interval=Math.max(2,Number(opts.interval))*1000,stale=Math.max(30,Number(opts.stale))*1000;
  const active=new Map<string,Promise<void>>();
  console.log("Supervisor active; Ctrl+C to stop.");
  while(true){
-  const agents=db.prepare("SELECT id,heartbeat_at FROM agents WHERE status='running'").all() as any[];
-  for(const a of agents){
-   if(active.has(a.id))continue;
-   const age=a.heartbeat_at?Date.now()-Date.parse(a.heartbeat_at):Infinity;
-   if(age>stale){db.prepare("UPDATE agents SET restart_count=restart_count+1,last_error=? WHERE id=?").run("Supervisor restart: stale heartbeat",a.id);log(a.id,"supervisor","Heartbeat stale; restarting loop");}
-   const p=startAgent(a.id).catch(e=>{log(a.id,"supervisor-error",String(e));db.prepare("UPDATE agents SET last_error=?,status='stopped' WHERE id=?").run(String(e),a.id);}).finally(()=>active.delete(a.id));
-   active.set(a.id,p);
-  }
+  if(emergencyStopActive()){await new Promise(r=>setTimeout(r,interval));continue;}
+  recoverStaleAgents(db,active,startAgent,stale,new Date(),(agentId,message)=>{
+   log(agentId,"supervisor",message);
+  });
   await new Promise(r=>setTimeout(r,interval));
  }
 });

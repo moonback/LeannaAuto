@@ -137,8 +137,7 @@ Objectif : empêcher les agents de dépasser les capacités de la machine et du 
 
 Travaux :
 - [ ] Définir un registre central des ressources disponibles et consommées.
-- [ ] Appliquer des quotas CPU, RAM, stockage, PIDs et durée par agent.
-- [ ] Définir des quotas globaux et des réserves pour le superviseur.
+- [ ] Appliquer des quotas CPU, RAM, stockage, PIDs et durée par agent.- [ ] Définir des quotas globaux et des réserves pour le superviseur.
 - [ ] Ajouter des budgets de tokens par agent, par tâche et globaux.
 - [ ] Réserver les ressources avant démarrage, puis libérer à l'arrêt ou à l'échec.
 - [ ] Définir des priorités et une file d'attente lorsque les ressources sont insuffisantes.
@@ -277,8 +276,7 @@ Travaux :
 - [ ] Ajouter vérification d'intégrité des versions et migrations.
 - [ ] Automatiser les sauvegardes SQLite et tester les restaurations.
 - [ ] Ajouter diagnostic système, export de rapports et collecte de métriques locales.
-- [ ] Définir une politique de compatibilité des versions d'agents et de protocoles.
-- [ ] Documenter désinstallation, purge et récupération après incident.
+- [ ] Définir une politique de compatibilité des versions d'agents et de protocoles.- [ ] Documenter désinstallation, purge et récupération après incident.
 - [ ] Préparer une distribution locale simple, sans dépendance à un service cloud propriétaire pour le contrôle du runtime.
 
 Critères de sortie :
@@ -418,5 +416,296 @@ Clôture de la vérification runtime — validation utilisateur Windows, 18 nove
 - [x] `npm ls picomatch --all` confirme que Picomatch 4.0.7 est uniquement dans l'arbre de développement : `vitest@4.1.12` → `vite@8.3.8` / `tinyglobby@0.2.17` → `fdir@6.5.0` → `picomatch@4.0.7`.
 - [ ] Le rapport complet `npm audit` conserve 5 avis high liés à Picomatch 4.0.7 dans cette chaîne de développement. Ils ne sont pas corrigés ; continuer à surveiller un correctif amont.
 - [x] Décision : ne pas appliquer `npm audit fix --force` ni ajouter un override arbitraire. Conserver Vitest 4.1.12 et le lockfile validé.
-
 Bilan du lot : installation reproductible (`npm ci`), build TypeScript réussi, 5 tests réussis sur 5, audit des dépendances de production sans vulnérabilité. Risque restant circonscrit à l'outillage de développement via Picomatch ; l'audit global n'est pas entièrement propre. Validations exécutées par l'utilisateur sous Windows.
+
+
+## 6.3. Lot API et superviseur — en cours
+
+Branche : `feat/api-supervisor-hardening`, créée depuis `fix/npm-security-audit`.
+Pull request existante : #6, vers `main` ; aucune fusion effectuée.
+
+### API et dashboard
+- [x] Extraire les contrôles d'authentification et d'autorisation dans `src/ui-security.ts`, avec comparaison de jetons à temps constant.
+- [x] Appliquer une liste d'autorisation explicite par rôle, méthode HTTP et route ; refus par défaut.
+- [x] Restreindre les en-têtes Host et Origin aux adresses loopback attendues ; limiter CORS aux origines locales.
+- [x] Exiger `application/json` pour les écritures et plafonner les corps JSON à 1 Mio.
+- [x] Ajouter des délais de réception HTTP, des en-têtes de sécurité et des réponses d'erreur génériques sans détails internes.
+- [x] Échapper les contenus d'agents injectés dans le HTML et retirer les gestionnaires inline des boutons de fiches agents.
+- [x] Renvoyer un conflit HTTP 409 lorsqu'un démarrage échoue parce qu'un runtime détient déjà le bail.
+- [ ] Tester les refus admin/opérateur avec de vrais appels HTTP sous Windows et vérifier la navigation dans le navigateur.
+- [ ] Examiner le stockage du jeton dans `sessionStorage` et mettre en place une stratégie de session plus robuste dans un lot ultérieur.
+
+### Superviseur et cycle de vie
+- [x] Ajouter la migration SQLite idempotente de `agents.runtime_owner`.
+- [x] Ajouter des baux runtime atomiques : un seul propriétaire peut démarrer un agent dont le heartbeat est encore valide.
+- [x] Rafraîchir le heartbeat toutes les 15 secondes, y compris pendant une attente réseau du modèle.
+- [x] Permettre au superviseur de reprendre uniquement les agents au heartbeat périmé ; une date invalide est considérée comme périmée.
+- [x] Empêcher les démarrages si l'arrêt d'urgence est actif, avec vérification SQLite atomique au moment de la prise du bail.
+- [x] Vérifier à nouveau l'arrêt d'urgence après création de la sandbox et l'arrêter en cas de course au démarrage.
+- [x] Libérer le propriétaire et le heartbeat lors des arrêts CLI, dashboard, d'urgence ou de fin de boucle.
+- [x] Ajouter un délai maximal aux appels d'inférence via `LLM_TIMEOUT_MS` (120 000 ms par défaut).
+- [ ] Tester une vraie reprise après arrêt brutal du processus et vérifier qu'aucun runtime concurrent ne subsiste.
+- [ ] Tester la reprise après crash Docker et la cohérence des tâches restées au statut `active`.
+
+### Tests et validation
+- [x] Ajouter 10 tests unitaires sur les rôles, les routes, les hôtes/origines locales et les limites JSON.
+- [x] Ajouter 6 tests unitaires sur les baux runtime, les heartbeats périmés, les propriétaires et l'arrêt d'urgence.
+- [x] Build TypeScript et suite complète validés sous Windows après les tests HTTP : `npm run build` réussi ; `npm test` : 5 fichiers, 31 tests réussis (retour utilisateur).
+- [x] Workflow CI basculé sur `npm ci` pour installer exactement le lockfile.
+- [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale. Les exécutions du 18 novembre (dont le run `44345121441`) échouent immédiatement avec `steps: null` et aucun runner assigné ; logs indisponibles.
+
+### Validation Windows et correction TypeScript — 18 novembre 2026
+
+Retour utilisateur après mise à jour de la branche :
+- [x] `npm ci` terminé ; 91 paquets installés, 5 alertes high restantes dans l'arbre de développement (Picomatch).
+- [ ] `npm run build` a échoué sur trois erreurs TS2709 dans `src/agent-runtime.ts` : le type d'instance SQLite était déclaré directement comme `Database`, alors que les définitions `better-sqlite3` exposent le type d'instance sous `Database.Database`.
+- [x] Correction appliquée : alias explicite `SqliteDatabase = DatabaseConstructor.Database` utilisé par les trois fonctions de bail runtime. Commit : `082bf0c`.
+- [x] `npm test` réussi selon le retour utilisateur : 4 fichiers, 26 tests.
+- [x] `npm run ui` démarre le serveur sur `http://127.0.0.1:3000`.
+- [ ] Rejouer `npm run build` après le commit de correction ; le build de la correction n'est pas encore validé.
+- [ ] Effectuer les scénarios API et de reprise après crash listés ci-dessous.
+
+Attention environnement local : Git a signalé des modifications non commitées dans `.gitignore` et `package-lock.json`. Les conserver et les examiner séparément ; ne pas les écraser lors de la synchronisation de la correction.
+
+Validation utilisateur Windows après correction `082bf0c`, 18 novembre 2026 :
+- [x] `git pull` : branche à jour.
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 4 fichiers et 26 tests réussis.
+- [x] Le blocage TS2709 de `src/agent-runtime.ts` est levé.
+- [ ] Les tests HTTP réels, les refus admin/opérateur sur serveur et les scénarios de reprise après crash restent à effectuer.
+- [ ] Ne pas considérer le lot API/superviseur comme terminé avant ces scénarios.
+
+### Tests HTTP d'intégration ajoutés — 18 novembre 2026
+
+- [x] Ajouter `tests/ui-http.test.ts` qui démarre le vrai serveur UI avec une base SQLite temporaire et des jetons de test.
+- [x] Couvrir la lecture dashboard par opérateur, le refus d'une création d'agent par opérateur, la création par administrateur, le rejet d'un Content-Type non JSON et le rejet de Host/Origin non fiables.
+- [x] Exécuter les tests HTTP sur Windows : les 5 scénarios passent, y compris le rejet Host/Origin non fiables.
+- [x] Vérifier le démarrage et l'arrêt du processus de test sur Windows : le fichier d'intégration termine normalement.
+- [ ] Ajouter ensuite les scénarios runtime de reprise après arrêt brutal et de conteneur Docker absent.
+
+Commit tests : `2545a5f`.
+
+Résultat du premier passage des tests HTTP sous Windows :
+- [x] `npm run build` réussi.
+- [x] 30 tests réussis sur 31 ; les quatre autres fichiers passent.
+- [x] Les quatre scénarios HTTP d'authentification, rôles et Content-Type passent.
+- [x] Le scénario Host/Origin a exposé une limite du test : Node `fetch` n'a pas envoyé le Host personnalisé attendu.
+- [x] Test corrigé pour envoyer Host via `node:http` et vérifier séparément le rejet Origin. Commit correctif : `9dfe895`.
+- [x] Validation utilisateur après le correctif `9dfe895` : `npm run build` réussi ; `npm test` réussi, 5 fichiers et 31 tests sur 31.
+- [x] Le test Host personnalisé via `node:http` et le test Origin malveillante passent tous les deux.
+
+### Réconciliation des sandboxes Docker — tests automatisés validés
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `git pull` : branche à jour.
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 6 fichiers réussis, 36 tests sur 36.
+- [x] Les 5 tests de réconciliation Docker passent, couvrant conteneur actif, arrêté, absent, daemon indisponible et échec de démarrage.
+
+La validation porte sur les tests automatisés avec exécuteur Docker simulé. Les scénarios manuels avec un vrai daemon Docker et une interruption brutale de processus restent à effectuer.
+
+### Réconciliation des sandboxes Docker — en cours
+
+Objectif : rendre la reprise d'un agent déterministe et éviter qu'une panne du daemon Docker soit confondue avec la disparition d'un conteneur.
+
+- [x] Extraire la réconciliation Docker dans une fonction testable avec un exécuteur injectable.
+- [x] Laisser intact un conteneur déjà en cours d'exécution.
+- [x] Redémarrer un conteneur existant mais arrêté au lieu d'en créer un second.
+- [x] Recréer un conteneur uniquement lorsque Docker confirme explicitement qu'il n'existe plus.
+- [x] Réutiliser le volume persistant `leanna-<agent>-workspace` lors de la recréation.
+- [x] Propager les erreurs de daemon indisponible et les échecs de démarrage au lieu de les masquer.
+- [x] Ajouter 5 tests unitaires ciblant ces états Docker.
+- [x] Build et suite complète validés sous Windows : 6 fichiers, 36 tests réussis (retour utilisateur).
+- [ ] Effectuer un test manuel avec Docker : arrêter un conteneur, relancer l'agent et vérifier qu'il est redémarré ; supprimer ensuite le conteneur (sans supprimer son volume) et vérifier sa recréation.
+- [ ] Tester une vraie interruption brutale du processus superviseur et confirmer qu'un seul runtime reprend le bail.
+
+Commits :
+- `e968810` — extraction de la réconciliation et distinction conteneur absent / daemon indisponible.
+- `e8ad2ee` — ajout des tests de réconciliation Docker.
+- `4716989`, `3dd6315`, `6390b73` — typage des doubles de test et correction du séparateur de sortie shell.
+
+### Continuité des tâches après reprise de bail — tests ajoutés
+
+- [x] Étendre les tests du bail runtime pour vérifier qu'une reprise après heartbeat périmé ne réinitialise pas une tâche déjà `active`.
+- [x] Vérifier que l'ancien propriétaire ne peut ni rafraîchir ni libérer le bail après la reprise par un nouveau propriétaire.
+- [x] Exécuter la suite étendue sous Windows : `npm run build` réussi ; `npm test` : 6 fichiers et 36 tests réussis (validation utilisateur, 18 novembre 2026).
+- [ ] Valider avec une interruption réelle du processus que le superviseur reprend l'agent et que sa tâche active continue sans être dupliquée.
+
+Commit : `fa7cdc5`.
+
+### Prochaine validation utilisateur
+
+Build et tests automatisés validés sous Windows le 18 novembre 2026. La prochaine étape porte sur les scénarios manuels API et la reprise réelle du runtime après crash.
+
+Depuis PowerShell :
+
+```powershell
+git fetch origin
+git checkout feat/api-supervisor-hardening
+git pull
+npm ci
+npm run build
+npm test
+npm run ui
+```
+
+Scénarios manuels prioritaires :
+1. Connexion avec jeton opérateur : lecture dashboard, démarrage/arrêt et création de tâche autorisés ; création d'agent et arrêt d'urgence refusés.
+2. Connexion avec jeton administrateur : création d'agent et arrêt d'urgence autorisés.
+3. Vérifier que le dashboard fonctionne via `http://127.0.0.1:3000` et `http://localhost:3000`, mais refuse un Host/Origin non local.
+4. Démarrer deux fois le même agent : le second appel doit être refusé avec HTTP 409.
+5. Vérifier qu'un arrêt manuel et l'arrêt d'urgence libèrent le runtime et empêchent toute nouvelle action d'outil.6. Sur une base SQLite existante, confirmer que la migration `runtime_owner` se déroule sans perte de données.
+
+Le lot reste en cours jusqu'à la validation Windows, la vérification des refus API et un scénario réel de reprise après crash. Aucun changement n'a été fait sur `main`.
+
+
+### Validation de la continuité des tâches — Windows, 18 novembre 2026
+
+Validation utilisateur sur `feat/api-supervisor-hardening` :
+- [x] `git pull` : branche déjà à jour.
+- [x] `npm run build` : compilation TypeScript réussie.
+- [x] `npm test` : 6 fichiers réussis, 36 tests sur 36.
+- [x] Le test de reprise de bail et de continuité d'une tâche active est inclus dans cette suite verte.
+
+Cette validation confirme le comportement couvert par les tests automatisés. Elle ne remplace pas encore un test de crash réel avec deux processus ni un test sur un daemon Docker réel. Ces scénarios restent ouverts.
+
+
+## 6.4. Test d'intégration de reprise après crash de processus — validation automatisée Windows
+
+Branche dédiée : `test/supervisor-process-crash-recovery`, créée depuis `feat/api-supervisor-hardening`.
+
+- [x] Ajouter un test multi-processus utilisant une vraie base SQLite temporaire.
+- [x] Extraire un cycle de récupération testable dans `src/supervisor.ts` et l'utiliser depuis la commande CLI `supervise`.
+- [x] Faire acquérir un bail runtime par un processus Node enfant, puis le terminer de force.
+- [x] Lancer le cycle de récupération dans un second processus Node et vérifier la reprise du bail par un nouveau propriétaire.
+- [x] Vérifier que la tâche persistante reste au statut `active` et que le compteur de redémarrage est incrémenté.
+- [x] Ajouter des tests unitaires pour les heartbeats périmés/invalides et empêcher la programmation de deux reprises simultanées.
+- [x] Exécuter les tests sous Windows : `npm run build` réussi ; `npm test` : 8 fichiers et 39 tests réussis (validation utilisateur, 18 novembre 2026).
+- [x] Confirmer que l'arrêt forcé du processus fonctionne sous Windows : le test multi-processus termine et le second processus reprend le bail.
+- [ ] Ajouter un test de bout en bout avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée, puis vérifier l'absence de runtime concurrent.
+- [ ] Tester séparément la réconciliation avec un daemon Docker réel.
+
+Fichiers ajoutés : `src/supervisor.ts`, `tests/supervisor.test.ts` et `tests/agent-runtime-process.test.ts`. Le cycle CLI utilise désormais la fonction extraite. Le test multi-processus utilise un faux démarrage d'agent qui exerce le vrai mécanisme de bail SQLite ; il valide la reprise après arrêt forcé et la conservation de la tâche active, mais pas encore l'exécution du vrai agent, l'appel LLM ou Docker.
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 8 fichiers réussis, 39 tests sur 39.
+- [x] Le test `agent-runtime-process.test.ts` passe : un processus détenteur du bail est tué, puis un second processus exécute le cycle superviseur et reprend le bail sans réinitialiser la tâche active.
+- [ ] Le redémarrage avec le véritable `startAgent`, un modèle simulé et une sandbox contrôlée reste à couvrir.
+- [ ] Le test avec un daemon Docker réel reste à effectuer.
+
+
+## 6.5. Intégration du superviseur avec la boucle réelle d'agent — en cours
+
+Branche dédiée : `test/agent-restart-integration`, créée depuis `test/supervisor-process-crash-recovery`.
+
+Objectif : vérifier que le superviseur ne se contente pas de reprendre le bail SQLite, mais peut relancer la boucle réelle d'agent sans dépendre d'un service LLM ni d'un daemon Docker pendant les tests.
+
+- [x] Extraire une fabrique `createAgentStarter` utilisée par l'entrée de production `startAgent`, avec dépendances externes injectables.
+- [x] Ajouter un test qui combine `recoverStaleAgents`, la prise du bail réelle, la boucle d'agent réelle et une sandbox/modèle simulés.
+- [x] Vérifier que la tâche active reste active, que l'outil simulé est appelé et que le bail est libéré à l'arrêt.
+- [x] Exécuter build et tests sous Windows : `npm run build` réussi ; `npm test` : 9 fichiers et 40 tests réussis (validation utilisateur, 18 novembre 2026).
+- [ ] Ajouter un test de concurrence prouvant qu'un second démarrage ne peut pas prendre le bail pendant que la boucle réelle tourne.
+- [ ] Tester séparément le démarrage avec un daemon Docker réel.
+
+Limite de ce lot : le test exécute la vraie boucle d'agent et le vrai mécanisme de bail, mais remplace le transport LLM, l'exécuteur Docker et l'action shell par des doubles déterministes. Il ne constitue pas un test de daemon Docker réel ni un appel réseau OpenRouter.
+
+Validation utilisateur Windows, 18 novembre 2026 :
+- [x] `npm run build` : compilation TypeScript réussie.
+- [x] `npm test` : 9 fichiers réussis, 40 tests sur 40.
+- [x] Le test `agent-restart-integration.test.ts` passe : récupération via `recoverStaleAgents`, exécution de la vraie boucle d'agent, appel du modèle simulé et de l'outil simulé, conservation de la tâche active et libération du bail.
+- [ ] La concurrence entre deux tentatives de démarrage pendant une boucle réelle reste à tester.
+- [ ] Le démarrage avec un daemon Docker réel reste à tester.
+
+
+## 6.6. Exclusion des démarrages concurrents — test ajouté
+
+Branche dédiée : `test/agent-start-concurrency`, créée depuis `test/agent-restart-integration`.
+
+- [x] Maintenir la vraie boucle d'agent dans un appel modèle simulé bloquant, tout en conservant le bail runtime.
+- [x] Tenter un second démarrage du même agent pendant que le premier détient encore le bail.
+- [x] Vérifier que le second démarrage est refusé et qu'aucune deuxième boucle/modèle n'est lancée.
+- [x] Vérifier que le premier runtime libère le bail après son arrêt contrôlé.
+- [x] Exécuter `npm run build` et `npm test` sous Windows après correction : build réussi ; 9 fichiers et 41 tests réussis sur 41 (validation utilisateur, 18 novembre 2026).
+- [ ] Tester la réconciliation et le redémarrage avec un daemon Docker réel.
+
+Premier retour Windows : build réussi ; 40 tests réussis sur 41. Le nouveau second test a échoué car la connexion SQLite partagée au niveau du fichier était fermée par le `afterEach` du premier test, puis réutilisée par le second (`TypeError: The database connection is not open`). Ce défaut concernait l'isolation du test, pas une preuve d'échec du verrouillage concurrent.
+
+Correction commit `5bc8f95` : créer une base SQLite mémoire et son schéma avant chaque test, puis fermer uniquement cette instance après le test. Le scénario concurrent libère également son appel modèle bloquant dans un bloc `finally`, afin d'éviter de laisser la boucle d'agent suspendue si une assertion échoue.
+
+Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel.
+
+### Test d'intégration Docker réel — ajouté, opt-in
+
+Branche dédiée : `test/docker-runtime-reconciliation`, créée depuis `test/agent-start-concurrency`.
+
+- [x] Ajouter un test opt-in utilisant le vrai exécutable Docker et `ensureSandboxWith`.
+- [x] Couvrir création, arrêt/redémarrage, suppression/recréation du conteneur et conservation d'un fichier dans le volume workspace.
+- [x] Vérifier dans le conteneur les paramètres effectifs : réseau `none`, filesystem racine read-only, mémoire 1 Gio, CPU 1 et limite PIDs 64.
+- [ ] Exécuter le test sur une machine avec Docker Desktop/Engine actif après correction.
+- [ ] Vérifier le nettoyage du conteneur et du volume de test après succès et échec.
+
+Premier retour utilisateur sous Windows : build réussi ; suite standard 9 fichiers passés, 1 test Docker ignoré (41 tests réussis). À l’exécution opt-in, le test a échoué dès le premier `docker exec` : le test utilisait le nom complet `leanna-<agentId>`, alors que la production tronque l’identifiant à 40 caractères dans `containerName()`. Le conteneur avait donc été créé sous un nom plus court.
+
+Correction commit `13d17fc` : le test applique la même normalisation et troncature que `src/executor.ts` pour le conteneur et son volume. Cette correction du test n’est pas encore validée ; relancer le build, la suite standard et le test Docker opt-in.
+
+Le test est volontairement ignoré par défaut pour ne pas exiger Docker dans la suite standard et ne supprimer que des ressources portant un identifiant aléatoire propre au test. Pour l'activer sous PowerShell : `$env:LEANNAAUTO_DOCKER_INTEGRATION="1"; npm test -- tests/executor-docker.integration.test.ts`. Le test peut télécharger `node:22-bookworm-slim` si l'image n'est pas présente localement. Ne pas exécuter sur un daemon partagé sans comprendre que le test crée puis supprime son propre conteneur et son propre volume. Build et tests après cette correction : en attente du retour Windows.
+
+
+### Validation Docker réel et intégration agent — 18 novembre 2026
+
+Branche `test/docker-runtime-reconciliation` :
+- [x] L'utilisateur a validé `npm run build` sous Windows.
+- [x] Suite standard : 10 fichiers, 42 tests réussis.
+- [x] Test Docker opt-in : création, redémarrage, recréation et persistance du workspace validés sur un vrai daemon Docker.
+- [x] Paramètres effectifs vérifiés : réseau désactivé, racine read-only, 1 Gio RAM, 1 CPU et 64 PIDs.
+- [x] Correction du nom de conteneur du test confirmée par l'exécution réelle.
+
+Branche dédiée : `test/agent-docker-end-to-end`, créée depuis `test/docker-runtime-reconciliation`.
+- [x] Ajouter un test opt-in qui exécute la vraie boucle `createAgentStarter`, la vraie réconciliation Docker et la vraie commande `shell` dans le conteneur.
+- [x] Simuler uniquement la réponse du modèle ; vérifier l'écriture d'un marqueur dans le volume, les limites Docker et la libération du bail SQLite.
+- [x] Valider sous Windows le build TypeScript et la suite complète : `npm run build` réussi ; `npm test` : 11 fichiers, 43 tests réussis (retour utilisateur, 18 novembre 2026).
+- [x] Exécuter séparément `tests/agent-docker.integration.test.ts` avec `LEANNAAUTO_DOCKER_INTEGRATION=1` : 1 test réussi sur vrai Docker.
+- [x] La suite complète a également exécuté les deux tests Docker réels : test agent end-to-end et test de réconciliation/persistance du workspace.
+
+Le test de bout en bout reste opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1`. Il crée et supprime un conteneur ainsi qu'un volume portant un identifiant aléatoire propre au test. Il ne contacte pas OpenRouter. La validation réelle de l'agent avec un fournisseur LLM et le scénario de crash du processus pendant une exécution Docker restent distincts.
+
+### Reprise d'un agent Docker après crash du processus — validation Windows réussie
+
+Branche dédiée : `test/docker-agent-crash-recovery`, créée depuis `test/agent-docker-end-to-end`.
+- [x] Ajouter un scénario opt-in qui acquiert le bail SQLite dans un processus enfant, rend son heartbeat périmé, puis tue brutalement ce processus.
+- [x] Faire intervenir `recoverStaleAgents` et la vraie fabrique `createAgentStarter` pour reprendre le bail et relancer la boucle réelle.
+- [x] Utiliser un vrai conteneur Docker et la vraie commande `shell` ; vérifier l'écriture du marqueur dans le workspace persistant.
+- [x] Vérifier que le compteur de redémarrage augmente, que le bail est libéré à la fin et que la tâche déjà active n'est pas réinitialisée.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm run build` réussi.
+- [x] Suite standard : 9 fichiers réussis, 41 tests réussis ; 3 fichiers Docker opt-in ignorés (3 tests skipped).
+- [x] Test opt-in `tests/agent-docker-crash.integration.test.ts` avec `LEANNAAUTO_DOCKER_INTEGRATION=1` : 1 test réussi sur vrai Docker.
+
+Le test utilise un vrai processus enfant tué brutalement, le superviseur réel, la vraie boucle d'agent et une vraie sandbox Docker. Le modèle reste simulé et le test ne contacte pas OpenRouter. Il teste une reprise après perte du processus propriétaire avant la reprise de tâche, pas un crash au milieu d'une commande shell déjà en cours.
+
+
+### Commandes Docker orphelines après crash Node — risque confirmé, sérialisation ajoutée
+
+Branche de caractérisation : `test/docker-exec-orphan-recovery`.
+Branche de correction : `fix/docker-exec-orphan-lock`, créée depuis la branche de caractérisation.
+
+Caractérisation réelle sur Windows/Docker, 18 novembre 2026 :
+- [x] Le processus Node enfant est tué par `SIGKILL` pendant qu'une commande shell longue tourne dans le conteneur.
+- [x] La commande d'origine continue après la mort du client Node/Docker.
+- [x] Une relance immédiate provoque deux exécutions concurrentes : relevé exact `["started","started","completed","completed"]`.
+- [x] Le risque de double effet de bord est donc confirmé ; le comportement ne doit pas être traité comme une annulation implicite.
+- [x] Build TypeScript réussi et suite complète : 13 fichiers, 45 tests réussis sur 45, avec les tests Docker opt-in activés.
+- [x] Le test de caractérisation isolé réussit et reproduit les deux exécutions concurrentes.
+- [x] `npm ci` réussit après synchronisation déjà présente du lockfile ; `npm install --package-lock-only` n'avait aucun changement à produire.
+- [ ] Les 5 vulnérabilités high signalées par `npm audit` restent à examiner séparément ; ne pas lancer `npm audit fix --force` sans analyse.
+
+Correction livrée et validée sur `fix/docker-exec-orphan-lock` :
+- [x] Ajouter un verrou `flock` exclusif dans le workspace persistant de chaque agent, partagé par toutes les commandes `shell()` de cet agent.
+- [x] Garder le verrou dans le processus shell du conteneur, et non dans le processus Node client : si Node est tué, le verrou noyau reste détenu tant que la commande orpheline tourne.
+- [x] Passer la commande comme argument séparé au shell pour ne pas construire une chaîne shell à partir de l'entrée utilisateur.
+- [x] Renforcer le test Docker pour exiger l'ordre `started, completed, started, completed` après le crash et la relance.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm ci` réussi, `npm run build` réussi, `npm test` avec 13 fichiers et 45 tests réussis (tous les tests Docker opt-in activés).
+- [x] Test Docker ciblé répété séparément : 1 test réussi ; relevé `["started","completed","started","completed"]`, confirmant que la relance attend la fin de la commande orpheline.
+- [ ] Tester fin normale, expiration du timeout client, commande bloquée et arrêt/redémarrage du conteneur.
+
+Le verrou est volontairement par agent : il sérialise les appels shell sur un même workspace, sans bloquer les commandes d'autres agents. `flock` libère automatiquement le verrou à la fin du processus qui l'a acquis ; le fichier de verrou peut rester dans le volume sans conserver un verrou actif. La correction empêche une seconde commande de commencer avant la fin de la précédente ; elle n'annule pas la commande orpheline.
