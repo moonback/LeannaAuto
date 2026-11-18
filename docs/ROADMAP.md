@@ -335,6 +335,24 @@ Les phases 2 et 3 doivent progresser ensemble : la fiabilité ne doit jamais con
 | 10 — Auto-évolution | À faire | Pipeline sandboxé, validation humaine et rollback. |
 | 11 — Exploitation | Partiel | Installation, sauvegarde et restauration reproductibles. |
 
+## 6.1. Avancement du lot dashboard — 18 novembre 2026
+
+Branche de travail : `feat/dashboard-finish`, créée depuis `feat/pro-dashboard-ui`.
+
+Modifications apportées :
+- [x] Afficher les tâches existantes dans la page « Toutes les tâches » (la zone était présente mais jamais alimentée).
+- [x] Échapper les valeurs dynamiques rendues dans les tableaux HTML afin de limiter l'injection de balisage via les données.
+- [x] Afficher le rôle authentifié dans l'en-tête du dashboard.
+- [ ] Vérifier l'ensemble des pages et actions dans un navigateur Windows.
+- [ ] Exécuter build, tests et CI sur cette branche.
+- [ ] Tester les permissions admin/opérateur, l'arrêt d'urgence et le réarmement.
+
+Commits du lot :
+- `7ea7371` — rendu de la liste des tâches et échappement des tableaux.
+- `2a70270` — simplification/correction du helper d'échappement et affichage du rôle.
+
+Validation : aucune exécution de build ou de tests n'a été effectuée dans cet environnement. Le lot reste donc **en cours**, non validé. La revue des autres rendus HTML dynamiques et des routes API reste à faire.
+
 ## 7. Prochain lot concret
 
 **Lot recommandé : finaliser et valider la refonte du dashboard.**
