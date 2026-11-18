@@ -109,6 +109,18 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain("function renderTasks(tasks,agents)");
   expect(html).toContain("function openTaskEdit(id)");
   expect(html).toContain("function openTaskAssign(id)");
+  expect(html).toContain("function cancelTask(id)");
+  expect(html).toContain("data-task-cancel");
+  expect(html).toContain("data-mission-cancel");
+  expect(html).toContain("function cancelMission(id)");
+  expect(html).toContain("function renderTimeline(events");
+  expect(html).toContain("function currentActivity(events,task)");
+  expect(html).toContain("function loadAgentDetail(id)");
+  expect(html).toContain("function loadTaskActivity(id)");
+  expect(html).toContain("data-task-journal");
+  expect(html).toContain("Activité actuelle");
+  expect(html).toContain("Journal chronologique");
+  expect(html).toContain("Actualisation automatique · 5 s");
   expect(html).toContain("data-task-assign");
   expect(html).toContain('id="taskAssignModal"');
   expect(html).toContain("function deleteTask(id)");
@@ -123,7 +135,9 @@ describe("dashboard HTTP security integration",()=>{
  it("authenticates an operator and serves the dashboard with exact task counters",async()=>{
   const response=await request("/api/dashboard");
   expect(response.status).toBe(200);
-  await expect(response.json()).resolves.toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
+  const dashboard=await response.json() as {role:string;taskCounts:{active:number;pending:number;failed:number;completed:number;total:number};events:unknown[]};
+  expect(dashboard).toMatchObject({role:"operator",taskCounts:{active:0,pending:0,failed:0,completed:0,total:0}});
+  expect(Array.isArray(dashboard.events)).toBe(true);
  });
  it("rejects privileged writes from an operator",async()=>{
   const response=await request("/api/agents",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"blocked",goal:"must be denied"})});
@@ -250,6 +264,45 @@ describe("dashboard HTTP security integration",()=>{
   expect(stillThere.status).toBe(200);
  });
 
+ it("allows administrators to cancel active tasks and stops their agent",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"cancel-task-agent",goal:"Task cancellation"})});
+  const agent=await created.json() as {id:string};
+  const made=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Cancelable active task"})});
+  const task=await made.json() as {id:string};
+  const database=new Database(path.join(directory,"test.db"));
+  try{
+   database.prepare("UPDATE agents SET status='running',runtime_owner='test-owner' WHERE id=?").run(agent.id);
+   database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(task.id);
+   expect((await request("/api/tasks/"+task.id+"/cancel",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(403);
+   const cancelled=await request("/api/tasks/"+task.id+"/cancel",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+   expect(cancelled.status).toBe(200);
+   await expect(cancelled.json()).resolves.toMatchObject({ok:true,agentStopped:true});
+   expect(database.prepare("SELECT status FROM tasks WHERE id=?").get(task.id)).toMatchObject({status:"cancelled"});
+   expect(database.prepare("SELECT status,runtime_owner FROM agents WHERE id=?").get(agent.id)).toMatchObject({status:"stopped",runtime_owner:null});
+   expect((await request("/api/tasks/"+task.id+"/cancel",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(409);
+  }finally{database.close()}
+ });
+ it("cancels an active mission, stops the agent and cancels its queued tasks",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"cancel-mission-agent",goal:"Mission to cancel"})});
+  const agent=await created.json() as {id:string};
+  const first=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Active mission task"})});
+  const activeTask=await first.json() as {id:string};
+  const second=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Queued mission task"})});
+  const pendingTask=await second.json() as {id:string};
+  const database=new Database(path.join(directory,"test.db"));
+  try{
+   database.prepare("UPDATE agents SET status='running',runtime_owner='test-owner' WHERE id=?").run(agent.id);
+   database.prepare("UPDATE tasks SET status='active' WHERE id=?").run(activeTask.id);
+   expect((await request("/api/agents/"+agent.id+"/mission/cancel",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})).status).toBe(403);
+   const cancelled=await request("/api/agents/"+agent.id+"/mission/cancel",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+   expect(cancelled.status).toBe(200);
+   await expect(cancelled.json()).resolves.toMatchObject({ok:true,agentStopped:true});
+   expect(database.prepare("SELECT goal,status FROM agents WHERE id=?").get(agent.id)).toMatchObject({goal:"",status:"stopped"});
+   const statuses=database.prepare("SELECT status FROM tasks WHERE agent_id=? ORDER BY created_at").all(agent.id) as Array<{status:string}>;
+   expect(statuses).toHaveLength(2);
+   expect(statuses.every(item=>item.status==="cancelled")).toBe(true);
+  }finally{database.close()}
+ });
  it("rejects workspace path traversal before attempting Docker access",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"workspace-path-check",goal:"Verify workspace path guard"})});
   expect(created.status).toBe(201);
