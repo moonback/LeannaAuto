@@ -35,6 +35,14 @@ describe("dashboard API authorization",()=>{
  it("allows agent lifecycle writes only to administrators and denies unlisted routes by default",()=>{
   expect(isAllowedUiRequest("admin","PATCH","/api/agents/agent-1")).toBe(true);
   expect(isAllowedUiRequest("admin","DELETE","/api/agents/agent-1")).toBe(true);
+  expect(isAllowedUiRequest("admin","PATCH","/api/tasks/task-1")).toBe(true);
+  expect(isAllowedUiRequest("admin","DELETE","/api/tasks/task-1")).toBe(true);
+  expect(isAllowedUiRequest("admin","PATCH","/api/agents/agent-1/mission")).toBe(true);
+  expect(isAllowedUiRequest("admin","DELETE","/api/agents/agent-1/mission")).toBe(true);
+  expect(isAllowedUiRequest("operator","PATCH","/api/tasks/task-1")).toBe(false);
+  expect(isAllowedUiRequest("operator","DELETE","/api/tasks/task-1")).toBe(false);
+  expect(isAllowedUiRequest("operator","PATCH","/api/agents/agent-1/mission")).toBe(false);
+  expect(isAllowedUiRequest("operator","DELETE","/api/agents/agent-1/mission")).toBe(false);
   expect(isAllowedUiRequest("operator","PATCH","/api/agents/agent-1")).toBe(false);
   expect(isAllowedUiRequest("operator","DELETE","/api/agents/agent-1")).toBe(false);
   expect(isAllowedUiRequest("operator","POST","/api/unknown")).toBe(false);
