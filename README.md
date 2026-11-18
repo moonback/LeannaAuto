@@ -60,3 +60,12 @@ Configure `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `.env`. The default end
 npm run dev -- supervise --interval 10 --stale 90
 ```
 The watchdog starts loops for database agents marked `running`, records heartbeat timestamps, and logs stale heartbeat detections. For production process-level recovery, run it under systemd, Docker restart policy, or another external process manager; a hung loop is not yet force-killed/replaced by this MVP.
+
+
+## Dashboard authentication
+The local dashboard binds to `127.0.0.1`. Before starting it, set `LEANNAAUTO_UI_TOKEN` in `.env` to a long, unique random secret. The dashboard login sends this token as a bearer credential; protected API routes reject requests without it. The browser keeps the token in session storage for the current tab session. Do not expose the dashboard port publicly or reuse this token elsewhere.
+
+Generate a token with Node.js:
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
