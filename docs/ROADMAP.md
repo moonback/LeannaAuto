@@ -696,3 +696,12 @@ Branche dédiée : `test/docker-exec-orphan-recovery`, créée depuis `test/dock
 - [ ] Tester le verrouillage en cas de fin normale, crash du client Docker, commande bloquée et arrêt/redémarrage du conteneur.
 
 Le test de caractérisation est opt-in via `LEANNAAUTO_DOCKER_INTEGRATION=1` et utilise uniquement un conteneur et un volume au nom aléatoire, supprimés au nettoyage. Aucun changement de comportement de production n'est encore effectué : la survie d'une commande après la mort de son client Node reste une hypothèse à mesurer sur le daemon Docker cible.
+
+
+Premier retour Windows, 18 novembre 2026 :
+- `npm ci` a échoué car le lockfile référence Vitest 3.2.7 alors que `package.json` exige Vitest 4.1.12 ; les versions de Vite et plusieurs dépendances transitives sont également désynchronisées. Le build et les tests ont ensuite tourné avec les dépendances déjà présentes localement, ce qui ne valide pas une installation propre.
+- Build réussi avec l'installation existante.
+- La suite a compté 44 tests réussis et 1 échec ; le test de caractérisation Docker a lu zéro ligne d'événement (`starts: 0`, `completions: 0`). Ce résultat ne permet pas de conclure sur la survie de la commande orpheline.
+- Les trois tests Docker précédemment établis ont passé dans cette exécution.
+- [ ] Régénérer et committer `package-lock.json` pour le rendre cohérent avec `package.json`.
+- [ ] Rejouer le test de caractérisation avec les assertions de diagnostic ajoutées : vérifier le marqueur avant le crash, vérifier le résultat de la commande de reprise et consigner le nombre d'exécutions observées.
