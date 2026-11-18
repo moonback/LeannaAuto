@@ -699,12 +699,13 @@ Caractérisation réelle sur Windows/Docker, 18 novembre 2026 :
 - [x] `npm ci` réussit après synchronisation déjà présente du lockfile ; `npm install --package-lock-only` n'avait aucun changement à produire.
 - [ ] Les 5 vulnérabilités high signalées par `npm audit` restent à examiner séparément ; ne pas lancer `npm audit fix --force` sans analyse.
 
-Correction en cours sur `fix/docker-exec-orphan-lock` :
+Correction livrée et validée sur `fix/docker-exec-orphan-lock` :
 - [x] Ajouter un verrou `flock` exclusif dans le workspace persistant de chaque agent, partagé par toutes les commandes `shell()` de cet agent.
 - [x] Garder le verrou dans le processus shell du conteneur, et non dans le processus Node client : si Node est tué, le verrou noyau reste détenu tant que la commande orpheline tourne.
 - [x] Passer la commande comme argument séparé au shell pour ne pas construire une chaîne shell à partir de l'entrée utilisateur.
 - [x] Renforcer le test Docker pour exiger l'ordre `started, completed, started, completed` après le crash et la relance.
-- [ ] Valider sous Windows que l'image Docker contient `flock`, que le build passe et que le test prouve l'absence de chevauchement.
+- [x] Validation utilisateur Windows, 18 novembre 2026 : `npm ci` réussi, `npm run build` réussi, `npm test` avec 13 fichiers et 45 tests réussis (tous les tests Docker opt-in activés).
+- [x] Test Docker ciblé répété séparément : 1 test réussi ; relevé `["started","completed","started","completed"]`, confirmant que la relance attend la fin de la commande orpheline.
 - [ ] Tester fin normale, expiration du timeout client, commande bloquée et arrêt/redémarrage du conteneur.
 
-Le verrou est volontairement par agent : il sérialise les appels shell sur un même workspace, sans bloquer les commandes d'autres agents. `flock` libère automatiquement le verrou à la fin du processus qui l'a acquis ; le fichier de verrou peut rester dans le volume sans conserver un verrou actif. La correction ne prétend pas annuler une commande orpheline : elle empêche la relance de commencer avant que celle-ci ait terminé.
+Le verrou est volontairement par agent : il sérialise les appels shell sur un même workspace, sans bloquer les commandes d'autres agents. `flock` libère automatiquement le verrou à la fin du processus qui l'a acquis ; le fichier de verrou peut rester dans le volume sans conserver un verrou actif. La correction empêche une seconde commande de commencer avant la fin de la précédente ; elle n'annule pas la commande orpheline.
