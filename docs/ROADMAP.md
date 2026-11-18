@@ -622,3 +622,18 @@ Branche : `feat/ui-page-screenshots`.
 - [x] Enregistrer une image PNG par page dans `artifacts/screenshots/ui` (dossier personnalisable en argument).
 - [x] Ajouter la commande npm `npm run capture:screenshots`.
 - [ ] Validation Windows : lancer l'UI, définir le jeton administrateur, exécuter la capture et vérifier les 13 PNG.
+
+
+### Annulation des tâches et missions en cours
+
+Branche : `feat/cancel-running-work`.
+
+- [x] Ajouter une action administrateur « Annuler » pour les tâches en attente ou actives.
+- [x] Lorsqu'une tâche active est annulée, arrêter également son agent, libérer son runtime owner et empêcher la reprise de la tâche.
+- [x] Ajouter une action « Annuler la mission » pour les agents en cours : arrêter l'agent, effacer l'objectif et annuler ses tâches en attente ou actives.
+- [x] Conserver les tâches terminées et en erreur ainsi que les historiques d'événements.
+- [x] Ajouter un statut « Annulée » et un filtre dédié dans la page des tâches.
+- [x] Réserver les nouvelles actions d'annulation à l'administrateur et ajouter des tests HTTP de permissions et transitions d'état.
+- [ ] Validation Windows : `npm ci`, `npm run build`, `npm test`, puis vérifier les actions sur un agent réellement actif dans Docker.
+
+L'arrêt simple d'un agent reste disponible séparément ; l'annulation d'une mission est destructive pour son objectif et ses tâches non terminées, avec confirmation explicite dans l'interface.
