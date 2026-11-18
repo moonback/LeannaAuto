@@ -470,6 +470,14 @@ Retour utilisateur après mise à jour de la branche :
 
 Attention environnement local : Git a signalé des modifications non commitées dans `.gitignore` et `package-lock.json`. Les conserver et les examiner séparément ; ne pas les écraser lors de la synchronisation de la correction.
 
+Validation utilisateur Windows après correction `082bf0c`, 18 novembre 2026 :
+- [x] `git pull` : branche à jour.
+- [x] `npm run build` : TypeScript compile sans erreur.
+- [x] `npm test` : 4 fichiers et 26 tests réussis.
+- [x] Le blocage TS2709 de `src/agent-runtime.ts` est levé.
+- [ ] Les tests HTTP réels, les refus admin/opérateur sur serveur et les scénarios de reprise après crash restent à effectuer.
+- [ ] Ne pas considérer le lot API/superviseur comme terminé avant ces scénarios.
+
 ### Prochaine validation utilisateur
 
 Depuis PowerShell :
