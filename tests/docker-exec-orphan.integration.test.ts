@@ -10,13 +10,17 @@ async function docker(args:string[],timeoutMs=120000):Promise<string>{
  const {stdout}=await execFileAsync("docker",args,{timeout:timeoutMs,maxBuffer:1024*1024});
  return stdout.trim();
 }
-async function waitForFile(container:string,path:string,timeoutMs=15000):Promise<void>{
+async function waitForContent(container:string,path:string,expected:string,timeoutMs=15000):Promise<string>{
  const deadline=Date.now()+timeoutMs;
+ let lastContent="";
  while(Date.now()<deadline){
-  try{await docker(["exec",container,"test","-f",path]);return;}catch{}
+  try{
+   lastContent=await docker(["exec",container,"cat",path]);
+   if(lastContent.includes(expected))return lastContent;
+  }catch{}
   await new Promise(resolve=>setTimeout(resolve,150));
  }
- throw new Error("Timed out waiting for "+path);
+ throw new Error("Timed out waiting for "+JSON.stringify(expected)+" in "+path+". Last content: "+JSON.stringify(lastContent));
 }
 function waitForExit(child:ReturnType<typeof spawn>):Promise<void>{
  return new Promise((resolve,reject)=>{
@@ -51,17 +55,16 @@ describe.skipIf(!enabled)("Docker exec orphan characterization (opt-in)",()=>{
    cwd:process.cwd(),stdio:"ignore"
   });
   try{
-   await waitForFile(container,events);
-   const beforeCrash=(await docker(["exec",container,"cat",events])).split(/\\r?\\n/).filter(Boolean);
-   expect(beforeCrash).toContain("started");
+   const beforeCrash=await waitForContent(container,events,"started");
    owner.kill("SIGKILL");
    await waitForExit(owner);
 
-   // A retry starts while the first daemon-side exec may still be running.
+   // Retry immediately while the original command may still be running in Docker.
    const retryResult=await shell(agentId,command);
    expect(retryResult).not.toMatch(/^Command failed:/);
    await new Promise(resolve=>setTimeout(resolve,1000));
-   const lines=(await docker(["exec",container,"cat",events])).split(/\\r?\\n/).filter(Boolean);
+   const rawLines=await docker(["exec",container,"cat",events]);
+   const lines=rawLines.split(/\r?\n/).filter(Boolean);
    expect(lines).toContain("started");
    expect(lines).toContain("completed");
    console.log("Docker exec orphan characterization:",JSON.stringify({beforeCrash,lines}));
