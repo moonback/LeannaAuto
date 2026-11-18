@@ -38,7 +38,7 @@ Principes :
 | Auto-évolution | Non livrée | Pas de système sûr de proposition, revue, test et déploiement de modifications. |
 | Réplication contrôlée | Non livrée | La création d'un agent enfant ne constitue pas encore une réplication opérationnelle complète. |
 
-Validation utilisateur Windows du 18 novembre 2026 sur `feat/mission-control-ui` : `npm ci` réussi ; `npm run build` réussi ; `npm test` réussi avec 13 fichiers et 45 tests (tous les tests Docker opt-in activés) ; `npm run ui` démarre sur `http://127.0.0.1:3000`. Cette validation confirme la compilation, les tests et le démarrage serveur ; la validation visuelle et fonctionnelle de la nouvelle vue Missions reste à faire.
+Validation utilisateur Windows du 18 novembre 2026 sur `feat/mission-control-ui` : `npm ci` réussi ; `npm run build` réussi ; `npm test` réussi avec 13 fichiers et 46 tests (tous les tests Docker opt-in activés) ; `npm run ui` démarre sur `http://127.0.0.1:3000`. Cette validation confirme la compilation, les tests et le démarrage serveur ; la validation visuelle et fonctionnelle de la nouvelle vue Missions reste à faire.
 
 ## 2.1. Consolidation et nouveau chantier interface
 
@@ -174,6 +174,20 @@ Branche : `feat/mission-control-ui`.
 - [ ] Validation utilisateur Windows de ce nouveau lot : `npm run build`, `npm test` et vérification visuelle dans le navigateur.
 
 Limites connues : l'état Docker, SQLite, du fournisseur LLM et du superviseur n'est pas encore sondé indépendamment ; il n'est donc pas présenté comme sain. Le flux utilise les logs existants, pas encore un journal d'événements typé. Les alertes sont calculées à partir des champs actuellement persistés ; les approbations et métriques de ressources ne sont pas encore disponibles.
+
+### Livraison — socle initial d'événements structurés
+
+Branche : `feat/mission-control-ui`.
+
+- [x] Ajouter une table SQLite `events` avec horodatage, agent, tâche, type, niveau, source, résumé, détails JSON et corrélation.
+- [x] Indexer les événements par date, agent, tâche et type ; empêcher les modifications et suppressions SQL pour préserver le caractère append-only.
+- [x] Alimenter automatiquement le journal structuré depuis les logs runtime et les entrées d'audit existantes.
+- [x] Appliquer une rédaction de motifs courants de secrets dans le résumé et les détails des événements ; cette protection complémentaire ne remplace pas la rédaction à la source.
+- [x] Exposer `GET /api/events` avec authentification, filtres agent/tâche/type/niveau/période et pagination par curseur.
+- [x] Ajouter un test HTTP de lecture opérateur, filtrage par type et navigation entre pages.
+- [ ] Validation utilisateur Windows de ce lot : build, suite complète et vérification de l'API.
+
+Limites : les événements hérités des logs et audits ne contiennent pas encore systématiquement un identifiant de tâche ou de corrélation ; les appels LLM et les outils ne sont pas encore instrumentés comme événements dédiés. La rédaction actuelle est défensive et fondée sur des motifs, pas une garantie de détection de tous les secrets.
 
 ### Phase 1.5 — Contrat de données et API d'observabilité
 **Priorité : P0 · À réaliser en parallèle des vues, avant le temps réel**
