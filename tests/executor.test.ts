@@ -34,7 +34,7 @@ describe("sandbox reconciliation",()=>{
   expect(runner).toHaveBeenCalledTimes(1);
  });
  it("propagates failure to start an existing container",async()=>{
-  const runner=vi.fn()
+  const runner=vi.fn(async(_args:string[],_timeout?:number)=>"")
    .mockResolvedValueOnce("exited")
    .mockRejectedValueOnce(new Error("start failed"));
   await expect(ensureSandboxWith("agent-1",runner)).rejects.toThrow("start failed");
