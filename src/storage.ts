@@ -18,6 +18,8 @@ CREATE INDEX IF NOT EXISTS events_at_id ON events(at DESC,id DESC);
 CREATE INDEX IF NOT EXISTS events_agent_at ON events(agent_id,at DESC,id DESC);
 CREATE INDEX IF NOT EXISTS events_task_at ON events(task_id,at DESC,id DESC);
 CREATE INDEX IF NOT EXISTS events_type_at ON events(type,at DESC,id DESC);
+CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;
+CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;
 CREATE INDEX IF NOT EXISTS audit_at ON audit(at);
 CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY,value TEXT NOT NULL,updated_at TEXT NOT NULL);
 INSERT OR IGNORE INTO system_state(key,value,updated_at) VALUES('emergency_stop','0',CURRENT_TIMESTAMP);
