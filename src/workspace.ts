@@ -46,7 +46,11 @@ async function dockerExec(agentId:string,script:string,relativePath:string,maxBu
 
 export type WorkspaceEntry={name:string;path:string;type:"directory"|"file"|"symlink"|"other";sizeBytes:number;modifiedAt:string};
 const listScript=String.raw`set -eu
-undefined
+input="$1"
+[ -n "$input" ] || input=.
+target=$(realpath -e -- "$input" 2>/dev/null) || exit 40
+case "$target" in /workspace|/workspace/*) ;; *) exit 40 ;; esac
+[ -d "$target" ] || exit 41
 find "$target" -mindepth 1 -maxdepth 1 ! -name '.leanna-shell.lock' -printf '%f\0%y\0%s\0%T@\0'
 `;
 
