@@ -40,6 +40,12 @@ Principes :
 
 Validation utilisateur rapportée pour la branche précédente : `npm run build` réussi et `npm test` avec 5 tests réussis. La refonte UI de la branche `feat/pro-dashboard-ui` doit être vérifiée séparément sur l'environnement Windows avant d'être considérée comme validée.
 
+## 2.1. Consolidation et nouveau chantier interface
+
+Branche d'intégration : `integration/agent-observability`, créée depuis `fix/docker-exec-orphan-lock`. Les lots précédents sont déjà empilés en chaîne de commits ; cette branche reprend leur état complet sans cherry-pick ni fusion artificielle de branches déjà ancêtres les unes des autres. Aucune modification de `main`.
+
+Branche UI : `feat/mission-control-ui`, créée depuis la branche d'intégration. Première livraison : vue Missions qui regroupe les agents par état et expose mission, tâche active ou prochaine tâche, dernière activité, heartbeat et actions de contrôle. Les informations proviennent des données déjà présentes dans `/api/dashboard` ; aucune progression chiffrée n'est inventée.
+
 ## 3. Roadmap par phases
 
 ### Phase 0 — Stabilisation et qualité de livraison
@@ -69,6 +75,8 @@ Objectif : faire de l'interface le centre de contrôle opérationnel.
 
 Travaux :
 - [ ] Finaliser le design responsive et vérifier chaque page.
+- [x] Ajouter une vue « Missions » avec cartes d'agents, objectif, tâche active/prochaine tâche, dernière activité, heartbeat, état et actions de démarrage/arrêt ; données alimentées par le dashboard existant.
+- [ ] Faire valider visuellement la vue Missions sous Windows et ajuster les informations affichées selon le retour utilisateur.
 - [ ] Ajouter une fiche agent détaillée : identité, statut, mission, parent, heartbeat, ressources, tâches, erreurs et historique.
 - [ ] Ajouter recherche, filtres, tri et pagination aux listes d'agents, tâches, logs et audits.
 - [ ] Ajouter des vues détaillées des tâches : attente, exécution, réussite, échec, durée et agent assigné.
