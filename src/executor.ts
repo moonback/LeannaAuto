@@ -47,3 +47,13 @@ export async function ensureSandbox(agentId:string){
  return ensureSandboxWith(agentId,runDocker,process.env.DOCKER_IMAGE??"node:22-bookworm-slim");
 }
 export async function stopSandbox(agentId:string){try{await execFileAsync("docker",["stop",containerName(agentId)],{timeout:15000});}catch{}}
+
+
+/** Remove an agent sandbox and its persistent workspace after explicit deletion. */
+export async function deleteSandbox(agentId:string){
+ const name=containerName(agentId);
+ try{await execFileAsync("docker",["rm","-f",name],{timeout:20000});}
+ catch(error){if(!isMissingContainer(error))throw error;}
+ try{await execFileAsync("docker",["volume","rm",name+"-workspace"],{timeout:20000});}
+ catch(error){const detail=String((error as any)?.stderr??"")+" "+String((error as any)?.message??error);if(!/no such volume/i.test(detail))throw error;}
+}

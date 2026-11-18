@@ -89,6 +89,10 @@ describe("dashboard HTTP security integration",()=>{
   expect(html).toContain('function renderAgentDirectory(agents)');
   expect(html).toContain('function openAgentModal()');
   expect(html).toContain('function closeAgentModal()');
+  expect(html).toContain("function openEditAgent(id)");
+  expect(html).toContain("function deleteAgent(id)");
+  expect(html).toContain('data-action="edit"');
+  expect(html).toContain('data-action="delete"');
   expect(html).not.toContain("document.getElementById('nTasks')");
   expect(html).not.toContain("document.getElementById('nTokens')");
   expect(html).not.toContain("document.getElementById('recent')");
@@ -113,6 +117,30 @@ describe("dashboard HTTP security integration",()=>{
   expect(dashboard.status).toBe(200);
   await expect(dashboard.json()).resolves.toMatchObject({taskCounts:{active:0,pending:1,failed:0,completed:0,total:1}});
  });
+ 
+ it("allows administrators to edit an agent but rejects operator edits",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"editable-agent",goal:"Original mission"})});
+  const agent=await created.json() as {id:string};
+  const denied=await request("/api/agents/"+encodeURIComponent(agent.id),operatorToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"blocked",goal:"blocked"})});
+  expect(denied.status).toBe(403);
+  const updated=await request("/api/agents/"+encodeURIComponent(agent.id),adminToken,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"renamed-agent",goal:"Updated mission"})});
+  expect(updated.status).toBe(200);
+  const detail=await request("/api/agents/"+encodeURIComponent(agent.id));
+  await expect(detail.json()).resolves.toMatchObject({agent:{name:"renamed-agent",goal:"Updated mission"}});
+ });
+ it("restricts agent deletion to stopped leaf agents without tasks",async()=>{
+  const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"deletable-agent",goal:"Deletion guard test"})});
+  const agent=await created.json() as {id:string};
+  const operatorDelete=await request("/api/agents/"+encodeURIComponent(agent.id),operatorToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(operatorDelete.status).toBe(403);
+  const task=await request("/api/tasks",operatorToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:agent.id,title:"Keep agent"})});
+  expect(task.status).toBe(201);
+  const blocked=await request("/api/agents/"+encodeURIComponent(agent.id),adminToken,{method:"DELETE",headers:{"Content-Type":"application/json"},body:"{}"});
+  expect(blocked.status).toBe(409);
+  const stillThere=await request("/api/agents/"+encodeURIComponent(agent.id));
+  expect(stillThere.status).toBe(200);
+ });
+
  it("rejects workspace path traversal before attempting Docker access",async()=>{
   const created=await request("/api/agents",adminToken,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"workspace-path-check",goal:"Verify workspace path guard"})});
   expect(created.status).toBe(201);
