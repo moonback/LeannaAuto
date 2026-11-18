@@ -454,7 +454,8 @@ Pull request existante : #6, vers `main` ; aucune fusion effectuée.
 - [x] Ajouter 10 tests unitaires sur les rôles, les routes, les hôtes/origines locales et les limites JSON.
 - [x] Ajouter 6 tests unitaires sur les baux runtime, les heartbeats périmés, les propriétaires et l'arrêt d'urgence.
 - [ ] Build TypeScript et suite complète à exécuter sur Windows ; aucune validation locale de ce lot n'est revendiquée à ce stade.
-- [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale.
+- [x] Workflow CI basculé sur `npm ci` pour installer exactement le lockfile.
+- [ ] CI GitHub à confirmer. Les exécutions observées ont échoué avant le démarrage des étapes (aucune étape ni runner assigné dans les métadonnées du job ; logs indisponibles). Ce résultat ne permet pas de conclure à un échec de compilation ou de tests ; vérifier/réexécuter après la validation locale. Les exécutions du 18 novembre (dont le run `44345121441`) échouent immédiatement avec `steps: null` et aucun runner assigné ; logs indisponibles.
 
 ### Prochaine validation utilisateur
 
