@@ -41,3 +41,13 @@ The Docker executor creates isolated containers with CPU, memory and PID limits 
 - Constitution checks are basic heuristics. This is a prototype and should not be run on a machine with sensitive data.
 - Docker socket access, if used for host orchestration, is effectively a powerful host permission. Keep the host dedicated and never expose the socket to the agent container.
 
+
+## Persistent task tracking
+Tasks can be stored and tracked separately from the agent loop:
+```bash
+npm run dev -- task add AGENT_ID --title "Investigate issue" --description "Write findings to workspace"
+npm run dev -- task list AGENT_ID
+npm run dev -- task set TASK_ID active
+npm run dev -- task set TASK_ID completed
+```
+Task state is stored in SQLite (pending, active, completed, failed). This CLI tracking is not yet automatically consumed by the agent planner.
