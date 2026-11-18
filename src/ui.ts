@@ -74,6 +74,97 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media(max-width:560px){.office-summary>div{padding:11px}.office-summary strong{font-size:22px}.office-toolbar{align-items:flex-start;flex-direction:column}.office-scene-top{align-items:flex-start;flex-direction:column}.office-desk{width:180px}.office-children{gap:8px}.office-forest{gap:10px}}
 @media(max-width:760px){main{width:100%;padding:18px 14px 38px}.top{position:relative;margin:-18px -4px 20px;padding:14px 4px}.top h2{font-size:21px}aside{box-shadow:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* LeannaAuto · Premium Operations UI refresh */
+:root{
+ --bg:#080d18;--panel:#111d30;--panel-raised:#17263d;--stroke:#2b405f;
+ --text:#f1f5ff;--muted:#91a2bd;--accent:#8da4ff;--accent-strong:#647ff0;
+ --success:#54d6a8;--warning:#f0bd73;--danger:#f17e91;
+}
+html{scroll-behavior:smooth}
+body{min-height:100vh;color:var(--text);background:
+ radial-gradient(ellipse at 80% -12%,rgba(73,108,177,.2),transparent 38%),
+ radial-gradient(ellipse at 0% 100%,rgba(38,65,112,.13),transparent 42%),var(--bg)}
+aside{
+ width:272px;padding:26px 18px 18px;background:rgba(9,16,29,.94);
+ border-right:1px solid rgba(125,151,195,.17);box-shadow:18px 0 55px #00000020;
+}
+aside h1{font-size:19px;padding:0 11px 22px;margin-bottom:18px;border-bottom:1px solid rgba(125,151,195,.16)}
+aside h1:before{content:"";display:inline-block;width:9px;height:9px;margin-right:9px;border-radius:3px;background:var(--accent);box-shadow:0 0 18px #829bff99;transform:rotate(45deg)}
+nav{gap:5px}
+nav button{
+ min-height:43px;padding:10px 13px;border-radius:10px;color:#aab9d0;
+ font-size:12px;font-weight:650;letter-spacing:.01em;
+}
+nav button:hover{background:#192942;color:#f4f7ff}
+nav button.active{
+ color:#f7f9ff;background:linear-gradient(100deg,rgba(90,119,211,.25),rgba(39,60,96,.52));
+ border-color:rgba(126,153,255,.24);box-shadow:inset 3px 0 var(--accent),0 6px 18px #00000016;
+}
+aside>p{line-height:1.8!important;color:#8295b2!important}
+main{width:calc(100% - 272px);margin-left:272px;padding:30px clamp(22px,3.2vw,58px) 64px}
+.top{
+ margin:-30px -12px 28px;padding:22px 12px 19px;
+ border-bottom:1px solid rgba(125,151,195,.16);
+ background:rgba(8,14,25,.86);backdrop-filter:blur(20px);
+}
+.top h2{font-size:26px;letter-spacing:-.8px;font-weight:760}
+.top>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card{
+ background:linear-gradient(145deg,rgba(22,36,58,.96),rgba(14,24,40,.98));
+ border:1px solid rgba(112,139,184,.23);border-radius:16px;
+ box-shadow:0 14px 38px #00000020, inset 0 1px #ffffff08;
+ transition:border-color .18s,transform .18s,box-shadow .18s;
+}
+.metric-card{min-height:138px;padding:20px}
+.metric{font-size:35px;letter-spacing:-1.2px;font-weight:760}
+.metric-label{font-size:11px;letter-spacing:.035em;text-transform:uppercase;color:#9aacc7}
+.metric-foot{font-size:11px;color:#8093b1}
+.control-columns{gap:16px}
+.control-card-head h3,.card>h3{font-size:15px;letter-spacing:-.2px}
+.status-strip{border-radius:12px;padding:13px 16px}
+.health-pill,.badge{letter-spacing:.02em}
+button.action{min-height:39px;border-radius:10px;padding:9px 15px;font-size:12px;font-weight:700}
+button.action:hover{box-shadow:0 8px 22px #3e5ab744;filter:brightness(1.08);transform:translateY(-1px)}
+button.action.secondary{background:#1b2b43;border-color:#3a5275;color:#d6e0f1}
+button.action.danger{background:linear-gradient(135deg,#b94d65,#87344c);border-color:#b85c70}
+input,textarea,select{border-radius:10px;background:#0a1424;border-color:#344967;color:#edf3ff}
+input::placeholder,textarea::placeholder{color:#687d9d}
+table{border-spacing:0}
+td,th{padding:13px 15px}
+th{background:#142238;color:#9aacc8}
+tr:hover td{background:#ffffff04}
+pre{border-color:#2a3e5c;background:#091321;border-radius:12px}
+.agent-card,.mission-card,.task-row{border-color:#304663;box-shadow:0 8px 22px #00000018}
+.agent-card:hover,.mission-card:hover{border-color:#526d9a;transform:translateY(-2px);box-shadow:0 15px 32px #0000002a}
+.agent-info,.workspace-files,.workspace-preview{border-color:#2b405f}
+.agent-modal-panel{border-color:#49658d;box-shadow:0 30px 100px #000b}
+.office-scene{border-color:#3a557a}
+.control-footer{padding-top:6px}
+button:disabled{cursor:not-allowed}
+@media(max-width:900px){
+ aside{width:230px}main{width:calc(100% - 230px);margin-left:230px}
+}
+@media(max-width:760px){
+ aside{position:sticky;top:0;z-index:8;width:100%;padding:10px 12px;background:rgba(8,14,25,.97);border-right:0;border-bottom:1px solid #2a3d59}
+ aside h1{padding:0 8px 10px;margin:0 0 8px;font-size:16px;border:0}
+ nav{display:flex;gap:5px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:thin}
+ nav button{flex:0 0 auto;min-height:36px;width:auto;padding:8px 11px;white-space:nowrap}
+ aside>p{display:none}
+ main{width:100%;margin:0;padding:18px 14px 38px}
+ .top{position:relative;top:auto;margin:-18px -4px 20px;padding:14px 4px}
+ .top h2{font-size:21px}
+}
+@media(max-width:560px){
+ .cards,.control-metrics,.agents-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .metric-card{min-height:116px;padding:14px}
+ .metric{font-size:28px}
+ .card{padding:15px}
+ .top>div{gap:6px}
+ .top .action{padding:7px 9px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
 </style></head><body><div id="authGate" style="position:fixed;inset:0;background:#080d19ee;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px"><form id="loginForm" class="card" style="width:min(420px,100%)"><h2>Authentification</h2><p class="muted">Saisissez votre jeton administrateur ou opérateur.</p><input type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><input id="authToken" name="password" type="password" autocomplete="current-password" required placeholder="Jeton administrateur"><button class="action" style="width:100%">Se connecter</button><p id="authError" class="muted"></p></form></div><aside><h1>◈ LeannaAuto <small style="display:block;color:#91a2bd;font-size:10px;letter-spacing:1.4px;margin-top:5px">AGENT OPERATIONS</small></h1><nav><button class="active" onclick="page('overview',this)">◫ &nbsp;Vue d'ensemble</button><button onclick="page('office',this)">▧ &nbsp;Bureau IA</button><button onclick="page('agents',this)">◉ &nbsp;Agents</button><button onclick="page('missions',this)">▣ &nbsp;Missions</button><button onclick="page('tasks',this)">☷ &nbsp;Tâches</button><button onclick="page('supervisor',this)">⌁ &nbsp;Supervision</button><button onclick="page('lineage',this)">⌘ &nbsp;Filiation</button><button onclick="page('logs',this)">≋ &nbsp;Logs système</button><button onclick="page('audit',this)">▤ &nbsp;Audit</button><button onclick="page('usage',this)">◌ &nbsp;Quota IA</button><button onclick="page('resources',this)">▥ &nbsp;Ressources</button><button onclick="page('workspace',this)">▣ &nbsp;Workspace</button><button onclick="page('settings',this)">⚙ &nbsp;Sécurité & paramètres</button></nav><p class="muted" style="margin-top:auto;padding:15px 10px;border-top:1px solid #263750;font-size:11px">● Console locale sécurisée<br>Accès par jeton · localhost</p></aside><main><div class="top"><h2 id="heading">Vue d'ensemble</h2><div><span id="roleLabel" class="muted"></span> <button class="action danger" id="emergencyButton" onclick="toggleEmergency()">Arrêt d’urgence</button> <span class="muted" id="refresh">Live · 5s</span></div></div>
 <section id="office" class="section"><div class="office-page-head"><div><span class="office-kicker">LEANNAAUTO · ESPACE DE TRAVAIL</span><h3>Le bureau des intelligences</h3><p class="muted">Chaque agent occupe son poste. Les liens représentent sa filiation et les cartes affichent ses tâches.</p></div><button class="action" onclick="page('agents',document.querySelector('nav button[onclick*=agents]'))">Gérer les agents</button></div><div class="office-summary"><div><span>Agents présents</span><strong id="officeAgentCount">0</strong></div><div><span>Au travail</span><strong id="officeRunningCount">0</strong></div><div><span>Tâches actives</span><strong id="officeActiveTasks">0</strong></div><div><span>En attente</span><strong id="officePendingTasks">0</strong></div></div><div class="office-toolbar"><div class="office-legend"><span><i class="legend-dot running"></i>En mission</span><span><i class="legend-dot stopped"></i>À l’arrêt</span><span><i class="legend-dot failed"></i>En erreur</span></div><span class="muted" id="officeUpdated">Synchronisation toutes les 5 secondes</span></div><div class="office-scene"><div class="office-scene-top"><div><b>Vue hiérarchique 3D</b><span> Sélectionnez un personnage pour ouvrir sa fiche.</span></div><span class="office-live"><i></i> EN DIRECT</span></div><div id="officeTree" class="office-tree" role="tree" aria-label="Arbre des agents"><div class="office-empty">Chargement du bureau…</div></div></div></section>
 <section id="overview" class="section show">
