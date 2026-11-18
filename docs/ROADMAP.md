@@ -616,3 +616,17 @@ Validation utilisateur Windows, 18 novembre 2026 :
 - [x] Le test `agent-restart-integration.test.ts` passe : récupération via `recoverStaleAgents`, exécution de la vraie boucle d'agent, appel du modèle simulé et de l'outil simulé, conservation de la tâche active et libération du bail.
 - [ ] La concurrence entre deux tentatives de démarrage pendant une boucle réelle reste à tester.
 - [ ] Le démarrage avec un daemon Docker réel reste à tester.
+
+
+## 6.6. Exclusion des démarrages concurrents — test ajouté
+
+Branche dédiée : `test/agent-start-concurrency`, créée depuis `test/agent-restart-integration`.
+
+- [x] Maintenir la vraie boucle d'agent dans un appel modèle simulé bloquant, tout en conservant le bail runtime.
+- [x] Tenter un second démarrage du même agent pendant que le premier détient encore le bail.
+- [x] Vérifier que le second démarrage est refusé et qu'aucune deuxième boucle/modèle n'est lancée.
+- [x] Vérifier que le premier runtime libère le bail après son arrêt contrôlé.
+- [ ] Exécuter `npm run build` et `npm test` sous Windows.
+- [ ] Tester la réconciliation et le redémarrage avec un daemon Docker réel.
+
+Le test utilise la vraie fabrique `createAgentStarter` et le mécanisme SQLite de prise de bail. Le modèle et la sandbox sont simulés pour rendre la concurrence déterministe. Il ne valide pas encore le comportement avec un daemon Docker réel.
