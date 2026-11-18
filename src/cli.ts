@@ -32,7 +32,7 @@ program.command("logs").argument("<id>").option("--tail <n>","number of rows","5
  show();if(opts.follow){while(true){await new Promise(r=>setTimeout(r,3000));show();}}
 });
 program.command("stop").argument("<id>").action(async(id)=>{
- db.prepare("UPDATE agents SET status='stopped' WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped by CLI");console.log("Stopped "+id);
+ db.prepare("UPDATE agents SET status='stopped',heartbeat_at=NULL,runtime_owner=NULL WHERE id=?").run(id);await stopSandbox(id);log(id,"system","Stopped by CLI");console.log("Stopped "+id);
 });
 program.command("identity").argument("<id>").action((id)=>{const a=db.prepare("SELECT id,name,identity,constitution_hash,parent_id,version FROM agents WHERE id=?").get(id);console.log(JSON.stringify(a??{},null,2));});
 program.command("spawn").argument("<parent>").requiredOption("--goal <goal>").action((parent,opts)=>{
@@ -71,8 +71,10 @@ program.command("supervise").description("Recover agents whose runtime heartbeat
    if(age<=stale)continue;
    db.prepare("UPDATE agents SET restart_count=restart_count+1,last_error=? WHERE id=? AND status='running'").run("Supervisor reclaim: stale heartbeat",a.id);
    log(a.id,"supervisor","Stale heartbeat detected; attempting atomic runtime recovery");
-   const p=startAgent(a.id,{staleAfterMs:stale}).catch(e=>{log(a.id,"supervisor-error",String(e).slice(0,1000));}).finally(()=>active.delete(a.id));
-   active.set(a.id,p);
+   try{
+    const p=startAgent(a.id,{staleAfterMs:stale}).catch(e=>{log(a.id,"supervisor-error",String(e).slice(0,1000));}).finally(()=>active.delete(a.id));
+    active.set(a.id,p);
+   }catch(e){log(a.id,"supervisor-error",String(e).slice(0,1000));}
   }
   await new Promise(r=>setTimeout(r,interval));
  }
