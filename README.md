@@ -69,3 +69,7 @@ Generate a token with Node.js:
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
+
+
+## Global emergency stop
+The dashboard administrator can activate a persistent global emergency stop. It marks every running agent as stopped, asks its Docker sandbox to stop, and prevents new agent loops from starting through both the dashboard and CLI while the lock is active. Resetting the lock only permits future starts; it does not restart agents automatically. The emergency-stop state is stored in SQLite and survives dashboard restarts.
