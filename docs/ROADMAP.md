@@ -38,7 +38,7 @@ Principes :
 | Auto-évolution | Non livrée | Pas de système sûr de proposition, revue, test et déploiement de modifications. |
 | Réplication contrôlée | Non livrée | La création d'un agent enfant ne constitue pas encore une réplication opérationnelle complète. |
 
-Validation utilisateur Windows du 18 novembre 2026 sur `feat/mission-control-ui` : `npm ci` réussi ; `npm run build` réussi ; `npm test` réussi avec 13 fichiers et 46 tests (tous les tests Docker opt-in activés) ; `npm run ui` démarre sur `http://127.0.0.1:3000`. Cette validation confirme la compilation, les tests et le démarrage serveur ; la validation visuelle et fonctionnelle de la nouvelle vue Missions reste à faire.
+Validation utilisateur Windows du 18 novembre 2026 sur `feat/mission-control-ui` : `npm ci` réussi ; `npm run build` réussi ; `npm test` réussi avec 13 fichiers et 49 tests (tous les tests Docker opt-in activés) ; `npm run ui` démarre sur `http://127.0.0.1:3000`. Cette validation confirme la compilation, les tests et le démarrage serveur ; la validation visuelle et fonctionnelle de la nouvelle vue Missions reste à faire.
 
 ## 2.1. Consolidation et nouveau chantier interface
 
@@ -188,7 +188,22 @@ Branche : `feat/mission-control-ui`.
 - [x] Ajouter un test HTTP de lecture opérateur, filtrage par type et navigation entre pages.
 - [ ] Validation utilisateur Windows de ce lot : build, suite complète et vérification de l'API.
 
-Limites : les événements hérités des logs et audits ne contiennent pas encore systématiquement un identifiant de tâche ou de corrélation ; les appels LLM et les outils ne sont pas encore instrumentés comme événements dédiés. La rédaction actuelle est défensive et fondée sur des motifs, pas une garantie de détection de tous les secrets.
+Limites : les événements hérités des logs et audits ne contiennent pas encore systématiquement un identifiant de tâche ou de corrélation. Les événements structurés dédiés couvrent maintenant les transitions de tâches, les appels LLM et l'exécution des outils sur la boucle d'agent. La rédaction actuelle est défensive et fondée sur des motifs, pas une garantie de détection de tous les secrets.
+
+### Livraison — corrélation du runtime, du LLM et des outils
+
+Branche : `feat/mission-control-ui`.
+
+- [x] Étendre le journal runtime avec des métadonnées structurées optionnelles : type, source, tâche, corrélation et détails.
+- [x] Émettre les transitions de tâche `pending → active` et `active → completed` avec l'identifiant de tâche.
+- [x] Instrumenter le début, la fin et l'échec des appels LLM, avec durée et identifiant de corrélation.
+- [x] Attacher la tâche et la corrélation aux événements de consommation de tokens.
+- [x] Instrumenter les décisions de la constitution et les phases d'exécution des outils, avec durée et résultat.
+- [x] Supprimer les arguments bruts des messages de décision d'outil afin de ne pas recopier inutilement commandes et contenus dans les journaux.
+- [x] Ajouter un test d'intégration vérifiant que les événements tâche/LLM/outil d'un même cycle partagent la même corrélation.
+- [ ] Validation utilisateur Windows : build, suite complète et tests Docker opt-in.
+
+Limites : la corrélation est créée par cycle de décision de l'agent ; les actions hors boucle d'agent et les événements historiques ne reçoivent pas rétroactivement de corrélation. Les logs legacy conservent leur format texte pour compatibilité.
 
 ### Phase 1.5 — Contrat de données et API d'observabilité
 **Priorité : P0 · À réaliser en parallèle des vues, avant le temps réel**
