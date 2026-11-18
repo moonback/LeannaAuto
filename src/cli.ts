@@ -1,7 +1,7 @@
 import "dotenv/config";
 import {Command} from "commander";
 import {randomUUID} from "node:crypto";
-import {db,log} from "./storage.js";
+import {db,log,emergencyStopActive} from "./storage.js";
 import {createIdentity,constitutionHash} from "./identity.js";
 import {startAgent} from "./agent.js";
 import {stopSandbox} from "./executor.js";
@@ -58,17 +58,20 @@ tasks.command("set").argument("<taskId>").argument("<status>").action((id,status
  const t=db.prepare("SELECT agent_id FROM tasks WHERE id=?").get(id) as any;if(!t)throw new Error("Task not found");
  db.prepare("UPDATE tasks SET status=?,updated_at=? WHERE id=?").run(status,new Date().toISOString(),id);log(t.agent_id,"task",id+" => "+status);
 });
-program.command("supervise").description("Watch and restart agents marked running").option("--interval <seconds>","poll interval","10").option("--stale <seconds>","heartbeat timeout","90").action(async(opts)=>{
+program.command("supervise").description("Recover agents whose runtime heartbeat is stale").option("--interval <seconds>","poll interval","10").option("--stale <seconds>","heartbeat timeout","90").action(async(opts)=>{
  const interval=Math.max(2,Number(opts.interval))*1000,stale=Math.max(30,Number(opts.stale))*1000;
  const active=new Map<string,Promise<void>>();
  console.log("Supervisor active; Ctrl+C to stop.");
  while(true){
-  const agents=db.prepare("SELECT id,heartbeat_at FROM agents WHERE status='running'").all() as any[];
+  if(emergencyStopActive()){await new Promise(r=>setTimeout(r,interval));continue;}
+  const agents=db.prepare("SELECT id,heartbeat_at FROM agents WHERE status='running'").all() as {id:string;heartbeat_at:string|null}[];
   for(const a of agents){
    if(active.has(a.id))continue;
    const age=a.heartbeat_at?Date.now()-Date.parse(a.heartbeat_at):Infinity;
-   if(age>stale){db.prepare("UPDATE agents SET restart_count=restart_count+1,last_error=? WHERE id=?").run("Supervisor restart: stale heartbeat",a.id);log(a.id,"supervisor","Heartbeat stale; restarting loop");}
-   const p=startAgent(a.id).catch(e=>{log(a.id,"supervisor-error",String(e));db.prepare("UPDATE agents SET last_error=?,status='stopped' WHERE id=?").run(String(e),a.id);}).finally(()=>active.delete(a.id));
+   if(age<=stale)continue;
+   db.prepare("UPDATE agents SET restart_count=restart_count+1,last_error=? WHERE id=? AND status='running'").run("Supervisor reclaim: stale heartbeat",a.id);
+   log(a.id,"supervisor","Stale heartbeat detected; attempting atomic runtime recovery");
+   const p=startAgent(a.id,{staleAfterMs:stale}).catch(e=>{log(a.id,"supervisor-error",String(e).slice(0,1000));}).finally(()=>active.delete(a.id));
    active.set(a.id,p);
   }
   await new Promise(r=>setTimeout(r,interval));
